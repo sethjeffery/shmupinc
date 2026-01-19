@@ -114,8 +114,8 @@ export class UiRouter {
   }
 
   private setPlayInputEnabled(enabled: boolean): void {
-    const scene = this.game.scene.getScene("PlayScene");
-    if (scene && scene.input) scene.input.enabled = enabled;
+    const input = this.game.scene.getScene("PlayScene")?.input;
+    if (input) input.enabled = enabled;
   }
 
   private updateGameOverStats(): void {

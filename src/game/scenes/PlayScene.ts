@@ -526,14 +526,14 @@ export class PlayScene extends Phaser.Scene {
   ): void {
     const base = ENEMIES[enemyId];
     const def = overrides ? { ...base, ...overrides } : base;
-    if (def.move == null) def.move = base.move;
-    if (def.fire == null) def.fire = base.fire;
-    def.goldDrop = def.goldDrop ?? base.goldDrop;
-    def.radius = def.radius ?? base.radius;
-    def.phases = def.phases ?? base.phases;
-    def.style = def.style ?? base.style;
-    def.rotation = def.rotation ?? base.rotation;
-    def.rotationDeg = def.rotationDeg ?? base.rotationDeg;
+    def.move ??= base.move;
+    def.fire ??= base.fire;
+    def.goldDrop ??= base.goldDrop;
+    def.radius ??= base.radius;
+    def.phases ??= base.phases;
+    def.style ??= base.style;
+    def.rotation ??= base.rotation;
+    def.rotationDeg ??= base.rotationDeg;
     const worldX = this.playArea.x + x * this.playArea.width;
     const worldY = this.playArea.y + y * this.playArea.height;
     const enemy = this.enemyPool.pop() ?? new Enemy(this, def, worldX, worldY);

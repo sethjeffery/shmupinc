@@ -4,6 +4,7 @@ import type {
   FireScript,
   MoveScript,
   MoveStep,
+  Vec2,
 } from "./scripts";
 import type { EnemyOverride, Spawn, WaveDefinition } from "./waves";
 
@@ -1093,11 +1094,7 @@ export const waveSkitterBlitz: WaveFactory = ({
  * 15) Asteroid Field: chunky debris rain with varied sizes.
  * Low/medium intensity, keeps the player moving.
  */
-export const waveAsteroidField: WaveFactory = ({
-  height,
-  waveNumber,
-  width,
-}) => {
+export const waveAsteroidField: WaveFactory = ({ height, waveNumber, width: _width }) => {
   const spawnY = toNormY(height, -140);
   const count = clamp(8 + Math.floor(waveNumber / 3), 8, 18);
   const interval = clamp(180 - waveNumber * 2, 120, 180);
