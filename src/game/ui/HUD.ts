@@ -15,16 +15,12 @@ export interface HudStatus {
 export class HUD {
   private shopButton: Phaser.GameObjects.Text;
   private pauseButton: Phaser.GameObjects.Text;
-  private bounds: Phaser.Geom.Rectangle;
-
   constructor(
     scene: Phaser.Scene,
     onShop: () => void,
     onPause: () => void,
     bounds: Phaser.Geom.Rectangle,
   ) {
-    this.bounds = bounds;
-
     this.shopButton = scene.add.text(0, 0, 'Shop', {
       backgroundColor: '#0f1624',
       color: '#ffd166',
@@ -55,7 +51,6 @@ export class HUD {
   }
 
   setBounds(bounds: Phaser.Geom.Rectangle): void {
-    this.bounds = bounds;
     const padding = 12;
     const left = bounds.x + padding;
     const right = bounds.x + bounds.width - padding;
