@@ -1,0 +1,223 @@
+import type { BulletSpec } from "./scripts";
+import type { WeaponPattern } from "./weaponPatterns";
+
+import {
+  BULLET_BOMB_HEAVY_PLAYER,
+  BULLET_DART_PLAYER,
+  BULLET_DART_SNIPER_PLAYER,
+  BULLET_GATLING_PLAYER,
+  BULLET_MISSILE_HEAVY_PLAYER,
+  BULLET_MISSILE_PLAYER,
+  BULLET_MISSILE_SWARM_PLAYER,
+  BULLET_ORB_PLAYER,
+  BULLET_ORB_PULSE_PLAYER,
+  BULLET_ORB_PLAYER_PLUS,
+  BULLET_ORB_PLAYER_PLUSPLUS,
+  BULLET_ORB_PLAYER_PLUSPLUSPLUS,
+} from "./bullets";
+
+export type WeaponId =
+  | "bombMortar"
+  | "dartGun"
+  | "gatlingGun"
+  | "gatlingGunPlus"
+  | "heavyMissile"
+  | "heavyMissilePlus"
+  | "missilePod"
+  | "missileSpread"
+  | "orbBlaster"
+  | "orbBlasterPlus"
+  | "orbBlasterPlusPlus"
+  | "orbBlasterPlusPlusPlus"
+  | "pulseArray"
+  | "railDart";
+
+export interface WeaponDefinition {
+  id: WeaponId;
+  name: string;
+  description: string;
+  cost: number;
+  fireRate: number; // shots per second
+  pattern: WeaponPattern;
+  bullet: BulletSpec;
+  icon: "bomb" | "dart" | "missile" | "orb";
+  muzzleOffsets?: { x: number; y: number }[];
+}
+
+export const WEAPONS: Record<WeaponId, WeaponDefinition> = {
+  bombMortar: {
+    bullet: BULLET_BOMB_HEAVY_PLAYER,
+    cost: 360,
+    description: "Slow, heavy bombs with huge AoE.",
+    fireRate: 1.2,
+    icon: "bomb",
+    id: "bombMortar",
+    name: "Bomb Mortar",
+    pattern: { count: 1, kind: "fan", spreadDeg: 0 },
+  },
+  dartGun: {
+    bullet: BULLET_DART_PLAYER,
+    cost: 130,
+    description: "Fast darts, good for precision.",
+    fireRate: 6,
+    icon: "dart",
+    id: "dartGun",
+    name: "Dart Gun",
+    pattern: { count: 1, kind: "fan", spreadDeg: 0 },
+  },
+  gatlingGun: {
+    bullet: BULLET_GATLING_PLAYER,
+    cost: 260,
+    description: "High energy bullets.",
+    fireRate: 10,
+    icon: "dart",
+    id: "gatlingGun",
+    muzzleOffsets: [
+      { x: -0.2, y: 0 },
+      { x: 0.2, y: 0 },
+    ],
+    name: "Gatling Gun",
+    pattern: { count: 2, kind: "fan", spreadDeg: 0 },
+  },
+  gatlingGunPlus: {
+    bullet: BULLET_GATLING_PLAYER,
+    cost: 320,
+    description: "Super high energy bullets.",
+    fireRate: 12,
+    icon: "dart",
+    id: "gatlingGunPlus",
+    muzzleOffsets: [
+      { x: -0.25, y: 0.15 },
+      { x: 0, y: 0 },
+      { x: 0.25, y: 0.15 },
+    ],
+    name: "Gatling Gun+",
+    pattern: { count: 3, kind: "fan", spreadDeg: 0 },
+  },
+  heavyMissile: {
+    bullet: BULLET_MISSILE_HEAVY_PLAYER,
+    cost: 320,
+    description: "Heavy homing missiles with high turn.",
+    fireRate: 1,
+    icon: "missile",
+    id: "heavyMissile",
+    name: "Heavy Missile",
+    pattern: { count: 1, kind: "fan", spreadDeg: 0 },
+  },
+  heavyMissilePlus: {
+    bullet: BULLET_MISSILE_HEAVY_PLAYER,
+    cost: 420,
+    description: "Twin heavy missiles for huge threats.",
+    fireRate: 1,
+    icon: "missile",
+    id: "heavyMissilePlus",
+    muzzleOffsets: [
+      { x: -0.5, y: 0 },
+      { x: 0.5, y: 0 },
+    ],
+    name: "Heavy Missile+",
+    pattern: { count: 2, kind: "fan", spreadDeg: 4 },
+  },
+  missilePod: {
+    bullet: BULLET_MISSILE_PLAYER,
+    cost: 240,
+    description: "Rapid homing missiles.",
+    fireRate: 2.4,
+    icon: "missile",
+    id: "missilePod",
+    name: "Missile Pod",
+    pattern: { count: 1, kind: "fan", spreadDeg: 0 },
+  },
+  missileSpread: {
+    bullet: BULLET_MISSILE_SWARM_PLAYER,
+    cost: 360,
+    description: "Triple homing salvo in a wide spread.",
+    fireRate: 1.6,
+    icon: "missile",
+    id: "missileSpread",
+    name: "Missile Spread",
+    pattern: { count: 3, kind: "fan", spreadDeg: 8 },
+  },
+  orbBlaster: {
+    bullet: BULLET_ORB_PLAYER,
+    cost: 0,
+    description: "Balanced orb shots.",
+    fireRate: 4.2,
+    icon: "orb",
+    id: "orbBlaster",
+    name: "Orb Blaster",
+    pattern: { count: 1, kind: "fan", spreadDeg: 0 },
+  },
+  orbBlasterPlus: {
+    bullet: BULLET_ORB_PLAYER_PLUS,
+    cost: 140,
+    description: "Twin orbs with lighter impact.",
+    fireRate: 3.6,
+    icon: "orb",
+    id: "orbBlasterPlus",
+    muzzleOffsets: [
+      { x: -0.45, y: 0 },
+      { x: 0.45, y: 0 },
+    ],
+    name: "Orb Blaster+",
+    pattern: { count: 2, kind: "fan", spreadDeg: 2 },
+  },
+  orbBlasterPlusPlus: {
+    bullet: BULLET_ORB_PLAYER_PLUSPLUS,
+    cost: 220,
+    description: "Triple orbs with softer output.",
+    fireRate: 5,
+    icon: "orb",
+    id: "orbBlasterPlusPlus",
+    muzzleOffsets: [
+      { x: -0.6, y: 0.2 },
+      { x: 0, y: 0 },
+      { x: 0.6, y: 0.2 },
+    ],
+    name: "Orb Blaster++",
+    pattern: { count: 3, kind: "fan", spreadDeg: 2 },
+  },
+  orbBlasterPlusPlusPlus: {
+    bullet: BULLET_ORB_PLAYER_PLUSPLUSPLUS,
+    cost: 380,
+    description: "You want some orbs with that?",
+    fireRate: 5,
+    icon: "orb",
+    id: "orbBlasterPlusPlusPlus",
+    muzzleOffsets: [
+      { x: -0.6, y: 0.4 },
+      { x: -0.5, y: 0.2 },
+      { x: 0, y: 0 },
+      { x: 0.5, y: 0.2 },
+      { x: 0.6, y: 0.4 },
+    ],
+    name: "Orb Blaster+++",
+    pattern: { count: 5, kind: "fan", spreadDeg: 2 },
+  },
+  pulseArray: {
+    bullet: BULLET_ORB_PULSE_PLAYER,
+    cost: 200,
+    description: "Twin pulse orbs with brighter impact.",
+    fireRate: 3.8,
+    icon: "orb",
+    id: "pulseArray",
+    muzzleOffsets: [
+      { x: -0.35, y: 0 },
+      { x: 0.35, y: 0 },
+    ],
+    name: "Pulse Array",
+    pattern: { count: 2, kind: "fan", spreadDeg: 1 },
+  },
+  railDart: {
+    bullet: BULLET_DART_SNIPER_PLAYER,
+    cost: 260,
+    description: "Slow, high-damage dart lance.",
+    fireRate: 2,
+    icon: "dart",
+    id: "railDart",
+    name: "Rail Dart",
+    pattern: { count: 1, kind: "fan", spreadDeg: 0 },
+  },
+};
+
+export const STARTER_WEAPON_ID: WeaponId = "orbBlaster";
