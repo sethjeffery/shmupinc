@@ -78,6 +78,7 @@ export class PlayScene extends Phaser.Scene {
   private bossActive = false;
   private healthPulseTime = 0;
   private healthPulseStrength = 0;
+  private touchOffsetY = 0;
   private bulletContext: BulletUpdateContext = {
     enemies: [],
     playerAlive: false,
@@ -775,9 +776,15 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private setTargetFromPointer(pointer: Phaser.Input.Pointer): void {
-    this.target.set(pointer.worldX, pointer.worldY);
     const nativeEvent = pointer.event as PointerEvent | TouchEvent;
-    if (nativeEvent instanceof TouchEvent) {
+    const isTouchEvent =
+      (typeof TouchEvent !== "undefined" && nativeEvent instanceof TouchEvent)
+      || (nativeEvent as PointerEvent).pointerType === "touch";
+    const targetY = isTouchEvent
+      ? pointer.worldY - this.touchOffsetY
+      : pointer.worldY;
+    this.target.set(pointer.worldX, targetY);
+    if (isTouchEvent && nativeEvent instanceof TouchEvent) {
       nativeEvent.preventDefault();
     }
   }
@@ -812,6 +819,9 @@ export class PlayScene extends Phaser.Scene {
     }
     this.drawPlayAreaFrame(this.healthPulseStrength);
     this.updateOuterFrameVars();
+    this.touchOffsetY = Math.round(
+      Phaser.Math.Clamp(this.playArea.height * 0.12, 40, 120),
+    );
     if (this.parallax) this.parallax.setBounds(this.playArea);
     if (this.hud) this.hud.setBounds(this.playArea);
   }
