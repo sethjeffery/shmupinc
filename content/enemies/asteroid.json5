@@ -1,0 +1,29 @@
+{
+  "fire": {
+    "steps": []
+  },
+  "goldDrop": {
+    "max": 3,
+    "min": 1
+  },
+  "hp": 3,
+  "id": "asteroid",
+  "move": {
+    "steps": [
+      {
+        "durationMs": 3200,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 860
+        }
+      }
+    ]
+  },
+  "radius": 12,
+  "style": {
+    "fillColor": 1777704,
+    "lineColor": 10990530,
+    "shape": "asteroid"
+  }
+}

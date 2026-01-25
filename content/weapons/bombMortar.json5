@@ -1,0 +1,25 @@
+{
+  "bullet": {
+    "aoe": {
+      "damage": 3,
+      "radius": 90
+    },
+    "color": 16735347,
+    "damage": 3,
+    "kind": "bomb",
+    "lifetimeMs": 2200,
+    "radius": 7,
+    "speed": 200
+  },
+  "cost": 360,
+  "description": "Slow, heavy bombs with huge AoE.",
+  "fireRate": 1.2,
+  "icon": "bomb",
+  "id": "bombMortar",
+  "name": "Bomb Mortar",
+  "pattern": {
+    "count": 1,
+    "kind": "fan",
+    "spreadDeg": 0
+  }
+}

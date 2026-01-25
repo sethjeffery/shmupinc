@@ -1,0 +1,34 @@
+{
+  "bullet": {
+    "color": 16758892,
+    "damage": 2,
+    "homing": {
+      "acquireRadius": 220,
+      "turnRateRadPerSec": 3.2
+    },
+    "kind": "missile",
+    "length": 10,
+    "lifetimeMs": 2200,
+    "radius": 3,
+    "speed": 320,
+    "thickness": 3,
+    "trail": {
+      "color": 16751454,
+      "count": 1,
+      "intervalMs": 70,
+      "sizeMax": 2,
+      "sizeMin": 1
+    }
+  },
+  "cost": 240,
+  "description": "Rapid homing missiles.",
+  "fireRate": 2.4,
+  "icon": "missile",
+  "id": "missilePod",
+  "name": "Missile Pod",
+  "pattern": {
+    "count": 1,
+    "kind": "fan",
+    "spreadDeg": 0
+  }
+}

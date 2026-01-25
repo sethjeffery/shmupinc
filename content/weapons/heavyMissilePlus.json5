@@ -1,0 +1,44 @@
+{
+  "bullet": {
+    "color": 16747115,
+    "damage": 4,
+    "homing": {
+      "acquireRadius": 240,
+      "turnRateRadPerSec": 4.2
+    },
+    "kind": "missile",
+    "length": 14,
+    "lifetimeMs": 3000,
+    "radius": 3,
+    "speed": 250,
+    "thickness": 5,
+    "trail": {
+      "color": 16739133,
+      "count": 2,
+      "intervalMs": 45,
+      "sizeMax": 2.6,
+      "sizeMin": 1.4
+    }
+  },
+  "cost": 420,
+  "description": "Twin heavy missiles for huge threats.",
+  "fireRate": 1,
+  "icon": "missile",
+  "id": "heavyMissilePlus",
+  "muzzleOffsets": [
+    {
+      "x": -0.5,
+      "y": 0
+    },
+    {
+      "x": 0.5,
+      "y": 0
+    }
+  ],
+  "name": "Heavy Missile+",
+  "pattern": {
+    "count": 2,
+    "kind": "fan",
+    "spreadDeg": 4
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "bullet": {
+    "color": 16763283,
+    "damage": 1,
+    "homing": {
+      "acquireRadius": 180,
+      "turnRateRadPerSec": 3.4
+    },
+    "kind": "missile",
+    "length": 8,
+    "lifetimeMs": 1800,
+    "radius": 2,
+    "speed": 300,
+    "thickness": 2,
+    "trail": {
+      "color": 16753771,
+      "count": 1,
+      "intervalMs": 80,
+      "sizeMax": 1.8,
+      "sizeMin": 0.9
+    }
+  },
+  "cost": 250,
+  "description": "Tri-missile pod with sharp tracking.",
+  "fireRate": 1.4,
+  "id": "stingerMissiles",
+  "name": "Stinger Missiles",
+  "pattern": {
+    "anglesDeg": [
+      -25,
+      0,
+      25
+    ],
+    "kind": "angles"
+  }
+}

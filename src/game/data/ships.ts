@@ -1,21 +1,7 @@
-export type ShipId = "bulwark" | "interceptor" | "scout" | "starter";
+import type { ShipDefinition, ShipId } from "./shipTypes";
 
-export type ShipShape = "bulwark" | "interceptor" | "scout" | "starling";
-
-export interface ShipDefinition {
-  id: ShipId;
-  name: string;
-  description: string;
-  cost: number;
-  maxHp: number;
-  moveSpeed: number;
-  color: number;
-  shape: ShipShape;
-  radiusMultiplier: number;
-  magnetMultiplier: number;
-}
-
-export const SHIPS: Record<ShipId, ShipDefinition> = {
+import { getContentRegistry } from "../../content/registry";
+export const LEGACY_SHIPS: Record<string, ShipDefinition> = {
   bulwark: {
     color: 0xff6b6b,
     cost: 260,
@@ -66,4 +52,11 @@ export const SHIPS: Record<ShipId, ShipDefinition> = {
   },
 };
 
+const contentShips = getContentRegistry().shipsById;
+
+export const SHIPS: Record<string, ShipDefinition> =
+  Object.keys(contentShips).length > 0 ? contentShips : LEGACY_SHIPS;
+
 export const STARTER_SHIP_ID: ShipId = "starter";
+
+export type { ShipDefinition, ShipId, ShipShape } from "./shipTypes";

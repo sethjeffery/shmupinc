@@ -1,14 +1,18 @@
+import type { ShopRules } from "../data/levels";
+import type { SaveData } from "../data/save";
 import type { BulletKind } from "../data/scripts";
+import type { SecondaryWeaponId } from "../data/secondaryWeapons";
+import type { ShipId, ShipShape } from "../data/ships";
+import type { WeaponId } from "../data/weapons";
 
 import Phaser from "phaser";
 
-import { loadSave, persistSave, type SaveData } from "../data/save";
-import {
-  SECONDARY_WEAPONS,
-  type SecondaryWeaponId,
-} from "../data/secondaryWeapons";
-import { SHIPS, type ShipId, type ShipShape } from "../data/ships";
-import { WEAPONS, type WeaponId } from "../data/weapons";
+import { getActiveLevelSession } from "../data/levelState";
+import { loadSave, persistSave } from "../data/save";
+import { SECONDARY_WEAPONS } from "../data/secondaryWeapons";
+import { SHIPS } from "../data/ships";
+import { filterShopItems, pickAllowedId } from "../data/shopRules";
+import { WEAPONS } from "../data/weapons";
 import { drawShipToCanvas } from "../render/shipShapes";
 import { PreviewScene } from "./PreviewScene";
 
@@ -29,7 +33,9 @@ export class ShopScene extends Phaser.Scene {
   private goldText?: HTMLDivElement;
   private goldFooterText?: HTMLSpanElement;
   private catalogTitle?: HTMLDivElement;
+  private catalogNote?: HTMLDivElement;
   private catalogGrid?: HTMLDivElement;
+  private missionText?: HTMLDivElement;
   private previewRoot?: HTMLDivElement;
   private previewGame?: Phaser.Game;
   private previewScene?: PreviewScene;
@@ -39,6 +45,7 @@ export class ShopScene extends Phaser.Scene {
   private statHull?: HTMLSpanElement;
   private statSpeed?: HTMLSpanElement;
   private statMagnet?: HTMLSpanElement;
+  private shopRules: null | ShopRules = null;
   private handleClickBound = (event: MouseEvent) =>
     this.handleOverlayClick(event);
 
@@ -72,12 +79,15 @@ export class ShopScene extends Phaser.Scene {
     this.goldText = undefined;
     this.goldFooterText = undefined;
     this.catalogTitle = undefined;
+    this.catalogNote = undefined;
     this.catalogGrid = undefined;
+    this.missionText = undefined;
     this.previewRoot = undefined;
     this.tabButtons = {};
     this.statHull = undefined;
     this.statSpeed = undefined;
     this.statMagnet = undefined;
+    this.shopRules = null;
     document.body.classList.remove("shop-open");
   }
 
@@ -91,15 +101,24 @@ export class ShopScene extends Phaser.Scene {
     const header = document.createElement("div");
     header.className = "shop-header";
 
+    const headerMeta = document.createElement("div");
+    headerMeta.className = "shop-header-meta";
+
     const title = document.createElement("div");
     title.className = "shop-title";
     title.textContent = "Hangar Exchange";
+
+    const mission = document.createElement("div");
+    mission.className = "shop-mission";
+    mission.textContent = "";
 
     const gold = document.createElement("div");
     gold.className = "shop-gold";
     gold.textContent = "Gold: 0";
 
-    header.appendChild(title);
+    headerMeta.appendChild(title);
+    headerMeta.appendChild(mission);
+    header.appendChild(headerMeta);
     header.appendChild(gold);
 
     const deck = document.createElement("div");
@@ -207,7 +226,9 @@ export class ShopScene extends Phaser.Scene {
     this.goldText = gold;
     this.goldFooterText = goldFooter;
     this.catalogTitle = catalogTitle;
+    this.catalogNote = contentNote;
     this.catalogGrid = catalogGrid;
+    this.missionText = mission;
     this.previewRoot = previewRoot;
     this.tabButtons = {
       primary: primaryTab,
@@ -281,6 +302,8 @@ export class ShopScene extends Phaser.Scene {
       !this.goldText
     )
       return;
+    this.syncShopRules();
+    this.ensureAllowedSelections();
     const goldValue = `Gold: ${this.save.gold}`;
     this.goldText.textContent = goldValue;
     if (this.goldFooterText) this.goldFooterText.textContent = goldValue;
@@ -307,6 +330,61 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
+  private syncShopRules(): void {
+    const session = getActiveLevelSession();
+    const level = session?.level;
+    this.shopRules = level?.shopRules ?? null;
+    if (this.missionText) {
+      if (level) {
+        this.missionText.textContent = `Mission: ${level.title}`;
+        this.missionText.classList.add("is-active");
+      } else {
+        this.missionText.textContent = "";
+        this.missionText.classList.remove("is-active");
+      }
+    }
+    if (this.catalogNote) {
+      this.catalogNote.textContent = level
+        ? "Mission loadout restricted to approved gear."
+        : "Equip anything you own at no cost.";
+    }
+  }
+
+  private ensureAllowedSelections(): void {
+    if (!this.shopRules) return;
+    let changed = false;
+
+    const availableShips = this.getFilteredShips();
+    const nextShipId = pickAllowedId(this.save.selectedShipId, availableShips);
+    if (nextShipId && nextShipId !== this.save.selectedShipId) {
+      this.save.selectedShipId = nextShipId;
+      changed = true;
+    }
+
+    const availableWeapons = this.getFilteredWeapons();
+    const nextWeaponId = pickAllowedId(
+      this.save.selectedWeaponId,
+      availableWeapons,
+    );
+    if (nextWeaponId && nextWeaponId !== this.save.selectedWeaponId) {
+      this.save.selectedWeaponId = nextWeaponId;
+      changed = true;
+    }
+
+    const availableSecondaries = this.getFilteredSecondaryWeapons();
+    const nextSecondaryId = pickAllowedId(
+      this.save.selectedSecondaryWeaponId,
+      availableSecondaries,
+      { allowNull: true },
+    );
+    if (nextSecondaryId !== this.save.selectedSecondaryWeaponId) {
+      this.save.selectedSecondaryWeaponId = nextSecondaryId;
+      changed = true;
+    }
+
+    if (changed) persistSave(this.save);
+  }
+
   private buildCategoryCards(category: ShopCategory): {
     cards: HTMLElement[];
     title: string;
@@ -328,8 +406,38 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
+  private getFilteredShips(): (typeof SHIPS)[ShipId][] {
+    const ships = Object.values(SHIPS);
+    return filterShopItems(
+      ships,
+      this.shopRules,
+      this.shopRules?.allowedShips,
+      this.shopRules?.caps?.shipCost,
+    );
+  }
+
+  private getFilteredWeapons(): (typeof WEAPONS)[WeaponId][] {
+    const weapons = Object.values(WEAPONS);
+    return filterShopItems(
+      weapons,
+      this.shopRules,
+      this.shopRules?.allowedWeapons,
+      this.shopRules?.caps?.primaryCost,
+    );
+  }
+
+  private getFilteredSecondaryWeapons(): (typeof SECONDARY_WEAPONS)[SecondaryWeaponId][] {
+    const weapons = Object.values(SECONDARY_WEAPONS);
+    return filterShopItems(
+      weapons,
+      this.shopRules,
+      this.shopRules?.allowedSecondaryWeapons,
+      this.shopRules?.caps?.secondaryCost,
+    );
+  }
+
   private buildShipCards(): HTMLElement[] {
-    return Object.values(SHIPS)
+    return this.getFilteredShips()
       .sort((a, b) => a.cost - b.cost)
       .map((ship) => {
         const owned = this.save.unlockedShips.includes(ship.id);
@@ -359,7 +467,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private buildPrimaryWeaponCards(): HTMLElement[] {
-    return Object.values(WEAPONS)
+    return this.getFilteredWeapons()
       .sort((a, b) => a.cost - b.cost)
       .map((weapon) => {
         const owned = this.save.unlockedWeapons.includes(weapon.id);
@@ -388,7 +496,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private buildSecondaryWeaponCards(): HTMLElement[] {
-    return Object.values(SECONDARY_WEAPONS)
+    return this.getFilteredSecondaryWeapons()
       .sort((a, b) => a.cost - b.cost)
       .map((weapon) => {
         const owned = this.save.unlockedSecondaryWeapons.includes(weapon.id);
@@ -420,7 +528,7 @@ export class ShopScene extends Phaser.Scene {
     accent: string;
     description: string;
     iconKind: "ship" | BulletKind;
-    id: SecondaryWeaponId | ShipId | WeaponId;
+    id: string;
     name: string;
     shipShape?: ShipShape;
     state: ShopCardState;
@@ -501,49 +609,51 @@ export class ShopScene extends Phaser.Scene {
     const card = target.closest<HTMLElement>("[data-type][data-id]");
     if (!card) return;
     const type = card.dataset.type as ShopItemType | undefined;
-    const id = card.dataset.id as
-      | SecondaryWeaponId
-      | ShipId
-      | undefined
-      | WeaponId;
+    const id = card.dataset.id;
     if (!type || !id) return;
 
     if (type === "ship") {
-      const shipId = id as ShipId;
-      const ship = SHIPS[shipId];
+      const ship = SHIPS[id];
       if (!ship) return;
-      const unlocked = this.save.unlockedShips.includes(shipId);
+      if (this.shopRules && !this.getFilteredShips().some((item) => item.id === id)) {
+        return;
+      }
+      const unlocked = this.save.unlockedShips.includes(id);
       if (!unlocked) {
         if (this.save.gold < ship.cost) return;
         this.save.gold -= ship.cost;
-        this.save.unlockedShips = [...this.save.unlockedShips, shipId];
+        this.save.unlockedShips = [...this.save.unlockedShips, id];
       }
-      this.save.selectedShipId = shipId;
+      this.save.selectedShipId = id;
     } else if (type === "primary") {
-      const weaponId = id as WeaponId;
-      const weapon = WEAPONS[weaponId];
+      const weapon = WEAPONS[id];
       if (!weapon) return;
-      const unlocked = this.save.unlockedWeapons.includes(weaponId);
+      if (this.shopRules && !this.getFilteredWeapons().some((item) => item.id === id)) {
+        return;
+      }
+      const unlocked = this.save.unlockedWeapons.includes(id);
       if (!unlocked) {
         if (this.save.gold < weapon.cost) return;
         this.save.gold -= weapon.cost;
-        this.save.unlockedWeapons = [...this.save.unlockedWeapons, weaponId];
+        this.save.unlockedWeapons = [...this.save.unlockedWeapons, id];
       }
-      this.save.selectedWeaponId = weaponId;
+      this.save.selectedWeaponId = id;
     } else {
-      const weaponId = id as SecondaryWeaponId;
-      const weapon = SECONDARY_WEAPONS[weaponId];
+      const weapon = SECONDARY_WEAPONS[id];
       if (!weapon) return;
-      const unlocked = this.save.unlockedSecondaryWeapons.includes(weaponId);
+      if (this.shopRules && !this.getFilteredSecondaryWeapons().some((item) => item.id === id)) {
+        return;
+      }
+      const unlocked = this.save.unlockedSecondaryWeapons.includes(id);
       if (!unlocked) {
         if (this.save.gold < weapon.cost) return;
         this.save.gold -= weapon.cost;
         this.save.unlockedSecondaryWeapons = [
           ...this.save.unlockedSecondaryWeapons,
-          weaponId,
+          id,
         ];
       }
-      this.save.selectedSecondaryWeaponId = weaponId;
+      this.save.selectedSecondaryWeaponId = id;
     }
 
     persistSave(this.save);

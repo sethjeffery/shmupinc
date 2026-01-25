@@ -1,46 +1,13 @@
+import type { EnemyDef } from "./enemyTypes";
 import type { FireScript, MoveScript } from "./scripts";
 
+import { getContentRegistry } from "../../content/registry";
 import {
   BULLET_DART_ENEMY,
   BULLET_MISSILE_ENEMY,
   BULLET_ORB_ENEMY,
   BULLET_ORB_HEAVY_ENEMY,
 } from "./bullets";
-
-export interface BossPhase {
-  hpThreshold: number;
-  move?: MoveScript;
-  fire?: FireScript;
-}
-
-export type EnemyShape =
-  | "asteroid"
-  | "bomber"
-  | "boss"
-  | "crossfire"
-  | "sine"
-  | "skitter"
-  | "snake"
-  | "sniper"
-  | "spinner"
-  | "swooper";
-
-export interface EnemyDef {
-  id: string;
-  hp: number;
-  radius: number;
-  goldDrop: { min: number; max: number };
-  move: MoveScript;
-  fire: FireScript;
-  phases?: BossPhase[];
-  rotation?: "fixed" | "movement";
-  rotationDeg?: number;
-  style?: {
-    fillColor?: number;
-    lineColor?: number;
-    shape?: EnemyShape;
-  };
-}
 
 const BULLET_LIGHT = BULLET_ORB_ENEMY;
 const BULLET_FAST = BULLET_DART_ENEMY;
@@ -473,19 +440,7 @@ const FIRE_BOSS_PHASE3: FireScript = {
   ],
 };
 
-type EnemyType =
-  | "asteroid"
-  | "bomber"
-  | "boss"
-  | "crossfire"
-  | "sine"
-  | "skitter"
-  | "snake"
-  | "sniper"
-  | "spinner"
-  | "swooper";
-
-export const ENEMIES: Record<EnemyType, EnemyDef> = {
+export const LEGACY_ENEMIES: Record<string, EnemyDef> = {
   asteroid: {
     fire: FIRE_NONE,
     goldDrop: { max: 3, min: 1 },
@@ -584,4 +539,9 @@ export const ENEMIES: Record<EnemyType, EnemyDef> = {
   },
 };
 
-export type EnemyId = keyof typeof ENEMIES;
+const contentEnemies = getContentRegistry().enemiesById;
+
+export const ENEMIES: Record<string, EnemyDef> =
+  Object.keys(contentEnemies).length > 0 ? contentEnemies : LEGACY_ENEMIES;
+
+export type { BossPhase, EnemyDef, EnemyId, EnemyShape } from "./enemyTypes";

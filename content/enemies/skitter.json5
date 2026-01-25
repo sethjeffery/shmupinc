@@ -1,0 +1,92 @@
+{
+  "fire": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 420,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "kind": "atPlayer"
+        },
+        "bullet": {
+          "color": 16756839,
+          "damage": 1,
+          "kind": "dart",
+          "length": 10,
+          "radius": 2,
+          "speed": 260,
+          "thickness": 2
+        },
+        "count": 2,
+        "intervalMs": 120,
+        "kind": "burst"
+      },
+      {
+        "durationMs": 520,
+        "kind": "cooldown"
+      }
+    ]
+  },
+  "goldDrop": {
+    "max": 7,
+    "min": 5
+  },
+  "hp": 6,
+  "id": "skitter",
+  "move": {
+    "steps": [
+      {
+        "durationMs": 240,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 140
+        }
+      },
+      {
+        "durationMs": 520,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 240,
+        "kind": "dashTo",
+        "to": {
+          "x": 120,
+          "y": 80
+        }
+      },
+      {
+        "durationMs": 520,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 240,
+        "kind": "dashTo",
+        "to": {
+          "x": -140,
+          "y": 210
+        }
+      },
+      {
+        "durationMs": 520,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 600,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 780
+        }
+      }
+    ]
+  },
+  "radius": 13,
+  "style": {
+    "fillColor": 1055019,
+    "lineColor": 8384767,
+    "shape": "skitter"
+  }
+}

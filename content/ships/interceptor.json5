@@ -1,0 +1,12 @@
+{
+  "color": 8255999,
+  "cost": 220,
+  "description": "Balanced ship with steady handling.",
+  "id": "interceptor",
+  "magnetMultiplier": 2.5,
+  "maxHp": 7,
+  "moveSpeed": 6.8,
+  "name": "Interceptor",
+  "radiusMultiplier": 1,
+  "shape": "interceptor"
+}

@@ -6,6 +6,7 @@ import Phaser from "phaser";
 
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
 import { ENEMIES } from "../data/enemies";
+import { getActiveLevelSession } from "../data/levelState";
 import { bankGold, computePlayerStats } from "../data/save";
 import {
   BOSS_WAVE_INTERVAL,
@@ -18,7 +19,6 @@ import {
 import {
   WAVES,
   type EnemyOverride,
-  type Spawn,
   type WaveDefinition,
 } from "../data/waves";
 import { STARTER_WEAPON_ID, WEAPONS, type WeaponId } from "../data/weapons";
@@ -27,9 +27,12 @@ import { Enemy } from "../entities/Enemy";
 import { PickupGold } from "../entities/PickupGold";
 import { Ship } from "../entities/Ship";
 import { circleOverlap } from "../systems/Collision";
+import { LevelRunner } from "../systems/LevelRunner";
 import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
+import { PlayerCollisionResolver } from "../systems/PlayerCollision";
 import { PlayerFiring } from "../systems/PlayerFiring";
+import { WaveScheduler } from "../systems/WaveScheduler";
 import { HUD } from "../ui/HUD";
 import { computePlayArea, PLAYFIELD_CORNER_RADIUS } from "../util/playArea";
 import { ObjectPool } from "../util/pool";
@@ -39,6 +42,33 @@ const MAGNET_RADIUS = 120;
 const FINISH_LINGER_MS = 2400;
 const EXIT_DASH_MS = 700;
 const SHIP_REGEN_PER_SEC = 0.1;
+const CONTACT_DAMAGE_PER_SEC = 1.4;
+const PLAYER_DAMAGE_MULTIPLIER = 1.2;
+const HIT_COOLDOWN_SEC = 0.5;
+const BUMP_FX = {
+  burstCount: 6,
+  color: 0x7df9ff,
+  cooldownMs: 120,
+  ringLife: 0.24,
+  ringRadius: 18,
+  ringThickness: 2,
+};
+const DAMAGE_FX = {
+  angleMax: Math.PI * 2,
+  angleMin: 0,
+  colors: [0xffffff, 0xfff3c4, 0xffd166],
+  cooldownMs: 80,
+  drag: 0.92,
+  lengthMax: 14,
+  lengthMin: 6,
+  lifeMax: 0.35,
+  lifeMin: 0.18,
+  sparkCount: 12,
+  speedMax: 260,
+  speedMin: 120,
+  thicknessMax: 1.6,
+  thicknessMin: 1,
+};
 const LOW_HEALTH_THRESHOLD = 0.25;
 const CRITICAL_HEALTH_THRESHOLD = 0.1;
 
@@ -60,18 +90,15 @@ export class PlayScene extends Phaser.Scene {
   private debugBulletSpec?: BulletSpec;
   private gameOverTimer?: Phaser.Time.TimerEvent;
   private overlayShown = false;
-  private waveEvents: Spawn[] = [];
-  private waveEventCursor = 0;
   private currentWaveDifficulty = 1;
   private lastFactoryIntensity?: WaveIntensity;
+  private levelRunner?: LevelRunner;
+  private waveScheduler?: WaveScheduler;
 
   private enemies: Enemy[] = [];
   private enemyPool: Enemy[] = [];
-  private waveIndex = 0;
-  private waveTimer = 0;
   private isGameOver = false;
   private gold = 0;
-  private hitCooldown = 0;
   private goldBanked = false;
   private shipAlive = true;
   private bossTimerMs = 0;
@@ -79,6 +106,8 @@ export class PlayScene extends Phaser.Scene {
   private healthPulseTime = 0;
   private healthPulseStrength = 0;
   private touchOffsetY = 0;
+  private collisionPush = { nx: 0, ny: 0, x: 0, y: 0 };
+  private collisionResolver?: PlayerCollisionResolver;
   private bulletContext: BulletUpdateContext = {
     enemies: [],
     playerAlive: false,
@@ -135,7 +164,7 @@ export class PlayScene extends Phaser.Scene {
       const dx = this.ship.x - x;
       const dy = this.ship.y - y;
       if (dx * dx + dy * dy <= radius * radius) {
-        this.damagePlayer(damage);
+        this.damagePlayer(damage, x, y);
       }
     }
   };
@@ -154,22 +183,21 @@ export class PlayScene extends Phaser.Scene {
     this.defaultTarget.set(0, 0);
     this.enemies.length = 0;
     this.enemyPool.length = 0;
-    this.waveIndex = 0;
-    this.waveTimer = 0;
-    this.waveEvents = [];
-    this.waveEventCursor = 0;
     this.currentWaveDifficulty = 1;
     this.lastFactoryIntensity = undefined;
     this.isGameOver = false;
     this.overlayShown = false;
     this.gold = 0;
-    this.hitCooldown = 0;
     this.goldBanked = false;
     this.playerFiring.reset();
     this.shipAlive = true;
     this.magnetMultiplier = 1;
     this.bossTimerMs = 0;
     this.bossActive = false;
+    if (this.levelRunner) {
+      this.levelRunner.destroy();
+      this.levelRunner = undefined;
+    }
     if (this.playAreaFrame) {
       this.playAreaFrame.destroy();
       this.playAreaFrame = undefined;
@@ -178,6 +206,8 @@ export class PlayScene extends Phaser.Scene {
       this.gameOverTimer.remove(false);
       this.gameOverTimer = undefined;
     }
+    this.collisionResolver = undefined;
+    this.waveScheduler = undefined;
   }
 
   create(): void {
@@ -204,6 +234,22 @@ export class PlayScene extends Phaser.Scene {
       radius: 14 * (stats.ship.radiusMultiplier ?? 1),
       shape: stats.ship.shape,
     });
+    this.collisionResolver = new PlayerCollisionResolver(
+      {
+        bumpFx: BUMP_FX,
+        damageFx: DAMAGE_FX,
+        damageMultiplier: PLAYER_DAMAGE_MULTIPLIER,
+        hitCooldownSec: HIT_COOLDOWN_SEC,
+        padding: PADDING,
+      },
+      {
+        canDamage: () => this.shipAlive && !this.isGameOver,
+        getBounds: () => this.playArea,
+        onDeath: () => this.handleShipDeath(),
+        particles: this.particles,
+        ship: this.ship,
+      },
+    );
 
     this.gold = 0;
     this.goldBanked = false;
@@ -226,7 +272,58 @@ export class PlayScene extends Phaser.Scene {
       () => this.pauseGame(),
       this.playArea,
     );
-    this.startWave(0);
+    const activeSession = getActiveLevelSession();
+    const activeLevel = activeSession?.level;
+    if (activeLevel) {
+      const playerState = { alive: true, radius: 0, x: 0, y: 0 };
+      this.levelRunner = new LevelRunner(activeLevel, {
+        applyContactDamage: (amount, fxX, fxY) =>
+          this.applyContactDamage(amount, fxX, fxY),
+        getEnemyCount: () => this.enemies.length,
+        getPlayArea: () => this.playArea,
+        getPlayerState: () => {
+          playerState.alive = this.shipAlive;
+          playerState.radius = this.ship.radius;
+          playerState.x = this.ship.x;
+          playerState.y = this.ship.y;
+          return playerState;
+        },
+        isEnemyActive: (enemyId) =>
+          this.enemies.some(
+            (enemy) => enemy.active && enemy.def.id === enemyId,
+          ),
+        onVictory: () => this.handleLevelVictory(),
+        pushPlayer: (offsetX, offsetY, fxColor, fxX, fxY) =>
+          this.applyPlayerPush(offsetX, offsetY, fxColor, fxX, fxY),
+        scene: this,
+        spawnEnemy: (enemyId, x, y, hpMultiplier, overrides) =>
+          this.spawnEnemy(enemyId, x, y, hpMultiplier, overrides),
+      });
+      this.levelRunner.start();
+    } else {
+      this.waveScheduler = new WaveScheduler({
+        getEnemyCount: () => this.enemies.length,
+        getWaveDefinition: (index) => this.buildEndlessWave(index),
+        onWaveStart: (_wave, index) => {
+          this.playerFiring.reset();
+          this.hud.setStatus({
+            gold: this.gold,
+            hp: this.ship.hp,
+            maxHp: this.ship.maxHp,
+            wave: index + 1,
+          });
+        },
+        spawn: (event) =>
+          this.spawnEnemy(
+            event.enemyId,
+            event.x,
+            event.y,
+            this.currentWaveDifficulty,
+            event.overrides,
+          ),
+      });
+      this.waveScheduler.start(0);
+    }
   }
 
   update(_time: number, deltaMs: number): void {
@@ -234,9 +331,7 @@ export class PlayScene extends Phaser.Scene {
     this.parallax.update(delta);
     this.particles.update(delta);
     if (this.overlayShown) return;
-    this.hitCooldown = Math.max(0, this.hitCooldown - delta);
-    this.waveTimer += deltaMs;
-
+    this.collisionResolver?.update(deltaMs);
     this.updateShip(delta);
     this.updateLowHealthEffect(delta);
     this.updateFiring(delta);
@@ -244,7 +339,11 @@ export class PlayScene extends Phaser.Scene {
     this.updateEnemies(deltaMs);
     this.updateEnemyBullets(delta);
     this.updatePickups(delta);
-    this.processWaves();
+    if (this.levelRunner) {
+      this.levelRunner.update(deltaMs);
+    } else if (this.waveScheduler) {
+      this.waveScheduler.update(deltaMs);
+    }
     const boss = this.getActiveBoss();
     const bossActiveNow = Boolean(boss);
     if (bossActiveNow) {
@@ -266,7 +365,7 @@ export class PlayScene extends Phaser.Scene {
       gold: this.gold,
       hp: this.ship.hp,
       maxHp: this.ship.maxHp,
-      wave: this.waveIndex + 1,
+      wave: this.getWaveDisplay(),
     });
   }
 
@@ -351,6 +450,7 @@ export class PlayScene extends Phaser.Scene {
   private updateEnemies(deltaMs: number): void {
     const bounds = this.playArea;
     const margin = 120;
+    const contactDamage = (CONTACT_DAMAGE_PER_SEC * deltaMs) / 1000;
     for (let i = this.enemies.length - 1; i >= 0; i -= 1) {
       const enemy = this.enemies[i];
       if (!enemy.active) {
@@ -411,25 +511,62 @@ export class PlayScene extends Phaser.Scene {
       }
 
       if (this.shipAlive) {
-        const collided = circleOverlap(
-          enemy.x,
-          enemy.y,
-          enemy.radius,
-          this.ship.x,
-          this.ship.y,
-          this.ship.radius,
-        );
-        if (collided) {
-          if (enemy.def.id === "boss") {
-            this.ship.hp = 0;
-            this.handleShipDeath();
-          } else {
-            this.damagePlayer(1);
-            this.releaseEnemy(i, true);
-          }
+        const push = this.getEnemyPush(enemy.x, enemy.y, enemy.radius);
+        if (push) {
+          const fxColor =
+            enemy.def.style?.lineColor ?? enemy.def.style?.fillColor ?? 0xff6b6b;
+          const contactX = this.ship.x - push.nx * this.ship.radius;
+          const contactY = this.ship.y - push.ny * this.ship.radius;
+          this.applyPlayerPush(push.x, push.y, fxColor, contactX, contactY);
+          this.applyContactDamage(contactDamage, contactX, contactY);
         }
       }
     }
+  }
+
+  private getEnemyPush(
+    enemyX: number,
+    enemyY: number,
+    enemyRadius: number,
+  ): { x: number; y: number; nx: number; ny: number } | null {
+    const dx = this.ship.x - enemyX;
+    const dy = this.ship.y - enemyY;
+    const minDist = this.ship.radius + enemyRadius;
+    const distSq = dx * dx + dy * dy;
+    if (distSq >= minDist * minDist) return null;
+
+    const out = this.collisionPush;
+    if (distSq > 0.0001) {
+      const dist = Math.sqrt(distSq);
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const push = minDist - dist;
+      out.nx = nx;
+      out.ny = ny;
+      out.x = nx * push;
+      out.y = ny * push;
+      return out;
+    }
+
+    out.nx = 1;
+    out.ny = 0;
+    out.x = minDist;
+    out.y = 0;
+    return out;
+  }
+
+  private applyPlayerPush(
+    offsetX: number,
+    offsetY: number,
+    fxColor?: number,
+    fxX?: number,
+    fxY?: number,
+  ): void {
+    this.collisionResolver?.applyPush(offsetX, offsetY, fxColor, fxX, fxY);
+  }
+
+  private applyContactDamage(amount: number, fxX?: number, fxY?: number): void {
+    this.collisionResolver?.applyContactDamage(amount, fxX, fxY);
   }
 
   private updateEnemyBullets(delta: number): void {
@@ -459,7 +596,7 @@ export class PlayScene extends Phaser.Scene {
           bullet.hit(this.handleBulletExplosion);
         } else {
           bullet.deactivate();
-          this.damagePlayer(bullet.damage);
+          this.damagePlayer(bullet.damage, bullet.x, bullet.y);
         }
       }
     });
@@ -492,30 +629,6 @@ export class PlayScene extends Phaser.Scene {
         }
       }
     });
-  }
-
-  private processWaves(): void {
-    while (
-      this.waveEventCursor < this.waveEvents.length &&
-      this.waveEvents[this.waveEventCursor].atMs <= this.waveTimer
-    ) {
-      const event = this.waveEvents[this.waveEventCursor];
-      this.spawnEnemy(
-        event.enemyId,
-        event.x,
-        event.y,
-        this.currentWaveDifficulty,
-        event.overrides,
-      );
-      this.waveEventCursor += 1;
-    }
-
-    const waveFinished =
-      this.waveEventCursor >= this.waveEvents.length &&
-      this.enemies.length === 0;
-    if (waveFinished) {
-      this.startWave(this.waveIndex + 1);
-    }
   }
 
   private spawnEnemy(
@@ -562,15 +675,8 @@ export class PlayScene extends Phaser.Scene {
     this.enemyPool.push(enemy);
   }
 
-  private damagePlayer(amount: number): void {
-    if (this.hitCooldown > 0 || this.isGameOver || !this.shipAlive) return;
-    this.ship.hp = Math.max(0, this.ship.hp - amount);
-    this.hitCooldown = 0.5;
-    this.ship.flash();
-    this.particles.spawnBurst(this.ship.x, this.ship.y, 10, 0x7df9ff);
-    if (this.ship.hp <= 0) {
-      this.handleShipDeath();
-    }
+  private damagePlayer(amount: number, fxX?: number, fxY?: number): void {
+    this.collisionResolver?.applyHitDamage(amount, fxX, fxY);
   }
 
   private dropGold(enemy: Enemy): void {
@@ -613,20 +719,6 @@ export class PlayScene extends Phaser.Scene {
     this.goldBanked = true;
   }
 
-  private startWave(index: number): void {
-    this.waveIndex = index;
-    this.waveTimer = 0;
-    this.waveEventCursor = 0;
-    this.playerFiring.reset();
-    this.buildWaveEvents();
-    this.hud.setStatus({
-      gold: this.gold,
-      hp: this.ship.hp,
-      maxHp: this.ship.maxHp,
-      wave: this.waveIndex + 1,
-    });
-  }
-
   private handleShipDeath(): void {
     if (this.isGameOver) return;
     this.isGameOver = true;
@@ -639,28 +731,26 @@ export class PlayScene extends Phaser.Scene {
       this.overlayShown = true;
       this.game.events.emit("ui:gameover", {
         gold: this.gold,
-        wave: this.waveIndex + 1,
+        wave: this.getWaveDisplay(),
       });
     });
   }
 
-  private buildWaveEvents(): void {
-    let wave = this.selectWaveDefinition();
-    if (!this.isBossWave(this.waveIndex)) {
+  private buildEndlessWave(waveIndex: number): WaveDefinition {
+    let wave = this.selectWaveDefinition(waveIndex);
+    if (!this.isBossWave(waveIndex)) {
       wave = augmentWaveDefinition(wave, {
         height: this.playArea.height,
-        waveNumber: this.waveIndex,
+        waveNumber: waveIndex,
         width: this.playArea.width,
       });
     }
-    this.currentWaveDifficulty = this.getDifficultyFactor(this.waveIndex);
-    this.waveEvents = [...wave.spawns].sort((a, b) => a.atMs - b.atMs);
-    this.waveEventCursor = 0;
+    this.currentWaveDifficulty = this.getDifficultyFactor(waveIndex);
     console.info(`[Wave] ${wave.id}`);
+    return wave;
   }
 
-  private selectWaveDefinition(): WaveDefinition {
-    const waveNumber = this.waveIndex;
+  private selectWaveDefinition(waveNumber: number): WaveDefinition {
     if (this.isBossWave(waveNumber)) {
       return buildBossWave(
         waveNumber,
@@ -729,9 +819,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private skipWave(): void {
-    if (this.isGameOver || this.overlayShown) return;
+    if (this.isGameOver || this.overlayShown || this.levelRunner) return;
     this.clearWaveEntities();
-    this.startWave(this.waveIndex + 1);
+    this.waveScheduler?.skipToNext();
   }
 
   private goToShop(): void {
@@ -824,6 +914,7 @@ export class PlayScene extends Phaser.Scene {
     );
     if (this.parallax) this.parallax.setBounds(this.playArea);
     if (this.hud) this.hud.setBounds(this.playArea);
+    if (this.levelRunner) this.levelRunner.setBounds(this.playArea);
   }
 
   private drawPlayAreaFrame(pulseStrength: number): void {
@@ -902,4 +993,31 @@ export class PlayScene extends Phaser.Scene {
       this.ship.setPosition(this.defaultTarget.x, this.defaultTarget.y);
     }
   };
+
+  private handleLevelVictory(): void {
+    if (this.isGameOver || this.overlayShown) return;
+    this.overlayShown = true;
+    this.pointerActive = false;
+    this.clearWaveEntities();
+    this.bankRunGold();
+    const activeSession = getActiveLevelSession();
+    const beatId = activeSession?.level.postBeatId;
+    this.time.delayedCall(700, () => {
+      if (beatId) {
+        this.game.events.emit("ui:story", {
+          beatId,
+          clearLevelOnExit: true,
+          nextRoute: "menu",
+        });
+      } else {
+        this.game.events.emit("ui:route", "menu");
+      }
+    });
+  }
+
+  private getWaveDisplay(): number {
+    if (this.levelRunner) return this.levelRunner.getWaveNumber();
+    if (this.waveScheduler) return this.waveScheduler.getWaveNumber();
+    return 0;
+  }
 }

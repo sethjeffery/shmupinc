@@ -1,6 +1,12 @@
 import type Phaser from "phaser";
 
-export type UiRoute = "gameover" | "hangar" | "menu" | "pause" | "play";
+import {
+  clearActiveLevel,
+  startLevelSession,
+} from "../game/data/levelState";
+import { STORY_BEATS } from "../game/data/storyBeats";
+
+export type UiRoute = "gameover" | "hangar" | "menu" | "pause" | "play" | "story";
 
 export interface GameOverStats {
   gold: number;
@@ -20,6 +26,11 @@ export class UiRouter {
   private menuOverlay: HTMLDivElement;
   private pauseOverlay: HTMLDivElement;
   private gameOverOverlay: HTMLDivElement;
+  private storyOverlay: HTMLDivElement;
+  private storyTitle!: HTMLDivElement;
+  private storyLines!: HTMLDivElement;
+  private storyNextRoute: UiRoute = "menu";
+  private storyClearLevelOnExit = false;
   private gameOverStatsText: HTMLDivElement;
   private lastGameOver: GameOverStats = { gold: 0, wave: 0 };
 
@@ -30,10 +41,16 @@ export class UiRouter {
     this.menuOverlay = this.buildMenuOverlay();
     this.pauseOverlay = this.buildPauseOverlay();
     this.gameOverOverlay = this.buildGameOverOverlay();
+    this.storyOverlay = this.buildStoryOverlay();
     this.gameOverStatsText = this.gameOverOverlay.querySelector(
       ".ui-stats",
     )!;
-    this.root.append(this.menuOverlay, this.pauseOverlay, this.gameOverOverlay);
+    this.root.append(
+      this.menuOverlay,
+      this.pauseOverlay,
+      this.gameOverOverlay,
+      this.storyOverlay,
+    );
     document.body.appendChild(this.root);
 
     this.root.addEventListener("click", (event) => this.handleClick(event));
@@ -44,8 +61,21 @@ export class UiRouter {
       this.lastGameOver = stats;
       this.setRoute("gameover");
     });
+    this.game.events.on(
+      "ui:story",
+      (payload: {
+        beatId: string;
+        nextRoute?: UiRoute;
+        clearLevelOnExit?: boolean;
+      }) => {
+        this.openStoryBeat(payload.beatId, payload.nextRoute ?? "menu", {
+          clearLevelOnExit: payload.clearLevelOnExit,
+        });
+      },
+    );
 
     this.setRoute("menu", { force: true });
+    this.tryAutoStartLevel();
   }
 
   setRoute(route: UiRoute, options?: { restart?: boolean; force?: boolean }): void {
@@ -53,13 +83,18 @@ export class UiRouter {
     const previous = this.route;
     this.route = route;
 
-    const uiOpen = route === "menu" || route === "pause" || route === "gameover";
+    const uiOpen =
+      route === "menu"
+      || route === "pause"
+      || route === "gameover"
+      || route === "story";
     document.body.classList.toggle("ui-open", uiOpen);
     this.root.classList.toggle("is-active", uiOpen);
 
     this.menuOverlay.classList.toggle("is-active", route === "menu");
     this.pauseOverlay.classList.toggle("is-active", route === "pause");
     this.gameOverOverlay.classList.toggle("is-active", route === "gameover");
+    this.storyOverlay.classList.toggle("is-active", route === "story");
 
     if (route === "gameover") {
       this.updateGameOverStats();
@@ -75,6 +110,12 @@ export class UiRouter {
       return;
     }
 
+    if (route === "story") {
+      this.stopPlayScene();
+      this.game.scene.stop("ShopScene");
+      return;
+    }
+
     if (route === "hangar") {
       this.stopPlayScene();
       this.game.scene.start("ShopScene");
@@ -83,6 +124,7 @@ export class UiRouter {
 
     if (route === "menu") {
       this.stopPlayScene();
+      clearActiveLevel();
     }
   }
 
@@ -129,9 +171,11 @@ export class UiRouter {
     if (!action) return;
     switch (action.dataset.action) {
       case "start":
+        clearActiveLevel();
         this.setRoute("play");
         break;
       case "hangar":
+        clearActiveLevel();
         this.setRoute("hangar");
         break;
       case "resume":
@@ -148,6 +192,20 @@ export class UiRouter {
         break;
       case "menu":
         this.setRoute("menu");
+        break;
+      case "story-squeeze": {
+        const session = startLevelSession("L2_SQUEEZE");
+        const level = session?.level;
+        if (level?.preBeatId) {
+          this.openStoryBeat(level.preBeatId, "hangar");
+        } else {
+          this.setRoute("hangar");
+        }
+        break;
+      }
+      case "story-continue":
+      case "story-skip":
+        this.resolveStory();
         break;
       default:
         break;
@@ -171,6 +229,20 @@ export class UiRouter {
     }
   }
 
+  private tryAutoStartLevel(): void {
+    const params = new URLSearchParams(window.location.search);
+    const levelId = params.get("level");
+    if (!levelId) return;
+    const session = startLevelSession(levelId);
+    const level = session?.level;
+    if (level?.preBeatId) {
+      this.openStoryBeat(level.preBeatId, "hangar");
+    } else {
+      this.setRoute("hangar");
+    }
+    window.history.replaceState({}, "", window.location.pathname);
+  }
+
   private buildMenuOverlay(): HTMLDivElement {
     const overlay = document.createElement("div");
     overlay.className = "ui-overlay ui-overlay--menu";
@@ -178,12 +250,52 @@ export class UiRouter {
       this.buildPanel({
         actions: [
           { action: "start", label: "Start Mission", primary: true },
+          { action: "story-squeeze", label: "Story: The Squeeze", primary: false },
           { action: "hangar", label: "Hangar", primary: false },
         ],
         hint: "How to play: Drag to move, auto-fire.",
         title: "Shmup Inc",
       }),
     );
+    return overlay;
+  }
+
+  private buildStoryOverlay(): HTMLDivElement {
+    const overlay = document.createElement("div");
+    overlay.className = "ui-overlay ui-overlay--story";
+
+    const panel = document.createElement("div");
+    panel.className = "story-panel";
+
+    const title = document.createElement("div");
+    title.className = "story-title";
+    title.textContent = "Mission Brief";
+
+    const lines = document.createElement("div");
+    lines.className = "story-lines";
+
+    const actions = document.createElement("div");
+    actions.className = "story-actions";
+    const continueButton = document.createElement("button");
+    continueButton.className = "story-button";
+    continueButton.dataset.action = "story-continue";
+    continueButton.type = "button";
+    continueButton.textContent = "Continue";
+    const skipButton = document.createElement("button");
+    skipButton.className = "story-skip";
+    skipButton.dataset.action = "story-skip";
+    skipButton.type = "button";
+    skipButton.textContent = "Skip";
+    actions.appendChild(continueButton);
+    actions.appendChild(skipButton);
+
+    panel.appendChild(title);
+    panel.appendChild(lines);
+    panel.appendChild(actions);
+    overlay.appendChild(panel);
+
+    this.storyTitle = title;
+    this.storyLines = lines;
     return overlay;
   }
 
@@ -261,5 +373,31 @@ export class UiRouter {
     }
 
     return panel;
+  }
+
+  private openStoryBeat(
+    beatId: string,
+    nextRoute: UiRoute,
+    options?: { clearLevelOnExit?: boolean },
+  ): void {
+    const beat = STORY_BEATS[beatId];
+    this.storyTitle.textContent = beat?.title ?? "Mission Brief";
+    const lines = beat?.lines?.length ? beat.lines : ["Awaiting mission data."];
+    const children = lines.map((line) => {
+      const node = document.createElement("p");
+      node.textContent = line;
+      return node;
+    });
+    this.storyLines.replaceChildren(...children);
+    this.storyNextRoute = nextRoute;
+    this.storyClearLevelOnExit = options?.clearLevelOnExit ?? false;
+    this.setRoute("story", { force: true });
+  }
+
+  private resolveStory(): void {
+    if (this.storyClearLevelOnExit) {
+      clearActiveLevel();
+    }
+    this.setRoute(this.storyNextRoute, { force: true });
   }
 }

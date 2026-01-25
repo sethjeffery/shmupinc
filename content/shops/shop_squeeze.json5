@@ -1,0 +1,21 @@
+{
+  "id": "shop_squeeze",
+  "allowedWeapons": [
+    "dartGun",
+    "orbBlaster",
+    "orbBlasterPlus",
+    "pulseArray"
+  ],
+  "allowedSecondaryWeapons": [
+    "haloOrbs",
+    "miniMissiles",
+    "rapidDarts",
+    "sideCannons"
+  ],
+  "allowedShips": ["starter", "scout", "interceptor"],
+  "caps": {
+    "primaryCost": 260,
+    "secondaryCost": 220,
+    "shipCost": 220
+  }
+}

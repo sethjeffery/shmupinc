@@ -1,0 +1,20 @@
+{
+  "bullet": {
+    "color": 8255999,
+    "damage": 1,
+    "kind": "orb",
+    "radius": 3,
+    "speed": 420
+  },
+  "cost": 0,
+  "description": "Balanced orb shots.",
+  "fireRate": 4.2,
+  "icon": "orb",
+  "id": "orbBlaster",
+  "name": "Orb Blaster",
+  "pattern": {
+    "count": 1,
+    "kind": "fan",
+    "spreadDeg": 0
+  }
+}

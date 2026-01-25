@@ -1,0 +1,12 @@
+{
+  "color": 16739179,
+  "cost": 260,
+  "description": "High armor, slower handling.",
+  "id": "bulwark",
+  "magnetMultiplier": 1,
+  "maxHp": 10,
+  "moveSpeed": 5.5,
+  "name": "Bulwark",
+  "radiusMultiplier": 1.35,
+  "shape": "bulwark"
+}

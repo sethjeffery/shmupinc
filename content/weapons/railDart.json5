@@ -1,0 +1,22 @@
+{
+  "bullet": {
+    "color": 16766627,
+    "damage": 2.4,
+    "kind": "dart",
+    "length": 16,
+    "radius": 2,
+    "speed": 680,
+    "thickness": 2
+  },
+  "cost": 260,
+  "description": "Slow, high-damage dart lance.",
+  "fireRate": 2,
+  "icon": "dart",
+  "id": "railDart",
+  "name": "Rail Dart",
+  "pattern": {
+    "count": 1,
+    "kind": "fan",
+    "spreadDeg": 0
+  }
+}

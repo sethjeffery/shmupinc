@@ -1,0 +1,15 @@
+{
+  "id": "squeeze-lock",
+  "spawns": [
+    { "atMs": 0, "enemyId": "crossfire", "x": 0.5, "y": -0.14 },
+    { "atMs": 1200, "enemyId": "swooper", "x": 0.25, "y": -0.18 },
+    { "atMs": 2400, "enemyId": "swooper", "x": 0.75, "y": -0.18 },
+    { "atMs": 6000, "enemyId": "crossfire", "x": 0.2, "y": -0.14 },
+    { "atMs": 7400, "enemyId": "crossfire", "x": 0.8, "y": -0.14 },
+    { "atMs": 11000, "enemyId": "swooper", "x": 0.5, "y": -0.18 },
+    { "atMs": 15000, "enemyId": "crossfire", "x": 0.5, "y": -0.14 },
+    { "atMs": 18000, "enemyId": "swooper", "x": 0.2, "y": -0.18 },
+    { "atMs": 20000, "enemyId": "swooper", "x": 0.8, "y": -0.18 },
+    { "atMs": 26000, "enemyId": "crossfire", "x": 0.5, "y": -0.14 }
+  ]
+}

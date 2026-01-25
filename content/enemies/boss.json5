@@ -1,0 +1,1825 @@
+{
+  "fire": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 500,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "angleDeg": 90,
+          "kind": "fixed"
+        },
+        "bullet": {
+          "color": 16756839,
+          "damage": 1,
+          "kind": "dart",
+          "length": 10,
+          "radius": 2,
+          "speed": 260,
+          "thickness": 2
+        },
+        "durationMs": 900,
+        "kind": "spray",
+        "originOffsets": [
+          {
+            "x": -28,
+            "y": 8
+          },
+          {
+            "x": 28,
+            "y": 8
+          }
+        ],
+        "ratePerSec": 6
+      },
+      {
+        "durationMs": 300,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "fromDeg": 60,
+          "kind": "sweep",
+          "periodMs": 1800,
+          "toDeg": 120
+        },
+        "bullet": {
+          "color": 16742479,
+          "damage": 2,
+          "kind": "orb",
+          "radius": 4,
+          "speed": 180
+        },
+        "durationMs": 1800,
+        "kind": "spray",
+        "ratePerSec": 6
+      },
+      {
+        "durationMs": 400,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "kind": "atPlayer"
+        },
+        "bullet": {
+          "color": 16756839,
+          "damage": 1,
+          "kind": "dart",
+          "length": 10,
+          "radius": 2,
+          "speed": 260,
+          "thickness": 2
+        },
+        "count": 4,
+        "intervalMs": 160,
+        "kind": "burst"
+      },
+      {
+        "durationMs": 400,
+        "kind": "cooldown"
+      }
+    ]
+  },
+  "goldDrop": {
+    "max": 36,
+    "min": 24
+  },
+  "hp": 60,
+  "id": "boss",
+  "move": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 1400,
+        "ease": "out",
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 160
+        }
+      },
+      {
+        "durationMs": 600,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 700,
+        "ease": "inOut",
+        "kind": "dashTo",
+        "to": {
+          "x": 110,
+          "y": 190
+        }
+      },
+      {
+        "durationMs": 500,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 700,
+        "ease": "inOut",
+        "kind": "dashTo",
+        "to": {
+          "x": -110,
+          "y": 190
+        }
+      },
+      {
+        "durationMs": 600,
+        "kind": "hover"
+      }
+    ]
+  },
+  "phases": [
+    {
+      "fire": {
+        "loop": true,
+        "steps": [
+          {
+            "durationMs": 400,
+            "kind": "cooldown"
+          },
+          {
+            "durationMs": 1200,
+            "kind": "charge"
+          },
+          {
+            "aim": {
+              "angleDeg": 0,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 15,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 30,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 45,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 60,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 75,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 90,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 105,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 120,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 135,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 150,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 165,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 180,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 195,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 210,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 225,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 240,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 255,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 270,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 285,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 300,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 315,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 330,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 345,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "durationMs": 120,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "angleDeg": 7.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 22.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 37.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 52.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 67.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 82.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 97.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 112.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 127.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 142.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 157.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 172.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 187.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 202.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 217.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 232.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 247.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 262.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 277.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 292.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 307.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 322.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 337.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 352.5,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "durationMs": 260,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "angleDeg": 90,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16752451,
+              "damage": 1,
+              "kind": "orb",
+              "radius": 3,
+              "speed": 200
+            },
+            "durationMs": 1200,
+            "kind": "spray",
+            "originOffsets": [
+              {
+                "x": -28,
+                "y": 8
+              },
+              {
+                "x": 28,
+                "y": 8
+              }
+            ],
+            "ratePerSec": 6
+          },
+          {
+            "durationMs": 200,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "kind": "atPlayer"
+            },
+            "bullet": {
+              "color": 16747628,
+              "damage": 2,
+              "homing": {
+                "acquireRadius": 260,
+                "turnRateRadPerSec": 2.6
+              },
+              "kind": "missile",
+              "length": 10,
+              "lifetimeMs": 2400,
+              "radius": 3,
+              "speed": 260,
+              "thickness": 3
+            },
+            "count": 2,
+            "intervalMs": 320,
+            "kind": "burst",
+            "originOffsets": [
+              {
+                "x": -28,
+                "y": 8
+              },
+              {
+                "x": 28,
+                "y": 8
+              }
+            ]
+          },
+          {
+            "durationMs": 500,
+            "kind": "cooldown"
+          }
+        ]
+      },
+      "hpThreshold": 0.66
+    },
+    {
+      "fire": {
+        "loop": true,
+        "steps": [
+          {
+            "durationMs": 300,
+            "kind": "cooldown"
+          },
+          {
+            "durationMs": 1000,
+            "kind": "charge"
+          },
+          {
+            "aim": {
+              "angleDeg": 0,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 20,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 40,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 60,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 80,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 100,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 120,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 140,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 160,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 180,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 200,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 220,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 240,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 260,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 280,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 300,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 320,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 340,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "durationMs": 160,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "angleDeg": 10,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 30,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 50,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 70,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 90,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 110,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 130,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 150,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 170,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 190,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 210,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 230,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 250,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 270,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 290,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 310,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 330,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "aim": {
+              "angleDeg": 350,
+              "kind": "fixed"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 440,
+              "thickness": 2
+            },
+            "count": 1,
+            "intervalMs": 1,
+            "kind": "burst"
+          },
+          {
+            "durationMs": 220,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "fromDeg": 50,
+              "kind": "sweep",
+              "periodMs": 1400,
+              "toDeg": 130
+            },
+            "bullet": {
+              "color": 16742479,
+              "damage": 2,
+              "kind": "orb",
+              "radius": 4,
+              "speed": 180
+            },
+            "durationMs": 1400,
+            "kind": "spray",
+            "ratePerSec": 8
+          },
+          {
+            "durationMs": 200,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "kind": "atPlayer"
+            },
+            "bullet": {
+              "color": 16756839,
+              "damage": 1,
+              "kind": "dart",
+              "length": 10,
+              "radius": 2,
+              "speed": 260,
+              "thickness": 2
+            },
+            "count": 4,
+            "intervalMs": 120,
+            "kind": "burst",
+            "originOffsets": [
+              {
+                "x": -28,
+                "y": 8
+              },
+              {
+                "x": 28,
+                "y": 8
+              }
+            ]
+          },
+          {
+            "durationMs": 400,
+            "kind": "cooldown"
+          }
+        ]
+      },
+      "hpThreshold": 0.33
+    }
+  ],
+  "radius": 44,
+  "rotation": "fixed",
+  "rotationDeg": 180,
+  "style": {
+    "fillColor": 1445912,
+    "lineColor": 16739179,
+    "shape": "boss"
+  }
+}

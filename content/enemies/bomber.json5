@@ -1,0 +1,62 @@
+{
+  "fire": {
+    "steps": [
+      {
+        "durationMs": 700,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "angleDeg": 90,
+          "kind": "fixed"
+        },
+        "bullet": {
+          "color": 16742479,
+          "damage": 2,
+          "kind": "orb",
+          "radius": 4,
+          "speed": 180
+        },
+        "count": 4,
+        "intervalMs": 180,
+        "kind": "burst"
+      }
+    ]
+  },
+  "goldDrop": {
+    "max": 10,
+    "min": 6
+  },
+  "hp": 8,
+  "id": "bomber",
+  "move": {
+    "steps": [
+      {
+        "durationMs": 600,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 180
+        }
+      },
+      {
+        "durationMs": 1200,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 900,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 720
+        }
+      }
+    ]
+  },
+  "radius": 16,
+  "style": {
+    "fillColor": 2757647,
+    "lineColor": 16752762,
+    "shape": "bomber"
+  }
+}

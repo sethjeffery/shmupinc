@@ -1,0 +1,33 @@
+{
+  "bullet": {
+    "color": 16760954,
+    "damage": 1,
+    "kind": "dart",
+    "length": 12,
+    "radius": 2,
+    "speed": 640,
+    "thickness": 2
+  },
+  "cost": 210,
+  "description": "Fast twin darts, straight ahead.",
+  "fireRate": 5.6,
+  "id": "rapidDarts",
+  "muzzleOffsets": [
+    {
+      "x": -1,
+      "y": 0
+    },
+    {
+      "x": 1,
+      "y": 0
+    }
+  ],
+  "name": "Rapid Darts",
+  "pattern": {
+    "anglesDeg": [
+      0,
+      0
+    ],
+    "kind": "angles"
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "fire": {
+    "steps": [
+      {
+        "durationMs": 1100,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "kind": "atPlayer"
+        },
+        "bullet": {
+          "color": 16752451,
+          "damage": 1,
+          "kind": "orb",
+          "radius": 3,
+          "speed": 200
+        },
+        "count": 3,
+        "intervalMs": 180,
+        "kind": "burst"
+      },
+      {
+        "durationMs": 300,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "kind": "atPlayer"
+        },
+        "bullet": {
+          "color": 16752451,
+          "damage": 1,
+          "kind": "orb",
+          "radius": 3,
+          "speed": 200
+        },
+        "count": 3,
+        "intervalMs": 180,
+        "kind": "burst"
+      },
+      {
+        "durationMs": 1200,
+        "kind": "cooldown"
+      }
+    ]
+  },
+  "goldDrop": {
+    "max": 8,
+    "min": 5
+  },
+  "hp": 6,
+  "id": "swooper",
+  "move": {
+    "steps": [
+      {
+        "durationMs": 1200,
+        "kind": "bezier",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": -80,
+            "y": 80
+          },
+          {
+            "x": -30,
+            "y": 160
+          },
+          {
+            "x": 0,
+            "y": 220
+          }
+        ]
+      },
+      {
+        "durationMs": 900,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 1400,
+        "kind": "bezier",
+        "points": [
+          {
+            "x": 0,
+            "y": 220
+          },
+          {
+            "x": 60,
+            "y": 260
+          },
+          {
+            "x": 140,
+            "y": 200
+          },
+          {
+            "x": 200,
+            "y": -120
+          }
+        ]
+      }
+    ]
+  },
+  "radius": 14,
+  "style": {
+    "fillColor": 1773340,
+    "lineColor": 16747738,
+    "shape": "swooper"
+  }
+}

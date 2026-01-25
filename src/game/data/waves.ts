@@ -1,4 +1,4 @@
-import type { EnemyDef, EnemyId } from "./enemies";
+import type { EnemyDef, EnemyId } from "./enemyTypes";
 import type { MoveScript } from "./scripts";
 
 export type EnemyOverride = Partial<

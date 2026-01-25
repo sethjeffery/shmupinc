@@ -1,0 +1,12 @@
+{
+  "color": 16765286,
+  "cost": 120,
+  "description": "Fast, light, low HP.",
+  "id": "scout",
+  "magnetMultiplier": 1.25,
+  "maxHp": 5,
+  "moveSpeed": 8.2,
+  "name": "Scout",
+  "radiusMultiplier": 1,
+  "shape": "scout"
+}

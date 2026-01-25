@@ -1,0 +1,12 @@
+{
+  "color": 10467327,
+  "cost": 0,
+  "description": "Your trusty starter craft.",
+  "id": "starter",
+  "magnetMultiplier": 1,
+  "maxHp": 6,
+  "moveSpeed": 7,
+  "name": "Starling",
+  "radiusMultiplier": 1,
+  "shape": "starling"
+}

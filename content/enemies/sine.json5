@@ -1,0 +1,64 @@
+{
+  "fire": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 700,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "angleDeg": 90,
+          "kind": "fixed"
+        },
+        "bullet": {
+          "color": 16756839,
+          "damage": 1,
+          "kind": "dart",
+          "length": 10,
+          "radius": 2,
+          "speed": 260,
+          "thickness": 2
+        },
+        "durationMs": 1200,
+        "kind": "spray",
+        "ratePerSec": 6
+      },
+      {
+        "durationMs": 800,
+        "kind": "cooldown"
+      }
+    ]
+  },
+  "goldDrop": {
+    "max": 6,
+    "min": 4
+  },
+  "hp": 5,
+  "id": "sine",
+  "move": {
+    "steps": [
+      {
+        "amp": 70,
+        "durationMs": 4200,
+        "freq": 1.1,
+        "kind": "sineDown",
+        "speed": 90
+      },
+      {
+        "durationMs": 900,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 680
+        }
+      }
+    ]
+  },
+  "radius": 13,
+  "style": {
+    "fillColor": 989739,
+    "lineColor": 7140095,
+    "shape": "sine"
+  }
+}

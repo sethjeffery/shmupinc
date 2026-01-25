@@ -1,0 +1,68 @@
+{
+  "fire": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 700,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "kind": "atPlayer"
+        },
+        "bullet": {
+          "color": 16756839,
+          "damage": 2,
+          "kind": "dart",
+          "length": 10,
+          "radius": 2,
+          "speed": 300,
+          "thickness": 2
+        },
+        "count": 1,
+        "intervalMs": 1,
+        "kind": "burst"
+      },
+      {
+        "durationMs": 900,
+        "kind": "cooldown"
+      }
+    ]
+  },
+  "goldDrop": {
+    "max": 7,
+    "min": 5
+  },
+  "hp": 5,
+  "id": "sniper",
+  "move": {
+    "steps": [
+      {
+        "durationMs": 650,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 140
+        }
+      },
+      {
+        "durationMs": 1700,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 850,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 760
+        }
+      }
+    ]
+  },
+  "radius": 12,
+  "style": {
+    "fillColor": 1317396,
+    "lineColor": 12124026,
+    "shape": "sniper"
+  }
+}

@@ -1,6 +1,6 @@
-import type { BulletSpec } from "./scripts";
-import type { WeaponPattern } from "./weaponPatterns";
+import type { WeaponDefinition, WeaponId } from "./weaponTypes";
 
+import { getContentRegistry } from "../../content/registry";
 import {
   BULLET_BOMB_HEAVY_PLAYER,
   BULLET_DART_PLAYER,
@@ -16,35 +16,7 @@ import {
   BULLET_ORB_PLAYER_PLUSPLUSPLUS,
 } from "./bullets";
 
-export type WeaponId =
-  | "bombMortar"
-  | "dartGun"
-  | "gatlingGun"
-  | "gatlingGunPlus"
-  | "heavyMissile"
-  | "heavyMissilePlus"
-  | "missilePod"
-  | "missileSpread"
-  | "orbBlaster"
-  | "orbBlasterPlus"
-  | "orbBlasterPlusPlus"
-  | "orbBlasterPlusPlusPlus"
-  | "pulseArray"
-  | "railDart";
-
-export interface WeaponDefinition {
-  id: WeaponId;
-  name: string;
-  description: string;
-  cost: number;
-  fireRate: number; // shots per second
-  pattern: WeaponPattern;
-  bullet: BulletSpec;
-  icon: "bomb" | "dart" | "missile" | "orb";
-  muzzleOffsets?: { x: number; y: number }[];
-}
-
-export const WEAPONS: Record<WeaponId, WeaponDefinition> = {
+export const LEGACY_WEAPONS: Record<string, WeaponDefinition> = {
   bombMortar: {
     bullet: BULLET_BOMB_HEAVY_PLAYER,
     cost: 360,
@@ -220,4 +192,11 @@ export const WEAPONS: Record<WeaponId, WeaponDefinition> = {
   },
 };
 
+const contentWeapons = getContentRegistry().weaponsById;
+
+export const WEAPONS: Record<string, WeaponDefinition> =
+  Object.keys(contentWeapons).length > 0 ? contentWeapons : LEGACY_WEAPONS;
+
 export const STARTER_WEAPON_ID: WeaponId = "orbBlaster";
+
+export type { WeaponDefinition, WeaponId } from "./weaponTypes";

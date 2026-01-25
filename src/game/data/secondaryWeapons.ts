@@ -1,6 +1,6 @@
-import type { BulletSpec } from "./scripts";
-import type { WeaponPattern } from "./weaponPatterns";
+import type { SecondaryWeaponDefinition } from "./secondaryWeaponTypes";
 
+import { getContentRegistry } from "../../content/registry";
 import {
   BULLET_BOMB_MICRO_PLAYER,
   BULLET_BOMB_MICRO_GUIDED_PLAYER,
@@ -11,36 +11,7 @@ import {
   BULLET_ORB_SPREAD_PLAYER,
 } from "./bullets";
 
-export type SecondaryWeaponId =
-  | "crossDarts"
-  | "crossDartsPlus"
-  | "flareOrbs"
-  | "guidedMicroBombs"
-  | "haloOrbs"
-  | "microBombs"
-  | "miniMissiles"
-  | "needleDarts"
-  | "rapidDarts"
-  | "sideCannons"
-  | "sideCannonsPlus"
-  | "spreadOrbs"
-  | "stingerMissiles";
-
-export interface SecondaryWeaponDefinition {
-  id: SecondaryWeaponId;
-  name: string;
-  description: string;
-  cost: number;
-  fireRate: number;
-  pattern: WeaponPattern;
-  bullet: BulletSpec;
-  muzzleOffsets?: { x: number; y: number }[];
-}
-
-export const SECONDARY_WEAPONS: Record<
-  SecondaryWeaponId,
-  SecondaryWeaponDefinition
-> = {
+export const LEGACY_SECONDARY_WEAPONS: Record<string, SecondaryWeaponDefinition> = {
   crossDarts: {
     bullet: BULLET_DART_PLAYER,
     cost: 210,
@@ -177,3 +148,12 @@ export const SECONDARY_WEAPONS: Record<
     pattern: { anglesDeg: [-25, 0, 25], kind: "angles" },
   },
 };
+
+const contentSecondaryWeapons = getContentRegistry().secondaryWeaponsById;
+
+export const SECONDARY_WEAPONS: Record<string, SecondaryWeaponDefinition> =
+  Object.keys(contentSecondaryWeapons).length > 0
+    ? contentSecondaryWeapons
+    : LEGACY_SECONDARY_WEAPONS;
+
+export type { SecondaryWeaponDefinition, SecondaryWeaponId } from "./secondaryWeaponTypes";
