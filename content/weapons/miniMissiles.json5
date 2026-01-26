@@ -1,0 +1,51 @@
+{
+  "id": "miniMissiles",
+  "name": "Mini-Missiles",
+  "description": "Light homing pair at wide angles.",
+  "cost": 180,
+  "gunId": "missile",
+  "size": "small",
+  "zones": [
+    "side",
+    "rear"
+  ],
+  "zoneStats": {
+    "rear": {
+      "angleDeg": 180
+    }
+  },
+  "stats": {
+    "fireRate": 1.8,
+    "angleDeg": 20,
+    "bullet": {
+      "color": "#ffc993",
+      "damage": 1,
+      "homing": {
+        "acquireRadius": 180,
+        "turnRateRadPerSec": 3.4
+      },
+      "kind": "missile",
+      "length": 8,
+      "lifetimeMs": 1800,
+      "radius": 2,
+      "thickness": 2,
+      "trail": {
+        "color": "#ffa46b",
+        "count": 1,
+        "intervalMs": 80,
+        "sizeMax": 1.8,
+        "sizeMin": 0.9
+      }
+    },
+    "shots": [
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": -0.5
+        }
+      }
+    ],
+    "speed": 300
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "L3_BREAKTHROUGH",
+  "title": "Breakthrough",
+  "pressureProfile": {
+    "primary": "throughput",
+    "secondary": ["enemy"]
+  },
+  "waveIds": ["breakthrough-storm", "breakthrough-surge", "breakthrough-push"],
+  "shopId": "shop_breakthrough",
+  "winCondition": { "kind": "clearWaves" }
+}

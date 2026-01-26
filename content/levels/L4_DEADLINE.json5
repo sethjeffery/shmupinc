@@ -1,0 +1,11 @@
+{
+  "id": "L4_DEADLINE",
+  "title": "Deadline",
+  "pressureProfile": {
+    "primary": "time",
+    "secondary": ["enemy"]
+  },
+  "waveIds": ["deadline-rush"],
+  "shopId": "shop_deadline",
+  "winCondition": { "kind": "survive", "durationMs": 48000 }
+}

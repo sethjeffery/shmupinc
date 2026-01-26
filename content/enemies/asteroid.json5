@@ -1,5 +1,6 @@
 {
   "fire": {
+    "loop": false,
     "steps": []
   },
   "goldDrop": {
@@ -9,21 +10,86 @@
   "hp": 3,
   "id": "asteroid",
   "move": {
+    "loop": false,
     "steps": [
       {
         "durationMs": 3200,
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 860
+          "y": 900
         }
       }
     ]
   },
-  "radius": 12,
+  "radius": 14,
   "style": {
-    "fillColor": 1777704,
-    "lineColor": 10990530,
-    "shape": "asteroid"
-  }
+    "fillColor": "#1b2028",
+    "lineColor": "#a7b3c2",
+    "shape": "asteroid",
+    "vector": {
+      "lines": [
+        {
+          "from": {
+            "x": -0.2,
+            "y": -0.2
+          },
+          "to": {
+            "x": 0.2,
+            "y": 0.2
+          }
+        },
+        {
+          "from": {
+            "x": -0.45,
+            "y": 0.2
+          },
+          "to": {
+            "x": -0.1,
+            "y": 0.5
+          }
+        }
+      ],
+      "outline": [
+        {
+          "x": 0.1,
+          "y": -1
+        },
+        {
+          "x": 0.6,
+          "y": -0.8
+        },
+        {
+          "x": 1,
+          "y": -0.2
+        },
+        {
+          "x": 0.85,
+          "y": 0.45
+        },
+        {
+          "x": 0.35,
+          "y": 0.95
+        },
+        {
+          "x": -0.25,
+          "y": 0.85
+        },
+        {
+          "x": -0.8,
+          "y": 0.5
+        },
+        {
+          "x": -1,
+          "y": -0.1
+        },
+        {
+          "x": -0.5,
+          "y": -0.75
+        }
+      ]
+    }
+  },
+  "rotation": "fixed",
+  "rotationDeg": 0
 }

@@ -125,7 +125,6 @@ const runPrintLevel = async (args: string[]): Promise<number> => {
   const shopSummary = level.shopRules
     ? {
         weapons: level.shopRules.allowedWeapons?.length ?? 0,
-        secondary: level.shopRules.allowedSecondaryWeapons?.length ?? 0,
         ships: level.shopRules.allowedShips?.length ?? 0,
       }
     : null;
@@ -140,7 +139,7 @@ const runPrintLevel = async (args: string[]): Promise<number> => {
   console.log(`Hazards: ${hazardTypes.join(", ") || "none"}`);
   if (shopSummary) {
     console.log(
-      `Shop: ${shopSummary.weapons} weapons, ${shopSummary.secondary} secondary, ${shopSummary.ships} ships`,
+      `Shop: ${shopSummary.weapons} weapons, ${shopSummary.ships} ships`,
     );
   } else {
     console.log("Shop: none");

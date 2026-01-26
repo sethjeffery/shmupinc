@@ -1,14 +1,5 @@
-import type { EnemyShape } from "../data/enemies";
+import type { EnemyShape, EnemyVector } from "../data/enemyTypes";
 import type Phaser from "phaser";
-
-interface Vec2 { x: number; y: number }
-
-interface LineSegment { from: Vec2; to: Vec2 }
-
-interface EnemyVector {
-  outline: Vec2[];
-  lines?: LineSegment[];
-}
 
 export const ENEMY_VECTORS: Record<EnemyShape, EnemyVector> = {
   asteroid: {
@@ -121,6 +112,22 @@ export const ENEMY_VECTORS: Record<EnemyShape, EnemyVector> = {
       { x: -0.5, y: -0.65 },
     ],
   },
+  sidesweeper: {
+    lines: [
+      { from: { x: -0.6, y: -0.1 }, to: { x: 0.6, y: -0.1 } },
+      { from: { x: -0.4, y: 0.2 }, to: { x: 0.4, y: 0.2 } },
+    ],
+    outline: [
+      { x: 0, y: -1 },
+      { x: 0.85, y: -0.55 },
+      { x: 1, y: 0 },
+      { x: 0.55, y: 0.55 },
+      { x: 0, y: 0.75 },
+      { x: -0.55, y: 0.55 },
+      { x: -1, y: 0 },
+      { x: -0.85, y: -0.55 },
+    ],
+  },
   snake: {
     outline: [
       { x: 0, y: -1 },
@@ -179,8 +186,11 @@ export const ENEMY_VECTORS: Record<EnemyShape, EnemyVector> = {
   },
 };
 
+const resolveEnemyVector = (shape: EnemyShape | EnemyVector): EnemyVector =>
+  typeof shape === "string" ? ENEMY_VECTORS[shape] : shape;
+
 const drawOutline = (
-  outline: Vec2[],
+  outline: EnemyVector["outline"],
   radius: number,
   moveTo: (x: number, y: number) => void,
   lineTo: (x: number, y: number) => void,
@@ -195,7 +205,7 @@ const drawOutline = (
 };
 
 const drawLines = (
-  lines: LineSegment[] | undefined,
+  lines: EnemyVector["lines"],
   radius: number,
   moveTo: (x: number, y: number) => void,
   lineTo: (x: number, y: number) => void,
@@ -209,10 +219,10 @@ const drawLines = (
 
 export const drawEnemyToGraphics = (
   graphics: Phaser.GameObjects.Graphics,
-  shape: EnemyShape,
+  shape: EnemyShape | EnemyVector,
   radius: number,
 ): void => {
-  const vector = ENEMY_VECTORS[shape];
+  const vector = resolveEnemyVector(shape);
   graphics.beginPath();
   drawOutline(vector.outline, radius, (x, y) => graphics.moveTo(x, y), (x, y) => graphics.lineTo(x, y));
   graphics.closePath();
@@ -228,6 +238,31 @@ export const drawEnemyToGraphics = (
         (x, y) => graphics.lineTo(x, y),
       );
       graphics.strokePath();
+    }
+  }
+};
+
+export const drawEnemyToCanvas = (
+  ctx: CanvasRenderingContext2D,
+  shape: EnemyShape | EnemyVector,
+  radius: number,
+): void => {
+  const vector = resolveEnemyVector(shape);
+  ctx.beginPath();
+  drawOutline(vector.outline, radius, (x, y) => ctx.moveTo(x, y), (x, y) => ctx.lineTo(x, y));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  if (vector.lines && vector.lines.length > 0) {
+    for (const line of vector.lines) {
+      ctx.beginPath();
+      drawLines(
+        [line],
+        radius,
+        (x, y) => ctx.moveTo(x, y),
+        (x, y) => ctx.lineTo(x, y),
+      );
+      ctx.stroke();
     }
   }
 };

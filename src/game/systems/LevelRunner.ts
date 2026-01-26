@@ -210,7 +210,7 @@ export class LevelRunner {
     this.spawnDebug.fillStyle(0x3fd2ff, 0.2);
     for (const wave of this.level.waves) {
       for (const spawn of wave.spawns) {
-        const x = bounds.x + spawn.x * bounds.width;
+        const x = bounds.x + (0.5 + spawn.x) * bounds.width;
         const y = bounds.y + spawn.y * bounds.height;
         this.spawnDebug.strokeCircle(x, y, 6);
         this.spawnDebug.fillCircle(x, y, 3);

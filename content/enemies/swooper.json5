@@ -10,7 +10,7 @@
           "kind": "atPlayer"
         },
         "bullet": {
-          "color": 16752451,
+          "color": "#ff9f43",
           "damage": 1,
           "kind": "orb",
           "radius": 3,
@@ -29,7 +29,7 @@
           "kind": "atPlayer"
         },
         "bullet": {
-          "color": 16752451,
+          "color": "#ff9f43",
           "damage": 1,
           "kind": "orb",
           "radius": 3,
@@ -105,8 +105,64 @@
   },
   "radius": 14,
   "style": {
-    "fillColor": 1773340,
-    "lineColor": 16747738,
-    "shape": "swooper"
+    "fillColor": "#1b0f1c",
+    "lineColor": "#ff8cda",
+    "shape": "swooper",
+    "vector": {
+      "lines": [
+        {
+          "from": {
+            "x": -0.3,
+            "y": 0
+          },
+          "to": {
+            "x": 0.3,
+            "y": 0
+          }
+        }
+      ],
+      "outline": [
+        {
+          "x": 0,
+          "y": -1
+        },
+        {
+          "x": 0.55,
+          "y": -0.4
+        },
+        {
+          "x": 0.95,
+          "y": -0.1
+        },
+        {
+          "x": 1.05,
+          "y": 0.4
+        },
+        {
+          "x": 0.55,
+          "y": 0.85
+        },
+        {
+          "x": 0,
+          "y": 0.6
+        },
+        {
+          "x": -0.55,
+          "y": 0.85
+        },
+        {
+          "x": -1.05,
+          "y": 0.4
+        },
+        {
+          "x": -0.95,
+          "y": -0.1
+        },
+        {
+          "x": -0.55,
+          "y": -0.4
+        }
+      ]
+    }
   }
 }

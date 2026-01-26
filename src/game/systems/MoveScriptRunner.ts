@@ -1,4 +1,4 @@
-import type { MoveScript, MoveStep, Vec2 } from '../data/scripts';
+import type { MoveScript, MoveStep, Vec2 } from "../data/scripts";
 
 export class MoveScriptRunner {
   private script: MoveScript;
@@ -65,7 +65,10 @@ export class MoveScriptRunner {
     const lastIndex = this.script.steps.length - 1;
     if (!this.script.loop && this.stepIndex === lastIndex) {
       const lastStep = this.script.steps[lastIndex];
-      if (lastStep.durationMs > 0 && this.stepElapsedMs >= lastStep.durationMs) {
+      if (
+        lastStep.durationMs > 0 &&
+        this.stepElapsedMs >= lastStep.durationMs
+      ) {
         this.applyStep(lastStep, 1);
         this.finished = true;
         return;
@@ -115,27 +118,34 @@ export class MoveScriptRunner {
   }
 
   private applyStep(step: MoveStep, t: number): void {
-    const easedT = step.kind === 'bezier' || step.kind === 'dashTo' ? this.applyEase(step.ease ?? 'linear', t) : t;
+    const easedT =
+      step.kind === "bezier" || step.kind === "dashTo"
+        ? this.applyEase(step.ease ?? "linear", t)
+        : t;
     switch (step.kind) {
-      case 'bezier':
+      case "bezier":
         this.evaluateBezier(step.points, easedT);
         break;
-      case 'sineDown': {
+      case "sineDown": {
         // SineDown is local and based on the step start position.
         const elapsed = this.stepElapsedMs / 1000;
-        this.currentLocalX = this.stepStartLocalX + Math.sin(elapsed * step.freq * Math.PI * 2) * step.amp;
+        this.currentLocalX =
+          this.stepStartLocalX +
+          Math.sin(elapsed * step.freq * Math.PI * 2) * step.amp;
         this.currentLocalY = this.stepStartLocalY + step.speed * elapsed;
         break;
       }
-      case 'hover':
+      case "hover":
         this.currentLocalX = this.stepStartLocalX;
         this.currentLocalY = this.stepStartLocalY;
         break;
-      case 'dashTo': {
+      case "dashTo": {
         const targetX = step.to.x;
         const targetY = step.to.y;
-        this.currentLocalX = this.stepStartLocalX + (targetX - this.stepStartLocalX) * easedT;
-        this.currentLocalY = this.stepStartLocalY + (targetY - this.stepStartLocalY) * easedT;
+        this.currentLocalX =
+          this.stepStartLocalX + (targetX - this.stepStartLocalX) * easedT;
+        this.currentLocalY =
+          this.stepStartLocalY + (targetY - this.stepStartLocalY) * easedT;
         break;
       }
       default:
@@ -162,17 +172,24 @@ export class MoveScriptRunner {
     this.currentLocalY = this.tempY[0];
   }
 
-  private applyEase(ease: 'in' | 'inOut' | 'linear' | 'out', t: number): number {
+  private applyEase(
+    ease: "in" | "inOut" | "linear" | "out" | "outIn",
+    t: number,
+  ): number {
     switch (ease) {
-      case 'in':
+      case "in":
         return t * t;
-      case 'out': {
+      case "out": {
         const inv = 1 - t;
         return 1 - inv * inv;
       }
-      case 'inOut':
+      case "inOut":
         return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      case 'linear':
+      case "outIn":
+        return t < 0.5
+          ? 0.5 * (1 - Math.pow(1 - 2 * t, 2))
+          : 0.5 * (2 * t - 1) * (2 * t - 1) + 0.5;
+      case "linear":
       default:
         return t;
     }
@@ -181,7 +198,7 @@ export class MoveScriptRunner {
   private prepareBuffers(): void {
     let max = 0;
     for (const step of this.script.steps) {
-      if (step.kind === 'bezier') {
+      if (step.kind === "bezier") {
         max = Math.max(max, step.points.length);
       }
     }

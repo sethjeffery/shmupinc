@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { PlayScene } from './scenes/PlayScene';
 import { ShopScene } from './scenes/ShopScene';
+import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from './util/playArea';
 
 const GAME_BACKGROUND = '#05060a';
 
@@ -19,9 +20,10 @@ export function createGame(): Phaser.Game {
     },
     scale: {
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      height: window.innerHeight,
-      mode: Phaser.Scale.RESIZE,
-      width: window.innerWidth,
+      height: PLAYFIELD_BASE_HEIGHT,
+      max: { height: PLAYFIELD_BASE_HEIGHT, width: PLAYFIELD_BASE_WIDTH },
+      mode: Phaser.Scale.FIT,
+      width: PLAYFIELD_BASE_WIDTH,
     },
     scene: [BootScene],
     type: Phaser.AUTO,

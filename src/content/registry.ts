@@ -42,9 +42,9 @@ let cachedErrors: ContentError[] = [];
 const EMPTY_REGISTRY: ContentRegistry = {
   beatsById: {},
   enemiesById: {},
+  gunsById: {},
   hazardsById: {},
   levelsById: {},
-  secondaryWeaponsById: {},
   shipsById: {},
   shopsById: {},
   wavesById: {},
@@ -52,7 +52,13 @@ const EMPTY_REGISTRY: ContentRegistry = {
 };
 
 export const getContentRegistry = (): ContentRegistry => {
-  if (typeof import.meta.glob !== "function") return EMPTY_REGISTRY;
+  if (typeof window === "undefined") return EMPTY_REGISTRY;
+  if (import.meta.env.DEV) {
+    const result = buildContentRegistry(loadContentEntries());
+    cachedRegistry = result.registry;
+    cachedErrors = result.errors;
+    return cachedRegistry;
+  }
   if (!cachedRegistry) {
     const result = buildContentRegistry(loadContentEntries());
     cachedRegistry = result.registry;

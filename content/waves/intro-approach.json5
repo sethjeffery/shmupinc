@@ -1,0 +1,119 @@
+{
+  "id": "intro-approach",
+  "spawns": [
+    {
+      "atMs": 2000,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 2200,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 2400,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 2600,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 2800,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 3000,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 3200,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 3400,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 8000,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 8300,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 8600,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 8900,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 9200,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 9500,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 9800,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 10100,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 10400,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 10700,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 11000,
+      "enemyId": "sidesweeper",
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

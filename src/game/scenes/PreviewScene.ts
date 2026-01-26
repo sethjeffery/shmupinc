@@ -1,7 +1,6 @@
 import type { BulletSpec } from "../data/scripts";
-import type { SecondaryWeaponDefinition } from "../data/secondaryWeapons";
+import type { MountedWeapon } from "../data/save";
 import type { ShipDefinition } from "../data/ships";
-import type { WeaponDefinition } from "../data/weapons";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
@@ -15,7 +14,7 @@ import { ObjectPool } from "../util/pool";
 
 export class PreviewScene extends Phaser.Scene {
   private ship!: Ship;
-  private baseRadius = 14;
+  private baseRadius = 17;
   private currentShip?: ShipDefinition;
   private pendingResize?: { height: number; width: number };
   private bullets!: ObjectPool<Bullet>;
@@ -28,15 +27,10 @@ export class PreviewScene extends Phaser.Scene {
     playerX: 0,
     playerY: 0,
   };
-  private primaryWeapon: null | WeaponDefinition = null;
-  private secondaryWeapon: null | SecondaryWeaponDefinition = null;
+  private mountedWeapons: MountedWeapon[] = [];
   private playerFiring = new PlayerFiring();
   private ready = false;
-  private pendingLoadout?: {
-    primary: WeaponDefinition;
-    secondary: null | SecondaryWeaponDefinition;
-    ship: ShipDefinition;
-  };
+  private pendingLoadout?: { mountedWeapons: MountedWeapon[]; ship: ShipDefinition };
 
   private emitMissileTrail = (
     x: number,
@@ -97,11 +91,7 @@ export class PreviewScene extends Phaser.Scene {
     );
     this.ready = true;
     if (this.pendingLoadout) {
-      this.setLoadout(
-        this.pendingLoadout.primary,
-        this.pendingLoadout.secondary,
-        this.pendingLoadout.ship,
-      );
+      this.setLoadout(this.pendingLoadout.mountedWeapons, this.pendingLoadout.ship);
       this.pendingLoadout = undefined;
     }
     if (this.pendingResize) {
@@ -111,7 +101,7 @@ export class PreviewScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number): void {
-    if (!this.ready || !this.primaryWeapon) return;
+    if (!this.ready) return;
     const delta = deltaMs / 1000;
     this.parallax.update(delta);
     this.particles.update(delta);
@@ -121,19 +111,18 @@ export class PreviewScene extends Phaser.Scene {
   }
 
   setLoadout(
-    primary: WeaponDefinition,
-    secondary: null | SecondaryWeaponDefinition,
+    mountedWeapons: MountedWeapon[],
     ship: ShipDefinition,
   ): void {
     if (!this.ready) {
-      this.pendingLoadout = { primary, secondary, ship };
+      this.pendingLoadout = { mountedWeapons, ship };
       return;
     }
-    this.primaryWeapon = primary;
-    this.secondaryWeapon = secondary;
+    this.mountedWeapons = mountedWeapons;
     this.currentShip = ship;
-    this.ship.setAppearance(ship.color, ship.shape);
+    this.ship.setAppearance(ship.color, ship.vector ?? ship.shape);
     this.ship.setRadius(this.baseRadius * (ship.radiusMultiplier ?? 1));
+    this.ship.setMountedWeapons(this.mountedWeapons);
     this.playerFiring.reset();
     this.bullets.forEachActive((bullet) => bullet.deactivate());
   }
@@ -156,14 +145,12 @@ export class PreviewScene extends Phaser.Scene {
   }
 
   private updateFiring(delta: number): void {
-    if (!this.primaryWeapon) return;
     this.playerFiring.update(
       delta,
       this.ship.x,
       this.ship.y,
       this.ship.radius,
-      this.primaryWeapon,
-      this.secondaryWeapon,
+      this.mountedWeapons,
       this.emitPlayerBullet,
     );
   }

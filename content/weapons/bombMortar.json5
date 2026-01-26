@@ -1,25 +1,35 @@
 {
-  "bullet": {
-    "aoe": {
-      "damage": 3,
-      "radius": 90
-    },
-    "color": 16735347,
-    "damage": 3,
-    "kind": "bomb",
-    "lifetimeMs": 2200,
-    "radius": 7,
-    "speed": 200
-  },
-  "cost": 360,
-  "description": "Slow, heavy bombs with huge AoE.",
-  "fireRate": 1.2,
-  "icon": "bomb",
   "id": "bombMortar",
   "name": "Bomb Mortar",
-  "pattern": {
-    "count": 1,
-    "kind": "fan",
-    "spreadDeg": 0
+  "description": "Slow, heavy bombs with huge AoE.",
+  "cost": 360,
+  "gunId": "bomb",
+  "size": "large",
+  "zones": [
+    "front"
+  ],
+  "stats": {
+    "fireRate": 1.2,
+    "bullet": {
+      "aoe": {
+        "damage": 3,
+        "radius": 90
+      },
+      "color": "#ff5c73",
+      "damage": 3,
+      "kind": "bomb",
+      "lifetimeMs": 2200,
+      "radius": 7
+    },
+    "shots": [
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": -0.5
+        }
+      }
+    ],
+    "speed": 200
   }
 }

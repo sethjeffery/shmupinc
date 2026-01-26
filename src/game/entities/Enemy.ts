@@ -206,7 +206,11 @@ export class Enemy {
 
     this.graphics.lineStyle(2, baseLine, 1);
     this.graphics.fillStyle(fill, 1);
-    drawEnemyToGraphics(this.graphics, style.shape ?? "swooper", this.radius);
+    drawEnemyToGraphics(
+      this.graphics,
+      style.vector ?? style.shape ?? "swooper",
+      this.radius,
+    );
   }
 
   private applyRotationMode(): void {

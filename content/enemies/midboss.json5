@@ -1,0 +1,304 @@
+{
+  "id": "midboss",
+  "hp": 28,
+  "radius": 28,
+  "goldDrop": {
+    "min": 18,
+    "max": 26
+  },
+  "rotation": "fixed",
+  "rotationDeg": 180,
+  "style": {
+    "shape": "boss",
+    "fillColor": "#1a1b28",
+    "lineColor": "#ff99eb",
+    "vector": {
+      "lines": [
+        {
+          "from": {
+            "x": -0.6,
+            "y": -0.1
+          },
+          "to": {
+            "x": -0.3,
+            "y": 0.25
+          }
+        },
+        {
+          "from": {
+            "x": 0.6,
+            "y": -0.1
+          },
+          "to": {
+            "x": 0.3,
+            "y": 0.25
+          }
+        },
+        {
+          "from": {
+            "x": -0.25,
+            "y": -0.45
+          },
+          "to": {
+            "x": 0.25,
+            "y": -0.45
+          }
+        }
+      ],
+      "outline": [
+        {
+          "x": 0,
+          "y": -1
+        },
+        {
+          "x": 0.7,
+          "y": -0.8
+        },
+        {
+          "x": 1.1,
+          "y": -0.35
+        },
+        {
+          "x": 1.25,
+          "y": 0.25
+        },
+        {
+          "x": 0.95,
+          "y": 0.85
+        },
+        {
+          "x": 0.35,
+          "y": 1.05
+        },
+        {
+          "x": -0.35,
+          "y": 1.05
+        },
+        {
+          "x": -0.95,
+          "y": 0.85
+        },
+        {
+          "x": -1.25,
+          "y": 0.25
+        },
+        {
+          "x": -1.1,
+          "y": -0.35
+        },
+        {
+          "x": -0.7,
+          "y": -0.8
+        }
+      ]
+    }
+  },
+  "move": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 900,
+        "ease": "out",
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 160
+        }
+      },
+      {
+        "durationMs": 600,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 700,
+        "ease": "inOut",
+        "kind": "dashTo",
+        "to": {
+          "x": 90,
+          "y": 190
+        }
+      },
+      {
+        "durationMs": 500,
+        "kind": "hover"
+      },
+      {
+        "durationMs": 700,
+        "ease": "inOut",
+        "kind": "dashTo",
+        "to": {
+          "x": -90,
+          "y": 190
+        }
+      },
+      {
+        "durationMs": 700,
+        "kind": "hover"
+      }
+    ]
+  },
+  "fire": {
+    "loop": true,
+    "steps": [
+      {
+        "durationMs": 500,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "fromDeg": 70,
+          "kind": "sweep",
+          "periodMs": 1800,
+          "toDeg": 110
+        },
+        "bullet": {
+          "color": "#ff8c6c",
+          "damage": 1,
+          "kind": "orb",
+          "radius": 3,
+          "speed": 200
+        },
+        "durationMs": 1800,
+        "kind": "spray",
+        "ratePerSec": 5
+      },
+      {
+        "durationMs": 300,
+        "kind": "cooldown"
+      },
+      {
+        "aim": {
+          "kind": "atPlayer"
+        },
+        "bullet": {
+          "color": "#ffb067",
+          "damage": 1,
+          "kind": "dart",
+          "length": 10,
+          "radius": 2,
+          "speed": 280,
+          "thickness": 2
+        },
+        "count": 3,
+        "intervalMs": 180,
+        "kind": "burst"
+      },
+      {
+        "durationMs": 500,
+        "kind": "cooldown"
+      }
+    ]
+  },
+  "phases": [
+    {
+      "hpThreshold": 0.6,
+      "fire": {
+        "loop": true,
+        "steps": [
+          {
+            "durationMs": 400,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "fromDeg": 60,
+              "kind": "sweep",
+              "periodMs": 1500,
+              "toDeg": 120
+            },
+            "bullet": {
+              "color": "#ff784f",
+              "damage": 1,
+              "kind": "orb",
+              "radius": 3,
+              "speed": 210
+            },
+            "durationMs": 1500,
+            "kind": "spray",
+            "ratePerSec": 6
+          },
+          {
+            "durationMs": 300,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "kind": "atPlayer"
+            },
+            "bullet": {
+              "color": "#ffb067",
+              "damage": 1,
+              "kind": "dart",
+              "length": 10,
+              "radius": 2,
+              "speed": 300,
+              "thickness": 2
+            },
+            "count": 4,
+            "intervalMs": 140,
+            "kind": "burst"
+          },
+          {
+            "durationMs": 500,
+            "kind": "cooldown"
+          }
+        ]
+      }
+    },
+    {
+      "hpThreshold": 0.3,
+      "fire": {
+        "loop": true,
+        "steps": [
+          {
+            "durationMs": 300,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "fromDeg": 55,
+              "kind": "sweep",
+              "periodMs": 1200,
+              "toDeg": 125
+            },
+            "bullet": {
+              "color": "#ffb067",
+              "damage": 2,
+              "kind": "orb",
+              "radius": 4,
+              "speed": 210
+            },
+            "durationMs": 1400,
+            "kind": "spray",
+            "ratePerSec": 7
+          },
+          {
+            "durationMs": 200,
+            "kind": "cooldown"
+          },
+          {
+            "aim": {
+              "kind": "atPlayer"
+            },
+            "bullet": {
+              "color": "#ffb067",
+              "damage": 2,
+              "kind": "dart",
+              "length": 12,
+              "radius": 2,
+              "speed": 340,
+              "thickness": 2
+            },
+            "count": 5,
+            "intervalMs": 120,
+            "kind": "burst"
+          },
+          {
+            "durationMs": 400,
+            "kind": "cooldown"
+          }
+        ]
+      }
+    }
+  ]
+}

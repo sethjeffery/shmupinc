@@ -1,42 +1,58 @@
 {
-  "bullet": {
-    "color": 8255999,
-    "damage": 0.7,
-    "kind": "orb",
-    "radius": 3,
-    "speed": 500
-  },
-  "cost": 380,
-  "description": "You want some orbs with that?",
-  "fireRate": 5,
-  "icon": "orb",
   "id": "orbBlasterPlusPlusPlus",
-  "muzzleOffsets": [
-    {
-      "x": -0.6,
-      "y": 0.4
-    },
-    {
-      "x": -0.5,
-      "y": 0.2
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0.5,
-      "y": 0.2
-    },
-    {
-      "x": 0.6,
-      "y": 0.4
-    }
-  ],
   "name": "Orb Blaster+++",
-  "pattern": {
-    "count": 5,
-    "kind": "fan",
-    "spreadDeg": 2
+  "description": "You want some orbs with that?",
+  "cost": 380,
+  "gunId": "orb",
+  "size": "small",
+  "zones": [
+    "front"
+  ],
+  "stats": {
+    "fireRate": 5,
+    "bullet": {
+      "color": "#7df9ff",
+      "damage": 0.7,
+      "kind": "orb",
+      "radius": 3
+    },
+    "shots": [
+      {
+        "angleDeg": -4,
+        "offset": {
+          "x": -0.6,
+          "y": 0.4
+        }
+      },
+      {
+        "angleDeg": -2,
+        "offset": {
+          "x": -0.5,
+          "y": 0.2
+        }
+      },
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 2,
+        "offset": {
+          "x": 0.5,
+          "y": 0.2
+        }
+      },
+      {
+        "angleDeg": 4,
+        "offset": {
+          "x": 0.6,
+          "y": 0.4
+        }
+      }
+    ],
+    "speed": 500
   }
 }

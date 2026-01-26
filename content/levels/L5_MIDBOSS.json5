@@ -1,0 +1,11 @@
+{
+  "id": "L5_MIDBOSS",
+  "title": "Midboss",
+  "pressureProfile": {
+    "primary": "focus",
+    "secondary": ["enemy"]
+  },
+  "waveIds": ["midboss-screen", "midboss-fight"],
+  "shopId": "shop_midboss",
+  "winCondition": { "kind": "defeatBoss", "bossId": "midboss" }
+}

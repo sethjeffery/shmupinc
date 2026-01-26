@@ -1,24 +1,25 @@
 import type { EnemyDef } from "../game/data/enemyTypes";
+import type { GunDefinition } from "../game/data/gunTypes";
 import type { HazardScript, LevelDefinition, ShopRules } from "../game/data/levels/types";
 import type { BulletSpec, FireScript, FireStep } from "../game/data/scripts";
-import type { SecondaryWeaponDefinition } from "../game/data/secondaryWeaponTypes";
 import type { ShipDefinition } from "../game/data/shipTypes";
 import type { StoryBeat } from "../game/data/storyBeatTypes";
 import type { WaveDefinition } from "../game/data/waves";
-import type { WeaponDefinition } from "../game/data/weaponTypes";
+import type { WeaponDefinition, WeaponShot, WeaponStats, WeaponZone } from "../game/data/weaponTypes";
 import type {
   BeatContent,
   ContentKind,
   EnemyContent,
+  GunContent,
   HazardContent,
   LevelContent,
-  SecondaryWeaponContent,
   ShipContent,
   ShopContent,
   WaveContent,
   WeaponContent,
 } from "./schemas";
 
+import { DEFAULT_WEAPON_SHOTS } from "../game/data/weaponTypes";
 import { contentSchemas } from "./schemas";
 
 export type ContentErrorKind = "duplicate" | "parse" | "reference" | "schema";
@@ -38,9 +39,9 @@ export interface ContentEntry {
 export interface ContentRegistry {
   beatsById: Record<string, StoryBeat>;
   enemiesById: Record<string, EnemyDef>;
+  gunsById: Record<string, GunDefinition>;
   hazardsById: Record<string, HazardScript>;
   levelsById: Record<string, LevelDefinition>;
-  secondaryWeaponsById: Record<string, SecondaryWeaponDefinition>;
   shipsById: Record<string, ShipDefinition>;
   shopsById: Record<string, ShopRules>;
   wavesById: Record<string, WaveDefinition>;
@@ -53,16 +54,17 @@ export interface ContentBuildResult {
 }
 
 const parseColor = (value: number | string | undefined): number | undefined => {
-  if (typeof value === "number") return value;
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim().toLowerCase();
-  if (trimmed.startsWith("#")) {
-    return Number.parseInt(trimmed.slice(1), 16);
-  }
-  if (trimmed.startsWith("0x")) {
-    return Number.parseInt(trimmed.slice(2), 16);
-  }
-  const parsed = Number.parseInt(trimmed, 10);
+  const match = /^(?:#|0x)?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(trimmed);
+  if (!match) return undefined;
+  const hex = match[1].length === 3
+    ? match[1]
+        .split("")
+        .map((digit) => digit + digit)
+        .join("")
+    : match[1];
+  const parsed = Number.parseInt(hex, 16);
   return Number.isNaN(parsed) ? undefined : parsed;
 };
 
@@ -71,7 +73,16 @@ const resolveColor = (value: number | string | undefined): number | undefined =>
   return parseColor(value);
 };
 
-const coerceBulletSpec = (spec: BulletSpec): BulletSpec => {
+type BulletTrailInput = Omit<NonNullable<BulletSpec["trail"]>, "color"> & {
+  color?: number | string;
+};
+
+type BulletSpecInput = Omit<BulletSpec, "color" | "trail"> & {
+  color?: number | string;
+  trail?: BulletTrailInput;
+};
+
+const coerceBulletSpec = (spec: BulletSpecInput): BulletSpec => {
   const rawColor = (spec as { color?: number | string }).color;
   const trail = spec.trail
     ? {
@@ -166,11 +177,11 @@ const coerceEndCondition = (
 export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResult => {
   const errors: ContentError[] = [];
 
-  const beatsById: Record<string, BeatContent> = {};
+  const beatsById: Record<string, StoryBeat> = {};
   const enemiesById: Record<string, EnemyContent> = {};
+  const gunsById: Record<string, GunContent> = {};
   const hazardsById: Record<string, HazardContent> = {};
   const levelsById: Record<string, LevelContent> = {};
-  const secondaryWeaponsById: Record<string, SecondaryWeaponContent> = {};
   const shipsById: Record<string, ShipContent> = {};
   const shopsById: Record<string, ShopContent> = {};
   const wavesById: Record<string, WaveContent> = {};
@@ -197,7 +208,14 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
           addDuplicateError(errors, entry.path, entry.kind, id);
           break;
         }
-        beatsById[id] = value as BeatContent;
+        {
+          const beat = value as BeatContent;
+          beatsById[id] = {
+            id: beat.id,
+            lines: beat.lines,
+            title: beat.title,
+          };
+        }
         break;
       case "enemies":
         if (enemiesById[id]) {
@@ -205,6 +223,13 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
           break;
         }
         enemiesById[id] = value as EnemyContent;
+        break;
+      case "guns":
+        if (gunsById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        gunsById[id] = value as GunContent;
         break;
       case "hazards":
         if (hazardsById[id]) {
@@ -219,13 +244,6 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
           break;
         }
         levelsById[id] = value as LevelContent;
-        break;
-      case "secondaryWeapons":
-        if (secondaryWeaponsById[id]) {
-          addDuplicateError(errors, entry.path, entry.kind, id);
-          break;
-        }
-        secondaryWeaponsById[id] = value as SecondaryWeaponContent;
         break;
       case "ships":
         if (shipsById[id]) {
@@ -294,14 +312,6 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
     };
   }
 
-  const resolvedSecondaryWeapons: Record<string, SecondaryWeaponDefinition> = {};
-  for (const [id, weapon] of Object.entries(secondaryWeaponsById)) {
-    resolvedSecondaryWeapons[id] = {
-      ...weapon,
-      bullet: coerceBulletSpec(weapon.bullet as BulletSpec),
-    };
-  }
-
   const resolvedShips: Record<string, ShipDefinition> = {};
   for (const [id, ship] of Object.entries(shipsById)) {
     resolvedShips[id] = {
@@ -310,11 +320,62 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
     };
   }
 
+  const resolvedGuns: Record<string, GunDefinition> = {};
+  for (const [id, gun] of Object.entries(gunsById)) {
+    resolvedGuns[id] = {
+      ...gun,
+      fillColor: resolveColor(gun.fillColor),
+      lineColor: resolveColor(gun.lineColor),
+    };
+  }
+
+const normalizeWeaponShots = (shots?: WeaponShot[]): WeaponShot[] => {
+  const source = shots && shots.length > 0 ? shots : DEFAULT_WEAPON_SHOTS;
+  return source.map((shot) => ({
+    angleDeg: shot.angleDeg ?? 0,
+    offset: shot.offset ?? { x: 0, y: 0 },
+  }));
+};
+
+const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
+  const fallbackSpeed =
+    stats.speed
+    ?? (stats.bullet as BulletSpec | undefined)?.speed
+    ?? 0;
+  const bullet = coerceBulletSpec(stats.bullet);
+  return {
+    ...stats,
+    angleDeg: stats.angleDeg ?? 0,
+    bullet: {
+      ...bullet,
+      speed: fallbackSpeed,
+    },
+    speed: fallbackSpeed,
+    multiShotMode: stats.multiShotMode ?? "simultaneous",
+    shots: normalizeWeaponShots(stats.shots),
+  };
+};
+
   const resolvedWeapons: Record<string, WeaponDefinition> = {};
   for (const [id, weapon] of Object.entries(weaponsById)) {
+    const zoneStats = weapon.zoneStats ?? {};
+    const resolvedZoneStats: Partial<Record<WeaponZone, Partial<WeaponStats>>> = {};
+    for (const [zone, override] of Object.entries(zoneStats)) {
+      if (!override) continue;
+      const { bullet, shots, ...rest } = override;
+      const resolvedOverride: Partial<WeaponStats> = {
+        ...rest,
+        shots: shots ? normalizeWeaponShots(shots) : undefined,
+      };
+      if (bullet) {
+        resolvedOverride.bullet = coerceBulletSpec(bullet);
+      }
+      resolvedZoneStats[zone as WeaponZone] = resolvedOverride;
+    }
     resolvedWeapons[id] = {
       ...weapon,
-      bullet: coerceBulletSpec(weapon.bullet as BulletSpec),
+      stats: resolveWeaponStats(weapon.stats as WeaponStats),
+      zoneStats: Object.keys(resolvedZoneStats).length ? resolvedZoneStats : undefined,
     };
   }
 
@@ -338,7 +399,6 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
   const resolvedShops: Record<string, ShopRules> = {};
   for (const [id, shop] of Object.entries(shopsById)) {
     resolvedShops[id] = {
-      allowedSecondaryWeapons: shop.allowedSecondaryWeapons,
       allowedShips: shop.allowedShips,
       allowedWeapons: shop.allowedWeapons,
       caps: shop.caps,
@@ -348,19 +408,16 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
         addReferenceError(errors, `shops/${id}`, `Missing weapon "${weaponId}".`);
       }
     }
-    for (const weaponId of shop.allowedSecondaryWeapons ?? []) {
-      if (!resolvedSecondaryWeapons[weaponId]) {
-        addReferenceError(
-          errors,
-          `shops/${id}`,
-          `Missing secondary weapon "${weaponId}".`,
-        );
-      }
-    }
     for (const shipId of shop.allowedShips ?? []) {
       if (!resolvedShips[shipId]) {
         addReferenceError(errors, `shops/${id}`, `Missing ship "${shipId}".`);
       }
+    }
+  }
+
+  for (const [id, weapon] of Object.entries(resolvedWeapons)) {
+    if (!resolvedGuns[weapon.gunId]) {
+      addReferenceError(errors, `weapons/${id}`, `Missing gun "${weapon.gunId}".`);
     }
   }
 
@@ -429,9 +486,9 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
     registry: {
       beatsById,
       enemiesById: resolvedEnemies,
+      gunsById: resolvedGuns,
       hazardsById: resolvedHazards,
       levelsById: resolvedLevels,
-      secondaryWeaponsById: resolvedSecondaryWeapons,
       shipsById: resolvedShips,
       shopsById: resolvedShops,
       wavesById: resolvedWaves,

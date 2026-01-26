@@ -1,5 +1,4 @@
 import type { EnemyId } from "../enemyTypes";
-import type { SecondaryWeaponId } from "../secondaryWeaponTypes";
 import type { ShipId } from "../shipTypes";
 import type { WaveDefinition } from "../waves";
 import type { WeaponId } from "../weaponTypes";
@@ -46,11 +45,9 @@ export type HazardScript = LaneWallScript;
 
 export interface ShopRules {
   allowedWeapons?: WeaponId[];
-  allowedSecondaryWeapons?: SecondaryWeaponId[];
   allowedShips?: ShipId[];
   caps?: {
-    primaryCost?: number;
-    secondaryCost?: number;
+    weaponCost?: number;
     shipCost?: number;
   };
 }

@@ -1,34 +1,44 @@
 {
-  "bullet": {
-    "color": 8255999,
-    "damage": 0.7,
-    "kind": "orb",
-    "radius": 3,
-    "speed": 380
-  },
-  "cost": 220,
-  "description": "Triple orbs with softer output.",
-  "fireRate": 5,
-  "icon": "orb",
   "id": "orbBlasterPlusPlus",
-  "muzzleOffsets": [
-    {
-      "x": -0.6,
-      "y": 0.2
-    },
-    {
-      "x": 0,
-      "y": 0
-    },
-    {
-      "x": 0.6,
-      "y": 0.2
-    }
-  ],
   "name": "Orb Blaster++",
-  "pattern": {
-    "count": 3,
-    "kind": "fan",
-    "spreadDeg": 2
+  "description": "Triple orbs with softer output.",
+  "cost": 220,
+  "gunId": "orb",
+  "size": "small",
+  "zones": [
+    "front"
+  ],
+  "stats": {
+    "fireRate": 5,
+    "bullet": {
+      "color": "#7df9ff",
+      "damage": 0.7,
+      "kind": "orb",
+      "radius": 3
+    },
+    "shots": [
+      {
+        "angleDeg": -2,
+        "offset": {
+          "x": -0.6,
+          "y": 0.2
+        }
+      },
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 2,
+        "offset": {
+          "x": 0.6,
+          "y": 0.2
+        }
+      }
+    ],
+    "speed": 380
   }
 }

@@ -12,7 +12,7 @@
           "kind": "fixed"
         },
         "bullet": {
-          "color": 16756839,
+          "color": "#ffb067",
           "damage": 1,
           "kind": "dart",
           "length": 10,
@@ -46,7 +46,7 @@
           "toDeg": 120
         },
         "bullet": {
-          "color": 16742479,
+          "color": "#ff784f",
           "damage": 2,
           "kind": "orb",
           "radius": 4,
@@ -65,7 +65,7 @@
           "kind": "atPlayer"
         },
         "bullet": {
-          "color": 16756839,
+          "color": "#ffb067",
           "damage": 1,
           "kind": "dart",
           "length": 10,
@@ -152,7 +152,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -170,7 +170,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -188,7 +188,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -206,7 +206,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -224,7 +224,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -242,7 +242,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -260,7 +260,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -278,7 +278,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -296,7 +296,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -314,7 +314,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -332,7 +332,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -350,7 +350,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -368,7 +368,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -386,7 +386,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -404,7 +404,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -422,7 +422,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -440,7 +440,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -458,7 +458,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -476,7 +476,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -494,7 +494,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -512,7 +512,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -530,7 +530,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -548,7 +548,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -566,7 +566,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -588,7 +588,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -606,7 +606,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -624,7 +624,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -642,7 +642,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -660,7 +660,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -678,7 +678,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -696,7 +696,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -714,7 +714,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -732,7 +732,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -750,7 +750,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -768,7 +768,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -786,7 +786,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -804,7 +804,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -822,7 +822,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -840,7 +840,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -858,7 +858,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -876,7 +876,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -894,7 +894,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -912,7 +912,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -930,7 +930,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -948,7 +948,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -966,7 +966,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -984,7 +984,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1002,7 +1002,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1024,7 +1024,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16752451,
+              "color": "#ff9f43",
               "damage": 1,
               "kind": "orb",
               "radius": 3,
@@ -1053,7 +1053,7 @@
               "kind": "atPlayer"
             },
             "bullet": {
-              "color": 16747628,
+              "color": "#ff8c6c",
               "damage": 2,
               "homing": {
                 "acquireRadius": 260,
@@ -1106,7 +1106,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1124,7 +1124,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1142,7 +1142,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1160,7 +1160,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1178,7 +1178,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1196,7 +1196,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1214,7 +1214,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1232,7 +1232,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1250,7 +1250,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1268,7 +1268,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1286,7 +1286,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1304,7 +1304,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1322,7 +1322,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1340,7 +1340,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1358,7 +1358,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1376,7 +1376,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1394,7 +1394,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1412,7 +1412,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1434,7 +1434,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1452,7 +1452,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1470,7 +1470,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1488,7 +1488,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1506,7 +1506,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1524,7 +1524,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1542,7 +1542,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1560,7 +1560,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1578,7 +1578,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1596,7 +1596,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1614,7 +1614,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1632,7 +1632,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1650,7 +1650,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1668,7 +1668,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1686,7 +1686,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1704,7 +1704,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1722,7 +1722,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1740,7 +1740,7 @@
               "kind": "fixed"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 2,
               "kind": "dart",
               "length": 12,
@@ -1764,7 +1764,7 @@
               "toDeg": 130
             },
             "bullet": {
-              "color": 16742479,
+              "color": "#ff784f",
               "damage": 2,
               "kind": "orb",
               "radius": 4,
@@ -1783,7 +1783,7 @@
               "kind": "atPlayer"
             },
             "bullet": {
-              "color": 16756839,
+              "color": "#ffb067",
               "damage": 1,
               "kind": "dart",
               "length": 10,
@@ -1818,8 +1818,88 @@
   "rotation": "fixed",
   "rotationDeg": 180,
   "style": {
-    "fillColor": 1445912,
-    "lineColor": 16739179,
-    "shape": "boss"
+    "fillColor": "#161018",
+    "lineColor": "#ff6b6b",
+    "shape": "boss",
+    "vector": {
+      "lines": [
+        {
+          "from": {
+            "x": -0.6,
+            "y": -0.1
+          },
+          "to": {
+            "x": -0.3,
+            "y": 0.25
+          }
+        },
+        {
+          "from": {
+            "x": 0.6,
+            "y": -0.1
+          },
+          "to": {
+            "x": 0.3,
+            "y": 0.25
+          }
+        },
+        {
+          "from": {
+            "x": -0.25,
+            "y": -0.45
+          },
+          "to": {
+            "x": 0.25,
+            "y": -0.45
+          }
+        }
+      ],
+      "outline": [
+        {
+          "x": 0,
+          "y": -1
+        },
+        {
+          "x": 0.7,
+          "y": -0.8
+        },
+        {
+          "x": 1.1,
+          "y": -0.35
+        },
+        {
+          "x": 1.25,
+          "y": 0.25
+        },
+        {
+          "x": 0.95,
+          "y": 0.85
+        },
+        {
+          "x": 0.35,
+          "y": 1.05
+        },
+        {
+          "x": -0.35,
+          "y": 1.05
+        },
+        {
+          "x": -0.95,
+          "y": 0.85
+        },
+        {
+          "x": -1.25,
+          "y": 0.25
+        },
+        {
+          "x": -1.1,
+          "y": -0.35
+        },
+        {
+          "x": -0.7,
+          "y": -0.8
+        }
+      ]
+    }
   }
 }

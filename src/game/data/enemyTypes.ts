@@ -17,8 +17,19 @@ export type EnemyShape =
   | "skitter"
   | "snake"
   | "sniper"
+  | "sidesweeper"
   | "spinner"
   | "swooper";
+
+export interface EnemyVectorLine {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}
+
+export interface EnemyVector {
+  outline: { x: number; y: number }[];
+  lines?: EnemyVectorLine[];
+}
 
 export interface EnemyDef {
   id: EnemyId;
@@ -34,5 +45,6 @@ export interface EnemyDef {
     fillColor?: number;
     lineColor?: number;
     shape?: EnemyShape;
+    vector?: EnemyVector;
   };
 }

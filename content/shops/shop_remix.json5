@@ -1,0 +1,21 @@
+{
+  "id": "shop_remix",
+  "allowedWeapons": [
+    "orbBlasterPlus",
+    "missilePod",
+    "pulseArray",
+    "heavyMissile",
+    "sideCannonsPlus",
+    "miniMissiles",
+    "haloOrbs"
+  ],
+  "allowedShips": [
+    "starter",
+    "bulwark",
+    "interceptor"
+  ],
+  "caps": {
+    "weaponCost": 320,
+    "shipCost": 300
+  }
+}

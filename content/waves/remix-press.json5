@@ -1,0 +1,29 @@
+{
+  "id": "remix-press",
+  "spawns": [
+    {
+      "atMs": 0,
+      "enemyId": "skitter",
+      "x": 0,
+      "y": -0.1
+    },
+    {
+      "atMs": 600,
+      "enemyId": "swooper",
+      "x": -0.25,
+      "y": -0.1
+    },
+    {
+      "atMs": 900,
+      "enemyId": "swooper",
+      "x": 0.25,
+      "y": -0.1
+    },
+    {
+      "atMs": 1600,
+      "enemyId": "spinner",
+      "x": 0,
+      "y": -0.1
+    }
+  ]
+}

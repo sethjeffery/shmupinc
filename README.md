@@ -7,7 +7,8 @@ Story levels are defined in `content/levels` using JSON5 `LevelDefinition` data 
 ## Content Authoring (Dev Only)
 
 - Editor route: start the dev server and open `/content` to browse and edit JSON content packs.
-- File structure: `content/levels`, `content/waves`, `content/hazards`, `content/beats`, `content/shops`, plus supporting packs for `content/enemies`, `content/weapons`, `content/secondaryWeapons`, and `content/ships` (all `.json5`).
+- File structure: `content/levels`, `content/waves`, `content/hazards`, `content/beats`, `content/shops`, plus supporting packs for `content/enemies`, `content/weapons`, `content/ships`, and `content/guns` (all `.json5`).
+- Weapons are unified in `content/weapons`; ships define `mounts` (zone + size) in `content/ships`, weapons declare supported `zones` + `size`, and each weapon references a gun model in `content/guns` via `gunId`.
 - Validation: `npm run content:validate`
 - Scaffold a level: `npm run content:scaffold -- level L3_NAME`
 - Print a level summary: `npm run content:print -- level L2_SQUEEZE`

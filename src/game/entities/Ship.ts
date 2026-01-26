@@ -1,15 +1,27 @@
-import type { ShipShape } from "../data/ships";
+import type { MountedWeapon } from "../data/save";
+import type { ShipShape, ShipVector } from "../data/shipTypes";
 
 import Phaser from "phaser";
 
+import { GUNS } from "../data/guns";
+import { drawGunToGraphics } from "../render/gunShapes";
 import { drawShipToGraphics } from "../render/shipShapes";
+
+interface GunAttachment {
+  color: number;
+  gunId: string;
+  mirror: boolean;
+  offset: { x: number; y: number };
+  rotationRad: number;
+  sizeMultiplier: number;
+}
 
 export interface ShipConfig {
   radius: number;
   maxHp: number;
   moveSpeed: number;
   color: number;
-  shape: ShipShape;
+  shape: ShipShape | ShipVector;
 }
 
 export class Ship {
@@ -22,8 +34,9 @@ export class Ship {
   moveSpeed: number;
   graphics: Phaser.GameObjects.Graphics;
   color: number;
-  shape: ShipShape;
+  shape: ShipShape | ShipVector;
   private flashTimer = 0;
+  private gunAttachments: GunAttachment[] = [];
 
   constructor(scene: Phaser.Scene, config: ShipConfig) {
     this.scene = scene;
@@ -75,7 +88,7 @@ export class Ship {
     this.maxHp = maxHp;
   }
 
-  setAppearance(color: number, shape: ShipShape): void {
+  setAppearance(color: number, shape: ShipShape | ShipVector): void {
     this.color = color;
     this.shape = shape;
     this.redraw(this.flashTimer);
@@ -83,6 +96,29 @@ export class Ship {
 
   setRadius(radius: number): void {
     this.radius = radius;
+    this.redraw(this.flashTimer);
+  }
+
+  setMountedWeapons(mountedWeapons: MountedWeapon[]): void {
+    this.gunAttachments = mountedWeapons
+      .map((mounted) => {
+        const gunId = mounted.weapon.gunId;
+        if (!GUNS[gunId]) return null;
+        const sizeMultiplier = 0.5;
+        const color = mounted.stats.bullet.color ?? 0x7df9ff;
+        const angleSign = mounted.mount.offset.x < 0 ? -1 : 1;
+        const rotationRad =
+          (((mounted.stats.angleDeg ?? 0) * Math.PI) / 180) * angleSign;
+        return {
+          color,
+          gunId,
+          mirror: mounted.mount.offset.x < 0,
+          offset: mounted.mount.offset,
+          rotationRad,
+          sizeMultiplier,
+        };
+      })
+      .filter((item): item is GunAttachment => Boolean(item));
     this.redraw(this.flashTimer);
   }
 
@@ -116,6 +152,7 @@ export class Ship {
     this.graphics.lineStyle(2, this.color, 1);
     this.graphics.fillStyle(fill, 1);
     drawShipToGraphics(this.graphics, this.shape, this.radius);
+    this.drawGuns();
   }
 
   private scaleColor(color: number, factor: number): number {
@@ -123,6 +160,27 @@ export class Ship {
     const g = Math.min(255, Math.round(((color >> 8) & 0xff) * factor));
     const b = Math.min(255, Math.round((color & 0xff) * factor));
     return (r << 16) | (g << 8) | b;
+  }
+
+  private drawGuns(): void {
+    if (!this.gunAttachments.length) return;
+    for (const attachment of this.gunAttachments) {
+      const gun = GUNS[attachment.gunId];
+      if (!gun) continue;
+      const size = this.radius * attachment.sizeMultiplier;
+      const x = attachment.offset.x * this.radius;
+      const y = attachment.offset.y * this.radius;
+      drawGunToGraphics(
+        this.graphics,
+        gun,
+        x,
+        y,
+        size,
+        attachment.color,
+        attachment.mirror,
+        attachment.rotationRad,
+      );
+    }
   }
 
   destroy(): void {

@@ -1,5 +1,5 @@
 import type { BulletSpec } from "../data/scripts";
-import type { SecondaryWeaponDefinition } from "../data/secondaryWeapons";
+import type { MountedWeapon } from "../data/save";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
@@ -7,21 +7,8 @@ import Phaser from "phaser";
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
 import { ENEMIES } from "../data/enemies";
 import { getActiveLevelSession } from "../data/levelState";
-import { bankGold, computePlayerStats } from "../data/save";
-import {
-  BOSS_WAVE_INTERVAL,
-  WAVE_FACTORY_PACK,
-  augmentWaveDefinition,
-  buildBossWave,
-  mirrorWaveDefinition,
-  type WaveIntensity,
-} from "../data/waveFactories";
-import {
-  WAVES,
-  type EnemyOverride,
-  type WaveDefinition,
-} from "../data/waves";
-import { STARTER_WEAPON_ID, WEAPONS, type WeaponId } from "../data/weapons";
+import { bankGold, computePlayerLoadout } from "../data/save";
+import { type EnemyOverride } from "../data/waves";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { Enemy } from "../entities/Enemy";
 import { PickupGold } from "../entities/PickupGold";
@@ -32,7 +19,6 @@ import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
 import { PlayerCollisionResolver } from "../systems/PlayerCollision";
 import { PlayerFiring } from "../systems/PlayerFiring";
-import { WaveScheduler } from "../systems/WaveScheduler";
 import { HUD } from "../ui/HUD";
 import { computePlayArea, PLAYFIELD_CORNER_RADIUS } from "../util/playArea";
 import { ObjectPool } from "../util/pool";
@@ -83,17 +69,12 @@ export class PlayScene extends Phaser.Scene {
   private playerBullets!: ObjectPool<Bullet>;
   private enemyBullets!: ObjectPool<Bullet>;
   private goldPickups!: ObjectPool<PickupGold>;
-  private weaponId: WeaponId = STARTER_WEAPON_ID;
-  private playerWeapon = WEAPONS[STARTER_WEAPON_ID];
-  private secondaryWeapon: null | SecondaryWeaponDefinition = null;
+  private mountedWeapons: MountedWeapon[] = [];
   private magnetMultiplier = 1;
   private debugBulletSpec?: BulletSpec;
   private gameOverTimer?: Phaser.Time.TimerEvent;
   private overlayShown = false;
-  private currentWaveDifficulty = 1;
-  private lastFactoryIntensity?: WaveIntensity;
   private levelRunner?: LevelRunner;
-  private waveScheduler?: WaveScheduler;
 
   private enemies: Enemy[] = [];
   private enemyPool: Enemy[] = [];
@@ -108,6 +89,8 @@ export class PlayScene extends Phaser.Scene {
   private touchOffsetY = 0;
   private collisionPush = { nx: 0, ny: 0, x: 0, y: 0 };
   private collisionResolver?: PlayerCollisionResolver;
+  private fpsText?: Phaser.GameObjects.Text;
+  private fpsTimerMs = 0;
   private bulletContext: BulletUpdateContext = {
     enemies: [],
     playerAlive: false,
@@ -183,8 +166,6 @@ export class PlayScene extends Phaser.Scene {
     this.defaultTarget.set(0, 0);
     this.enemies.length = 0;
     this.enemyPool.length = 0;
-    this.currentWaveDifficulty = 1;
-    this.lastFactoryIntensity = undefined;
     this.isGameOver = false;
     this.overlayShown = false;
     this.gold = 0;
@@ -192,6 +173,7 @@ export class PlayScene extends Phaser.Scene {
     this.playerFiring.reset();
     this.shipAlive = true;
     this.magnetMultiplier = 1;
+    this.mountedWeapons = [];
     this.bossTimerMs = 0;
     this.bossActive = false;
     if (this.levelRunner) {
@@ -207,7 +189,6 @@ export class PlayScene extends Phaser.Scene {
       this.gameOverTimer = undefined;
     }
     this.collisionResolver = undefined;
-    this.waveScheduler = undefined;
   }
 
   create(): void {
@@ -221,19 +202,18 @@ export class PlayScene extends Phaser.Scene {
     this.scale.off("resize", this.onResize, this);
     this.scale.on("resize", this.onResize, this);
 
-    const stats = computePlayerStats();
-    this.weaponId = stats.weapon.id;
-    this.playerWeapon = stats.weapon;
-    this.secondaryWeapon = stats.secondaryWeapon;
+    const stats = computePlayerLoadout();
+    this.mountedWeapons = stats.mountedWeapons;
     this.magnetMultiplier = stats.ship.magnetMultiplier ?? 1;
 
     this.ship = new Ship(this, {
       color: stats.ship.color,
       maxHp: stats.ship.maxHp,
       moveSpeed: stats.ship.moveSpeed,
-      radius: 14 * (stats.ship.radiusMultiplier ?? 1),
-      shape: stats.ship.shape,
+      radius: 17 * (stats.ship.radiusMultiplier ?? 1),
+      shape: stats.ship.vector ?? stats.ship.shape,
     });
+    this.ship.setMountedWeapons(this.mountedWeapons);
     this.collisionResolver = new PlayerCollisionResolver(
       {
         bumpFx: BUMP_FX,
@@ -255,6 +235,18 @@ export class PlayScene extends Phaser.Scene {
     this.goldBanked = false;
     this.ship.setPosition(this.defaultTarget.x, this.defaultTarget.y);
     this.target.copy(this.defaultTarget);
+
+    this.fpsText = this.add
+      .text(0, 0, "FPS --", {
+        backgroundColor: "#0f1624",
+        color: "#8fa6c7",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "11px",
+        padding: { x: 6, y: 3 },
+      })
+      .setOrigin(1, 0)
+      .setDepth(40);
+    this.positionFpsText();
 
     this.playerBullets = new ObjectPool(
       () => new Bullet(this, { owner: "player" }),
@@ -301,28 +293,8 @@ export class PlayScene extends Phaser.Scene {
       });
       this.levelRunner.start();
     } else {
-      this.waveScheduler = new WaveScheduler({
-        getEnemyCount: () => this.enemies.length,
-        getWaveDefinition: (index) => this.buildEndlessWave(index),
-        onWaveStart: (_wave, index) => {
-          this.playerFiring.reset();
-          this.hud.setStatus({
-            gold: this.gold,
-            hp: this.ship.hp,
-            maxHp: this.ship.maxHp,
-            wave: index + 1,
-          });
-        },
-        spawn: (event) =>
-          this.spawnEnemy(
-            event.enemyId,
-            event.x,
-            event.y,
-            this.currentWaveDifficulty,
-            event.overrides,
-          ),
-      });
-      this.waveScheduler.start(0);
+      this.game.events.emit("ui:route", "menu");
+      return;
     }
   }
 
@@ -330,6 +302,7 @@ export class PlayScene extends Phaser.Scene {
     const delta = deltaMs / 1000;
     this.parallax.update(delta);
     this.particles.update(delta);
+    this.updateFps(deltaMs);
     if (this.overlayShown) return;
     this.collisionResolver?.update(deltaMs);
     this.updateShip(delta);
@@ -341,8 +314,6 @@ export class PlayScene extends Phaser.Scene {
     this.updatePickups(delta);
     if (this.levelRunner) {
       this.levelRunner.update(deltaMs);
-    } else if (this.waveScheduler) {
-      this.waveScheduler.update(deltaMs);
     }
     const boss = this.getActiveBoss();
     const bossActiveNow = Boolean(boss);
@@ -392,14 +363,12 @@ export class PlayScene extends Phaser.Scene {
 
   private updateFiring(delta: number): void {
     if (!this.shipAlive) return;
-    const weapon = this.playerWeapon ?? WEAPONS[this.weaponId];
     this.playerFiring.update(
       delta,
       this.ship.x,
       this.ship.y,
       this.ship.radius,
-      weapon,
-      this.secondaryWeapon,
+      this.mountedWeapons,
       this.emitPlayerBullet,
       this.debugBulletSpec,
     );
@@ -458,7 +427,7 @@ export class PlayScene extends Phaser.Scene {
         continue;
       }
       enemy.update(
-        deltaMs * this.currentWaveDifficulty,
+        deltaMs,
         this.ship.x,
         this.ship.y,
         this.shipAlive,
@@ -648,7 +617,7 @@ export class PlayScene extends Phaser.Scene {
     def.style ??= base.style;
     def.rotation ??= base.rotation;
     def.rotationDeg ??= base.rotationDeg;
-    const worldX = this.playArea.x + x * this.playArea.width;
+    const worldX = this.playArea.x + (0.5 + x) * this.playArea.width;
     const worldY = this.playArea.y + y * this.playArea.height;
     const enemy = this.enemyPool.pop() ?? new Enemy(this, def, worldX, worldY);
     enemy.reset(def, worldX, worldY, hpMultiplier);
@@ -736,76 +705,6 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
-  private buildEndlessWave(waveIndex: number): WaveDefinition {
-    let wave = this.selectWaveDefinition(waveIndex);
-    if (!this.isBossWave(waveIndex)) {
-      wave = augmentWaveDefinition(wave, {
-        height: this.playArea.height,
-        waveNumber: waveIndex,
-        width: this.playArea.width,
-      });
-    }
-    this.currentWaveDifficulty = this.getDifficultyFactor(waveIndex);
-    console.info(`[Wave] ${wave.id}`);
-    return wave;
-  }
-
-  private selectWaveDefinition(waveNumber: number): WaveDefinition {
-    if (this.isBossWave(waveNumber)) {
-      return buildBossWave(
-        waveNumber,
-        this.playArea.width,
-        this.playArea.height,
-      );
-    }
-    if (waveNumber < WAVES.length) {
-      return WAVES[waveNumber];
-    }
-
-    const factoryIndex = waveNumber - WAVES.length;
-    const entry = this.pickFactoryEntry(factoryIndex);
-    this.lastFactoryIntensity = entry.intensity;
-
-    const baseWave = entry.factory({
-      height: this.playArea.height,
-      waveNumber,
-      width: this.playArea.width,
-    });
-
-    return Math.random() < 0.4 ? mirrorWaveDefinition(baseWave) : baseWave;
-  }
-
-  private isBossWave(waveNumber: number): boolean {
-    return (waveNumber + 1) % BOSS_WAVE_INTERVAL === 0;
-  }
-
-  private pickFactoryEntry(
-    factoryIndex: number,
-  ): (typeof WAVE_FACTORY_PACK)[number] {
-    const cycle: WaveIntensity[] = ["low", "medium", "high"];
-    const desired = cycle[factoryIndex % cycle.length];
-
-    let candidates = WAVE_FACTORY_PACK.filter(
-      (entry) => entry.intensity === desired,
-    );
-    if (desired === "high" && this.lastFactoryIntensity === "high") {
-      const fallback = WAVE_FACTORY_PACK.filter(
-        (entry) => entry.intensity !== "high",
-      );
-      if (fallback.length > 0) candidates = fallback;
-    }
-
-    if (candidates.length === 0) {
-      candidates = WAVE_FACTORY_PACK;
-    }
-
-    return candidates[Math.floor(Math.random() * candidates.length)];
-  }
-
-  private getDifficultyFactor(waveIndex: number): number {
-    return Math.min(1 + waveIndex * 0.03, 1.8);
-  }
-
   private clearWaveEntities(): void {
     for (const enemy of this.enemies) {
       enemy.deactivate();
@@ -816,12 +715,6 @@ export class PlayScene extends Phaser.Scene {
     this.playerBullets.forEachActive((bullet) => bullet.deactivate());
     this.enemyBullets.forEachActive((bullet) => bullet.deactivate());
     this.goldPickups.forEachActive((pickup) => pickup.deactivate());
-  }
-
-  private skipWave(): void {
-    if (this.isGameOver || this.overlayShown || this.levelRunner) return;
-    this.clearWaveEntities();
-    this.waveScheduler?.skipToNext();
   }
 
   private goToShop(): void {
@@ -857,7 +750,6 @@ export class PlayScene extends Phaser.Scene {
 
     const keyboard = this.input.keyboard;
     if (keyboard) {
-      keyboard.on("keydown-N", () => this.skipWave());
       keyboard.on("keydown-ONE", () => this.setDebugBulletSpec("orb"));
       keyboard.on("keydown-TWO", () => this.setDebugBulletSpec("dart"));
       keyboard.on("keydown-THREE", () => this.setDebugBulletSpec("missile"));
@@ -915,6 +807,23 @@ export class PlayScene extends Phaser.Scene {
     if (this.parallax) this.parallax.setBounds(this.playArea);
     if (this.hud) this.hud.setBounds(this.playArea);
     if (this.levelRunner) this.levelRunner.setBounds(this.playArea);
+    this.positionFpsText();
+  }
+
+  private updateFps(deltaMs: number): void {
+    if (!this.fpsText) return;
+    this.fpsTimerMs += deltaMs;
+    if (this.fpsTimerMs < 250) return;
+    this.fpsTimerMs = 0;
+    const fps = Math.round(this.game.loop.actualFps);
+    this.fpsText.setText(`FPS ${fps}`);
+  }
+
+  private positionFpsText(): void {
+    if (!this.fpsText) return;
+    const x = this.playArea.x + this.playArea.width - 12;
+    const y = this.playArea.y + 36;
+    this.fpsText.setPosition(x, y);
   }
 
   private drawPlayAreaFrame(pulseStrength: number): void {
@@ -972,19 +881,29 @@ export class PlayScene extends Phaser.Scene {
 
   private updateOuterFrameVars(): void {
     const root = document.documentElement;
-    root.style.setProperty("--play-x", `${this.playArea.x}px`);
-    root.style.setProperty("--play-y", `${this.playArea.y}px`);
-    root.style.setProperty("--play-w", `${this.playArea.width}px`);
-    root.style.setProperty("--play-h", `${this.playArea.height}px`);
+    const canvasBounds = this.game.canvas.getBoundingClientRect();
+    const scaleX = canvasBounds.width / this.scale.width;
+    const scaleY = canvasBounds.height / this.scale.height;
+    const playX = canvasBounds.left + this.playArea.x * scaleX;
+    const playY = canvasBounds.top + this.playArea.y * scaleY;
+    const playW = this.playArea.width * scaleX;
+    const playH = this.playArea.height * scaleY;
+    root.style.setProperty("--play-x", `${playX}px`);
+    root.style.setProperty("--play-y", `${playY}px`);
+    root.style.setProperty("--play-w", `${playW}px`);
+    root.style.setProperty("--play-h", `${playH}px`);
     root.style.setProperty(
       "--play-cx",
-      `${this.playArea.x + this.playArea.width / 2}px`,
+      `${playX + playW / 2}px`,
     );
     root.style.setProperty(
       "--play-cy",
-      `${this.playArea.y + this.playArea.height / 2}px`,
+      `${playY + playH / 2}px`,
     );
-    root.style.setProperty("--play-r", `${PLAYFIELD_CORNER_RADIUS}px`);
+    root.style.setProperty(
+      "--play-r",
+      `${PLAYFIELD_CORNER_RADIUS * scaleX}px`,
+    );
   }
 
   private onResize = (_gameSize: Phaser.Structs.Size): void => {
@@ -1017,7 +936,6 @@ export class PlayScene extends Phaser.Scene {
 
   private getWaveDisplay(): number {
     if (this.levelRunner) return this.levelRunner.getWaveNumber();
-    if (this.waveScheduler) return this.waveScheduler.getWaveNumber();
     return 0;
   }
 }

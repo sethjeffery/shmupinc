@@ -3,9 +3,9 @@ import { z } from "zod";
 export const CONTENT_KINDS = [
   "beats",
   "enemies",
+  "guns",
   "hazards",
   "levels",
-  "secondaryWeapons",
   "ships",
   "shops",
   "waves",
@@ -15,16 +15,47 @@ export const CONTENT_KINDS = [
 export type ContentKind = (typeof CONTENT_KINDS)[number];
 
 const idSchema = z.string().min(1);
+const idField = (description: string): z.ZodString =>
+  idSchema.describe(description);
+const idArray = (description: string): z.ZodArray<z.ZodString> =>
+  z.array(idSchema).describe(description);
 
-const colorSchema = z.union([
-  z.number(),
-  z.string().regex(/^(#|0x)?[0-9a-fA-F]{6}$/),
-]);
+const colorSchema = z
+  .string()
+  .regex(/^(#|0x)?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+const colorField = (description: string): typeof colorSchema =>
+  colorSchema.describe(`${description} (hex string).`);
 
 const vec2Schema = z.object({
-  x: z.number(),
-  y: z.number(),
+  x: z.number().describe("Local X offset in pixels."),
+  y: z.number().describe("Local Y offset in pixels."),
 });
+
+const gunPointSchema = z.object({
+  x: z.number().describe("Normalized X (-1..1, 0 centered)."),
+  y: z.number().describe("Normalized Y (-1..1, 0 centered)."),
+});
+
+const gunLineSchema = z.object({
+  from: gunPointSchema.describe("Line start point."),
+  to: gunPointSchema.describe("Line end point."),
+});
+
+const gunSchema = z.object({
+  description: z.string().describe("Player-facing description."),
+  fillColor: colorField("Optional fill color override.").optional(),
+  id: idField("Unique gun id."),
+  lineColor: colorField("Optional line color override.").optional(),
+  lines: z.array(gunLineSchema).describe("Optional line accents.").optional(),
+  name: z.string().describe("Display name."),
+  outline: z
+    .array(gunPointSchema)
+    .describe("Closed outline points for the gun body."),
+});
+
+const weaponZoneSchema = z.enum(["front", "rear", "side"]);
+
+const weaponSizeSchema = z.enum(["large", "small"]);
 
 const pressureKindSchema = z.enum([
   "enemy",
@@ -35,299 +66,457 @@ const pressureKindSchema = z.enum([
 ]);
 
 const pressureProfileSchema = z.object({
-  primary: pressureKindSchema,
-  secondary: z.array(pressureKindSchema).optional(),
+  primary: pressureKindSchema.describe(
+    "Dominant gameplay pressure for the level.",
+  ),
+  secondary: z
+    .array(pressureKindSchema)
+    .describe("Optional supporting pressures for pacing and theme.")
+    .default([]),
 });
 
 const hazardMotionSchema = z.union([
   z.object({
-    amplitude: z.number(),
-    axis: z.enum(["x", "y"]),
-    kind: z.literal("sine"),
-    periodMs: z.number().positive(),
-    phase: z.number().optional(),
+    amplitude: z.number().describe("Normalized amplitude (0..1 of axis)."),
+    axis: z.enum(["x", "y"]).describe("Axis to move along."),
+    kind: z.literal("sine").describe("Sine motion."),
+    periodMs: z.number().positive().describe("Full cycle duration in ms."),
+    phase: z.number().describe("Phase offset in radians.").default(0),
   }),
   z.object({
-    axis: z.enum(["x", "y"]),
-    durationMs: z.number().positive(),
-    from: z.number(),
-    kind: z.literal("lerp"),
-    to: z.number(),
-    yoyo: z.boolean().optional(),
+    axis: z.enum(["x", "y"]).describe("Axis to move along."),
+    durationMs: z
+      .number()
+      .positive()
+      .describe("Time to move from from -> to (ms)."),
+    from: z.number().describe("Start offset (normalized)."),
+    kind: z.literal("lerp").describe("Linear motion."),
+    to: z.number().describe("End offset (normalized)."),
+    yoyo: z
+      .boolean()
+      .describe("Reverse back to from when done.")
+      .default(false),
   }),
 ]);
 
 const laneWallSchema = z.object({
-  damageOnTouch: z.boolean().optional(),
-  fillColor: colorSchema.optional(),
-  id: idSchema,
-  lineColor: colorSchema.optional(),
-  motion: hazardMotionSchema.optional(),
+  damageOnTouch: z.boolean().describe("Deal damage on contact.").default(false),
+  fillColor: colorField("Fill color (kept subtle).").default("#0b1220"),
+  id: idField("Unique hazard id."),
+  lineColor: colorField("Outline color.").default("#1b3149"),
+  motion: hazardMotionSchema
+    .describe("Optional motion applied to the center.")
+    .optional(),
   rect: z.object({
-    h: z.number(),
-    w: z.number(),
-    x: z.number(),
-    y: z.number(),
+    h: z.number().describe("Normalized height (0..1 of playfield)."),
+    w: z.number().describe("Normalized width (0..1 of playfield)."),
+    x: z.number().describe("Normalized center X (0..1)."),
+    y: z.number().describe("Normalized center Y (0..1)."),
   }),
-  type: z.literal("laneWall"),
+  type: z.literal("laneWall").describe("Hazard type (lane wall)."),
 });
 
 const moveStepSchema = z.union([
   z.object({
-    durationMs: z.number(),
-    ease: z.enum(["in", "inOut", "linear", "out"]).optional(),
-    kind: z.literal("bezier"),
-    points: z.array(vec2Schema),
+    durationMs: z.number().describe("Step duration (ms)."),
+    ease: z
+      .enum(["in", "inOut", "outIn", "linear", "out"])
+      .describe("Easing curve.")
+      .default("linear")
+      .optional(),
+    kind: z.literal("bezier").describe("Follow a bezier curve."),
+    points: z
+      .array(vec2Schema)
+      .describe(
+        "Bezier points in local space (0,0 is top-center in the editor).",
+      ),
   }),
   z.object({
-    durationMs: z.number(),
-    ease: z.enum(["in", "inOut", "linear", "out"]).optional(),
-    kind: z.literal("dashTo"),
-    to: vec2Schema,
+    durationMs: z.number().describe("Step duration (ms)."),
+    ease: z
+      .enum(["in", "inOut", "outIn", "linear", "out"])
+      .describe("Easing curve.")
+      .default("linear"),
+    kind: z.literal("dashTo").describe("Dash to a local offset."),
+    to: vec2Schema.describe("Target offset in local space."),
   }),
   z.object({
-    durationMs: z.number(),
-    kind: z.literal("hover"),
+    durationMs: z.number().describe("Step duration (ms)."),
+    kind: z.literal("hover").describe("Hold position."),
   }),
   z.object({
-    amp: z.number(),
-    durationMs: z.number(),
-    freq: z.number(),
-    kind: z.literal("sineDown"),
-    speed: z.number(),
+    amp: z.number().describe("Vertical amplitude."),
+    durationMs: z.number().describe("Step duration (ms)."),
+    freq: z.number().describe("Sine frequency."),
+    kind: z.literal("sineDown").describe("Sine drift downward."),
+    speed: z.number().describe("Downward speed."),
   }),
 ]);
 
 const moveScriptSchema = z.object({
-  loop: z.boolean().optional(),
-  steps: z.array(moveStepSchema),
+  loop: z
+    .boolean()
+    .describe("Loop steps after finishing.")
+    .default(false)
+    .optional(),
+  steps: z.array(moveStepSchema).describe("Ordered movement steps."),
 });
 
 const aimSchema = z.union([
   z.object({
-    kind: z.literal("atPlayer"),
+    kind: z.literal("atPlayer").describe("Aim at player at fire time."),
   }),
   z.object({
-    angleDeg: z.number(),
-    kind: z.literal("fixed"),
+    angleDeg: z.number().describe("Fixed angle in degrees."),
+    kind: z.literal("fixed").describe("Fire at a fixed angle."),
   }),
   z.object({
-    fromDeg: z.number(),
-    kind: z.literal("sweep"),
-    periodMs: z.number(),
-    toDeg: z.number(),
+    fromDeg: z.number().describe("Sweep start angle."),
+    kind: z.literal("sweep").describe("Sweep between angles."),
+    periodMs: z.number().describe("Sweep period (ms)."),
+    toDeg: z.number().describe("Sweep end angle."),
   }),
 ]);
 
 const bulletHomingSchema = z.object({
-  acquireRadius: z.number(),
-  turnRateRadPerSec: z.number(),
+  acquireRadius: z.number().describe("Acquire radius for homing."),
+  turnRateRadPerSec: z.number().describe("Max turn rate (rad/s)."),
 });
 
 const bulletAoeSchema = z.object({
-  damage: z.number(),
-  radius: z.number(),
+  damage: z.number().describe("AoE damage on detonation."),
+  radius: z.number().describe("AoE radius in pixels."),
 });
 
 const bulletTrailSchema = z.object({
-  color: colorSchema,
-  count: z.number().optional(),
-  intervalMs: z.number().optional(),
-  sizeMax: z.number().optional(),
-  sizeMin: z.number().optional(),
+  color: colorField("Trail color."),
+  count: z.number().describe("Trail segment count.").optional(),
+  intervalMs: z.number().describe("Trail spawn interval (ms).").optional(),
+  sizeMax: z.number().describe("Max trail size.").optional(),
+  sizeMin: z.number().describe("Min trail size.").optional(),
 });
 
 const bulletSpecSchema = z.object({
-  aoe: bulletAoeSchema.optional(),
-  color: colorSchema.optional(),
-  damage: z.number(),
-  homing: bulletHomingSchema.optional(),
-  kind: z.enum(["bomb", "dart", "missile", "orb"]),
-  length: z.number().optional(),
-  lifetimeMs: z.number().optional(),
-  radius: z.number(),
-  speed: z.number(),
-  thickness: z.number().optional(),
-  trail: bulletTrailSchema.optional(),
+  aoe: bulletAoeSchema.describe("Area of effect.").optional(),
+  color: colorField("Bullet color.").optional(),
+  damage: z.number().describe("Damage per hit."),
+  homing: bulletHomingSchema.describe("Homing settings.").optional(),
+  kind: z.enum(["bomb", "dart", "missile", "orb"]).describe("Bullet kind."),
+  length: z.number().describe("Visual length (for darts).").optional(),
+  lifetimeMs: z.number().describe("Lifetime in ms.").optional(),
+  radius: z.number().describe("Collision radius in pixels."),
+  speed: z.number().describe("Bullet speed."),
+  thickness: z.number().describe("Stroke thickness in pixels.").optional(),
+  trail: bulletTrailSchema.describe("Trail settings.").optional(),
 });
 
 const fireStepSchema = z.union([
   z.object({
-    aim: aimSchema,
-    bullet: bulletSpecSchema,
-    count: z.number(),
-    intervalMs: z.number(),
-    kind: z.literal("burst"),
-    originOffsets: z.array(vec2Schema).optional(),
+    aim: aimSchema.describe("Aim definition."),
+    bullet: bulletSpecSchema.describe("Bullet spec."),
+    count: z.number().describe("Shots per burst."),
+    intervalMs: z.number().describe("Burst interval (ms)."),
+    kind: z.literal("burst").describe("Fire a short burst."),
+    originOffsets: z
+      .array(vec2Schema)
+      .describe("Local muzzle offsets.")
+      .optional(),
   }),
   z.object({
-    durationMs: z.number(),
-    kind: z.literal("charge"),
+    durationMs: z.number().describe("Charge duration (ms)."),
+    kind: z.literal("charge").describe("Pause before firing."),
   }),
   z.object({
-    durationMs: z.number(),
-    kind: z.literal("cooldown"),
+    durationMs: z.number().describe("Cooldown duration (ms)."),
+    kind: z.literal("cooldown").describe("Pause after firing."),
   }),
   z.object({
-    aim: aimSchema,
-    bullet: bulletSpecSchema,
-    durationMs: z.number(),
-    kind: z.literal("spray"),
-    originOffsets: z.array(vec2Schema).optional(),
-    ratePerSec: z.number(),
+    aim: aimSchema.describe("Aim definition."),
+    bullet: bulletSpecSchema.describe("Bullet spec."),
+    durationMs: z.number().describe("Spray duration (ms)."),
+    kind: z.literal("spray").describe("Continuous fire."),
+    originOffsets: z
+      .array(vec2Schema)
+      .describe("Local muzzle offsets.")
+      .optional(),
+    ratePerSec: z.number().describe("Shots per second."),
   }),
 ]);
 
 const fireScriptSchema = z.object({
-  loop: z.boolean().optional(),
-  steps: z.array(fireStepSchema),
+  loop: z
+    .boolean()
+    .describe("Loop steps after finishing.")
+    .default(false)
+    .optional(),
+  steps: z.array(fireStepSchema).describe("Ordered fire steps."),
 });
 
-const weaponPatternSchema = z.union([
-  z.object({
-    anglesDeg: z.array(z.number()),
-    kind: z.literal("angles"),
-  }),
-  z.object({
-    count: z.number(),
-    kind: z.literal("fan"),
-    spreadDeg: z.number(),
-  }),
-]);
+const weaponShotSchema = z.object({
+  angleDeg: z
+    .number()
+    .describe("Per-bullet angle offset (deg), added to the mount's angle.")
+    .default(0),
+  offset: vec2Schema
+    .describe(
+      "Local muzzle offset for this bullet (rotated by shot direction).",
+    )
+    .default({ x: 0, y: 0 }),
+});
 
 const enemyStyleSchema = z.object({
-  fillColor: colorSchema.optional(),
-  lineColor: colorSchema.optional(),
-  shape: z.enum([
-    "asteroid",
-    "bomber",
-    "boss",
-    "crossfire",
-    "sine",
-    "skitter",
-    "snake",
-    "sniper",
-    "spinner",
-    "swooper",
-  ]).optional(),
+  fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
+  lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
+  shape: z
+    .enum([
+      "asteroid",
+      "bomber",
+      "boss",
+      "crossfire",
+      "sine",
+      "skitter",
+      "snake",
+      "sniper",
+      "spinner",
+      "swooper",
+      "sidesweeper",
+    ])
+    .describe("Enemy shape.")
+    .default("swooper"),
+  vector: z
+    .object({
+      lines: z
+        .array(
+          z.object({
+            from: vec2Schema.describe("Line start point."),
+            to: vec2Schema.describe("Line end point."),
+          }),
+        )
+        .describe("Optional interior lines for detail.")
+        .optional(),
+      outline: z
+        .array(vec2Schema)
+        .describe("Closed outline points, relative to enemy radius."),
+    })
+    .describe("Custom vector shape (overrides built-in silhouette).")
+    .optional(),
 });
 
 const bossPhaseSchema = z.object({
-  fire: fireScriptSchema.optional(),
-  hpThreshold: z.number(),
-  move: moveScriptSchema.optional(),
+  fire: fireScriptSchema.describe("Fire script for this phase.").optional(),
+  hpThreshold: z
+    .number()
+    .describe("HP ratio at or below which this phase starts."),
+  move: moveScriptSchema.describe("Move script for this phase.").optional(),
 });
 
 const enemySchema = z.object({
-  fire: fireScriptSchema,
+  fire: fireScriptSchema.describe("Base fire script."),
   goldDrop: z.object({
-    max: z.number(),
-    min: z.number(),
+    max: z.number().describe("Maximum gold drop."),
+    min: z.number().describe("Minimum gold drop."),
   }),
-  hp: z.number(),
-  id: idSchema,
-  move: moveScriptSchema,
-  phases: z.array(bossPhaseSchema).optional(),
-  radius: z.number(),
-  rotation: z.enum(["fixed", "movement"]).optional(),
-  rotationDeg: z.number().optional(),
-  style: enemyStyleSchema.optional(),
+  hp: z.number().describe("Total hit points."),
+  id: idField("Unique enemy id."),
+  move: moveScriptSchema.describe("Base move script."),
+  phases: z.array(bossPhaseSchema).describe("Optional boss phases.").optional(),
+  radius: z.number().describe("Collision radius in pixels."),
+  rotation: z
+    .enum(["fixed", "movement"])
+    .describe("How the sprite rotates.")
+    .default("movement"),
+  rotationDeg: z.number().describe("Fixed rotation angle (deg).").default(0),
+  style: enemyStyleSchema.describe("Visual styling overrides.").optional(),
 });
 
 const spawnSchema = z.object({
-  atMs: z.number().min(0),
-  enemyId: idSchema,
-  overrides: z.record(z.string(), z.unknown()).optional(),
-  x: z.number(),
-  y: z.number(),
+  atMs: z.number().min(0).describe("Spawn time since wave start (ms)."),
+  enemyId: idField("Enemy id to spawn."),
+  overrides: z
+    .record(z.string(), z.unknown())
+    .describe("Partial overrides applied to the enemy definition.")
+    .optional(),
+  x: z
+    .number()
+    .describe(
+      "Normalized X offset from center (-0.5..0.5 visible, 0 centered).",
+    ),
+  y: z
+    .number()
+    .describe("Normalized Y position (0..1 visible, negative spawns above)."),
 });
 
 const waveSchema = z.object({
-  id: idSchema,
-  spawns: z.array(spawnSchema),
+  id: idField("Unique wave id."),
+  spawns: z.array(spawnSchema).describe("Spawn events for this wave."),
 });
 
 const beatSchema = z.object({
-  id: idSchema,
-  lines: z.array(z.string()),
-  title: z.string(),
+  id: idField("Unique beat id."),
+  lines: z.array(z.string()).describe("Story lines shown in the beat overlay."),
+  title: z.string().describe("Headline for the beat overlay."),
 });
 
 const shopSchema = z.object({
-  allowedSecondaryWeapons: z.array(idSchema).optional(),
-  allowedShips: z.array(idSchema).optional(),
-  allowedWeapons: z.array(idSchema).optional(),
+  allowedShips: idArray(
+    "Restrict to these ship ids (omit to allow all).",
+  ).optional(),
+  allowedWeapons: idArray(
+    "Restrict to these weapon ids (omit to allow all).",
+  ).optional(),
   caps: z
     .object({
-      primaryCost: z.number().min(0).optional(),
-      secondaryCost: z.number().min(0).optional(),
-      shipCost: z.number().min(0).optional(),
+      shipCost: z
+        .number()
+        .min(0)
+        .describe("Max cost allowed for ships.")
+        .optional(),
+      weaponCost: z
+        .number()
+        .min(0)
+        .describe("Max cost allowed for weapons.")
+        .optional(),
     })
+    .describe("Optional cost caps for shop items.")
     .optional(),
-  id: idSchema,
+  id: idField("Unique shop id."),
 });
 
 const winConditionSchema = z.union([
-  z.object({ kind: z.literal("clearWaves") }),
-  z.object({ bossId: idSchema, kind: z.literal("defeatBoss") }),
-  z.object({ durationMs: z.number().positive(), kind: z.literal("survive") }),
+  z.object({
+    kind: z.literal("clearWaves").describe("Win when all waves finish."),
+  }),
+  z.object({
+    bossId: idField("Boss enemy id."),
+    kind: z.literal("defeatBoss").describe("Win when the boss is defeated."),
+  }),
+  z.object({
+    durationMs: z.number().positive().describe("Required survival time (ms)."),
+    kind: z.literal("survive").describe("Win by surviving the timer."),
+  }),
 ]);
 
 const levelSchema = z.object({
-  endCondition: winConditionSchema.optional(),
-  hazardIds: z.array(idSchema).optional(),
-  id: idSchema,
-  postBeatId: idSchema.optional(),
-  preBeatId: idSchema.optional(),
-  pressureProfile: pressureProfileSchema,
-  shopId: idSchema.optional(),
-  title: z.string(),
-  waveIds: z.array(idSchema),
-  winCondition: winConditionSchema,
+  endCondition: winConditionSchema
+    .describe("Optional override that ends the level early.")
+    .optional(),
+  hazardIds: idArray("Hazards to spawn at level start.").default([]),
+  id: idField("Unique level id."),
+  postBeatId: idField("Beat id shown after victory.").optional(),
+  preBeatId: idField("Beat id shown before the shop.").optional(),
+  pressureProfile: pressureProfileSchema.describe("Intended pressure mix."),
+  shopId: idField("Shop rules to apply before play.").optional(),
+  title: z.string().describe("Level title shown in UI."),
+  waveIds: idArray("Ordered list of wave ids to run."),
+  winCondition: winConditionSchema.describe("Primary victory condition."),
+});
+
+const weaponStatsSchema = z.object({
+  angleDeg: z
+    .number()
+    .describe("Angle offset from straight up (deg).")
+    .default(0)
+    .optional(),
+  bullet: bulletSpecSchema
+    .extend({
+      speed: z
+        .number()
+        .describe("Deprecated for weapons; use stats.speed instead.")
+        .optional(),
+    })
+    .describe("Bullet spec (minus speed)."),
+  fireRate: z.number().describe("Shots per second."),
+  multiShotMode: z
+    .enum(["simultaneous", "roundRobin"])
+    .describe("How multi-shot patterns fire (all at once or cycling).")
+    .default("simultaneous")
+    .optional(),
+  shots: z
+    .array(weaponShotSchema)
+    .describe("Per-bullet definitions (angle + offset).")
+    .default([{ angleDeg: 0, offset: { x: 0, y: 0 } }]),
+  speed: z
+    .number()
+    .describe("Projectile speed (applied to all bullets fired)."),
+});
+
+const weaponZoneStatsSchema = weaponStatsSchema
+  .partial()
+  .describe("Overrides applied when mounted in a specific zone.");
+
+const shipVectorSchema = z.object({
+  lines: z
+    .array(
+      z.object({
+        from: vec2Schema.describe("Line start point."),
+        to: vec2Schema.describe("Line end point."),
+      }),
+    )
+    .describe("Optional interior lines for detail.")
+    .optional(),
+  outline: z
+    .array(vec2Schema)
+    .describe("Closed outline points, relative to ship radius."),
 });
 
 const weaponSchema = z.object({
-  bullet: bulletSpecSchema,
-  cost: z.number().min(0),
-  description: z.string(),
-  fireRate: z.number(),
-  icon: z.enum(["bomb", "dart", "missile", "orb"]),
-  id: idSchema,
-  muzzleOffsets: z.array(vec2Schema).optional(),
-  name: z.string(),
-  pattern: weaponPatternSchema,
-});
-
-const secondaryWeaponSchema = z.object({
-  bullet: bulletSpecSchema,
-  cost: z.number().min(0),
-  description: z.string(),
-  fireRate: z.number(),
-  id: idSchema,
-  muzzleOffsets: z.array(vec2Schema).optional(),
-  name: z.string(),
-  pattern: weaponPatternSchema,
+  cost: z.number().min(0).describe("Shop cost."),
+  description: z.string().describe("Player-facing description."),
+  gunId: idField("Gun model id used for icon + mount render."),
+  id: idField("Unique weapon id."),
+  name: z.string().describe("Display name."),
+  size: weaponSizeSchema.describe("Mount size required."),
+  stats: weaponStatsSchema.describe("Base weapon stats."),
+  zones: z.array(weaponZoneSchema).describe("Supported mount zones."),
+  zoneStats: z
+    .object({
+      front: weaponZoneStatsSchema.optional(),
+      rear: weaponZoneStatsSchema.optional(),
+      side: weaponZoneStatsSchema.optional(),
+    })
+    .describe("Per-zone stat overrides.")
+    .optional(),
 });
 
 const shipSchema = z.object({
-  color: colorSchema,
-  cost: z.number().min(0),
-  description: z.string(),
-  id: idSchema,
-  magnetMultiplier: z.number(),
-  maxHp: z.number(),
-  moveSpeed: z.number(),
-  name: z.string(),
-  radiusMultiplier: z.number(),
-  shape: z.enum(["bulwark", "interceptor", "scout", "starling"]),
+  color: colorField("Ship fill color."),
+  cost: z.number().min(0).describe("Unlock cost."),
+  description: z.string().describe("Player-facing description."),
+  id: idField("Unique ship id."),
+  magnetMultiplier: z.number().describe("Pickup magnet multiplier."),
+  maxHp: z.number().describe("Max HP."),
+  mounts: z
+    .array(
+      z.object({
+        id: idField("Unique mount id within this ship."),
+        offset: z
+          .object({
+            x: z.number().describe("Mount X offset in ship-radius units."),
+            y: z.number().describe("Mount Y offset in ship-radius units."),
+          })
+          .describe("Offset from ship center."),
+        size: weaponSizeSchema.describe("Mount size."),
+        zone: weaponZoneSchema.describe("Mount zone."),
+      }),
+    )
+    .describe("Weapon mounts for this ship."),
+  moveSpeed: z.number().describe("Movement speed scalar."),
+  name: z.string().describe("Display name."),
+  radiusMultiplier: z.number().describe("Collision radius multiplier."),
+  shape: z
+    .enum(["bulwark", "interceptor", "scout", "starling"])
+    .describe("Ship silhouette."),
+  vector: shipVectorSchema
+    .describe("Custom vector shape (overrides built-in silhouette).")
+    .optional(),
 });
 
 export const contentSchemas = {
   beats: beatSchema,
   enemies: enemySchema,
+  guns: gunSchema,
   hazards: laneWallSchema,
   levels: levelSchema,
-  secondaryWeapons: secondaryWeaponSchema,
   ships: shipSchema,
   shops: shopSchema,
   waves: waveSchema,
@@ -336,9 +525,9 @@ export const contentSchemas = {
 
 export type BeatContent = z.infer<typeof beatSchema>;
 export type EnemyContent = z.infer<typeof enemySchema>;
+export type GunContent = z.infer<typeof gunSchema>;
 export type HazardContent = z.infer<typeof laneWallSchema>;
 export type LevelContent = z.infer<typeof levelSchema>;
-export type SecondaryWeaponContent = z.infer<typeof secondaryWeaponSchema>;
 export type ShipContent = z.infer<typeof shipSchema>;
 export type ShopContent = z.infer<typeof shopSchema>;
 export type WaveContent = z.infer<typeof waveSchema>;

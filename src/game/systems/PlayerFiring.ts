@@ -1,18 +1,19 @@
-import type { BulletSpec } from '../data/scripts';
-import type { SecondaryWeaponDefinition } from '../data/secondaryWeapons';
-import type { WeaponPattern } from '../data/weaponPatterns';
-import type { WeaponDefinition } from '../data/weapons';
-import type { EmitBullet } from './FireScriptRunner';
+import type { BulletSpec } from "../data/scripts";
+import type { MountedWeapon } from "../data/save";
+import type { WeaponShot } from "../data/weaponTypes";
+import type { EmitBullet } from "./FireScriptRunner";
 
-import { resolveWeaponAngles } from '../data/weaponPatterns';
+import { DEFAULT_WEAPON_SHOTS } from "../data/weaponTypes";
 
 export class PlayerFiring {
-  private primaryTimer = 0;
-  private secondaryTimer = 0;
+  private timers: Record<string, number> = {};
+  private activeIds: string[] = [];
+  private burstIndices: Record<string, number> = {};
 
   reset(): void {
-    this.primaryTimer = 0;
-    this.secondaryTimer = 0;
+    this.timers = {};
+    this.activeIds.length = 0;
+    this.burstIndices = {};
   }
 
   update(
@@ -20,97 +21,145 @@ export class PlayerFiring {
     shipX: number,
     shipY: number,
     shipRadius: number,
-    primary: null | WeaponDefinition,
-    secondary: null | SecondaryWeaponDefinition,
+    mountedWeapons: MountedWeapon[],
     emit: EmitBullet,
     debugBulletSpec?: BulletSpec,
   ): void {
-    if (!primary) return;
-    this.primaryTimer += delta;
-    const primaryInterval = 1 / primary.fireRate;
-    if (this.primaryTimer >= primaryInterval) {
-      this.primaryTimer -= primaryInterval;
-      this.emitPrimaryBurst(
-        primary,
-        shipX,
-        shipY - shipRadius,
-        shipRadius,
-        debugBulletSpec ?? primary.bullet,
-        emit,
-      );
+    if (mountedWeapons.length === 0) return;
+    this.activeIds.length = 0;
+    for (const mounted of mountedWeapons) {
+      const weaponId = mounted.instanceId;
+      this.activeIds.push(weaponId);
+      const rate = Math.max(0.05, mounted.stats.fireRate);
+      const interval = 1 / rate;
+      const timer = (this.timers[weaponId] ?? 0) + delta;
+      if (timer >= interval) {
+        this.timers[weaponId] = timer - interval;
+        const resolvedBullet = {
+          ...(debugBulletSpec ?? mounted.stats.bullet),
+          speed: mounted.stats.speed,
+        };
+        this.emitWeaponBurst(
+          weaponId,
+          mounted,
+          shipX,
+          shipY,
+          shipRadius,
+          resolvedBullet,
+          emit,
+        );
+      } else {
+        this.timers[weaponId] = timer;
+      }
     }
 
-    if (!secondary) return;
-    this.secondaryTimer += delta;
-    const secondaryInterval = 1 / secondary.fireRate;
-    if (this.secondaryTimer >= secondaryInterval) {
-      this.secondaryTimer -= secondaryInterval;
-      this.emitSecondaryBurst(
-        secondary,
-        shipX,
-        shipY + shipRadius * 0.1,
-        shipRadius,
-        debugBulletSpec ?? secondary.bullet,
-        emit,
-      );
+    for (const id in this.timers) {
+      if (!this.activeIds.includes(id)) {
+        delete this.timers[id];
+        delete this.burstIndices[id];
+      }
     }
   }
 
-  private emitPrimaryBurst(
-    weapon: WeaponDefinition,
-    originX: number,
-    originY: number,
+  private emitWeaponBurst(
+    weaponId: string,
+    mounted: MountedWeapon,
+    shipX: number,
+    shipY: number,
     shipRadius: number,
     bulletSpec: BulletSpec,
     emit: EmitBullet,
   ): void {
+    const mount = mounted.mount;
+    const stats = mounted.stats;
+    const mountX = shipX + mount.offset.x * shipRadius;
+    const mountY = shipY + mount.offset.y * shipRadius;
+    const mirror = mount.offset.x < 0;
+    const angleSign = mirror ? -1 : 1;
+    const angleOffset = (stats.angleDeg ?? 0) * (Math.PI / 180) * angleSign;
     this.emitPattern(
-      weapon.pattern,
-      originX,
-      originY,
+      weaponId,
+      stats.shots ?? DEFAULT_WEAPON_SHOTS,
+      stats.multiShotMode,
+      mountX,
+      mountY,
       shipRadius,
       bulletSpec,
       emit,
-      weapon.muzzleOffsets,
-    );
-  }
-
-  private emitSecondaryBurst(
-    weapon: SecondaryWeaponDefinition,
-    originX: number,
-    originY: number,
-    shipRadius: number,
-    bulletSpec: BulletSpec,
-    emit: EmitBullet,
-  ): void {
-    this.emitPattern(
-      weapon.pattern,
-      originX,
-      originY,
-      shipRadius,
-      bulletSpec,
-      emit,
-      weapon.muzzleOffsets,
+      angleOffset,
+      angleSign,
     );
   }
 
   private emitPattern(
-    pattern: WeaponPattern,
+    weaponId: string,
+    shots: WeaponShot[],
+    multiShotMode?: MountedWeapon["stats"]["multiShotMode"],
     originX: number,
     originY: number,
     shipRadius: number,
     bulletSpec: BulletSpec,
     emit: EmitBullet,
-    muzzleOffsets?: { x: number; y: number }[],
+    angleOffset = 0,
+    angleSign = 1,
   ): void {
     const baseAngle = -Math.PI / 2;
-    const angles = resolveWeaponAngles(pattern);
-    for (let i = 0; i < angles.length; i += 1) {
-      const angle = baseAngle + (angles[i] * Math.PI) / 180;
-      const offset = muzzleOffsets?.[i];
-      const offsetX = (offset?.x ?? 0) * shipRadius;
-      const offsetY = (offset?.y ?? 0) * shipRadius;
-      emit(originX + offsetX, originY + offsetY, angle, bulletSpec);
+    const count = Math.max(1, shots.length);
+    if (multiShotMode === "roundRobin" && count > 1) {
+      const index = this.burstIndices[weaponId] ?? 0;
+      this.burstIndices[weaponId] = (index + 1) % count;
+      this.emitSingleShot(
+        shots,
+        index,
+        baseAngle,
+        originX,
+        originY,
+        shipRadius,
+        bulletSpec,
+        emit,
+        angleOffset,
+        angleSign,
+      );
+      return;
     }
+    for (let i = 0; i < count; i += 1) {
+      this.emitSingleShot(
+        shots,
+        i,
+        baseAngle,
+        originX,
+        originY,
+        shipRadius,
+        bulletSpec,
+        emit,
+        angleOffset,
+        angleSign,
+      );
+    }
+  }
+
+  private emitSingleShot(
+    shots: WeaponShot[],
+    index: number,
+    baseAngle: number,
+    originX: number,
+    originY: number,
+    shipRadius: number,
+    bulletSpec: BulletSpec,
+    emit: EmitBullet,
+    angleOffset: number,
+    angleSign: number,
+  ): void {
+    const shot = shots[index] ?? DEFAULT_WEAPON_SHOTS[0];
+    const shotAngle = (shot.angleDeg ?? 0) * angleSign;
+    const relativeAngle = angleOffset + (shotAngle * Math.PI) / 180;
+    const angle = baseAngle + relativeAngle;
+    const localX = (shot.offset?.x ?? 0) * shipRadius * angleSign;
+    const localY = (shot.offset?.y ?? 0) * shipRadius;
+    const cos = Math.cos(relativeAngle);
+    const sin = Math.sin(relativeAngle);
+    const offsetX = localX * cos - localY * sin;
+    const offsetY = localX * sin + localY * cos;
+    emit(originX + offsetX, originY + offsetY, angle, bulletSpec);
   }
 }

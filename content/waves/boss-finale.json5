@@ -1,0 +1,11 @@
+{
+  "id": "boss-finale",
+  "spawns": [
+    {
+      "atMs": 0,
+      "enemyId": "boss",
+      "x": 0,
+      "y": -0.1
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "L7_BOSS",
+  "title": "Boss",
+  "pressureProfile": {
+    "primary": "focus",
+    "secondary": ["enemy"]
+  },
+  "preBeatId": "beat_s1_boss_pre",
+  "postBeatId": "beat_s1_boss_post",
+  "waveIds": ["boss-approach", "boss-finale"],
+  "shopId": "shop_boss",
+  "winCondition": { "kind": "defeatBoss", "bossId": "boss" }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "shop_midboss",
+  "allowedWeapons": [
+    "orbBlaster",
+    "dartGun",
+    "railDart",
+    "crossDarts",
+    "sideCannons",
+    "miniMissiles"
+  ],
+  "allowedShips": [
+    "starter",
+    "interceptor",
+    "scout"
+  ],
+  "caps": {
+    "weaponCost": 260,
+    "shipCost": 220
+  }
+}

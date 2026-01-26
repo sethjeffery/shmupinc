@@ -1,37 +1,44 @@
 {
-  "bullet": {
-    "color": 7332863,
-    "damage": 1.2,
-    "kind": "orb",
-    "radius": 3,
-    "speed": 460,
-    "trail": {
-      "color": 5952511,
-      "count": 1,
-      "intervalMs": 80,
-      "sizeMax": 2.2,
-      "sizeMin": 1.2
-    }
-  },
-  "cost": 200,
-  "description": "Twin pulse orbs with brighter impact.",
-  "fireRate": 3.8,
-  "icon": "orb",
   "id": "pulseArray",
-  "muzzleOffsets": [
-    {
-      "x": -0.35,
-      "y": 0
-    },
-    {
-      "x": 0.35,
-      "y": 0
-    }
-  ],
   "name": "Pulse Array",
-  "pattern": {
-    "count": 2,
-    "kind": "fan",
-    "spreadDeg": 1
+  "description": "Twin pulse orbs with brighter impact.",
+  "cost": 200,
+  "gunId": "orb",
+  "size": "small",
+  "zones": [
+    "front"
+  ],
+  "stats": {
+    "fireRate": 3.8,
+    "bullet": {
+      "color": "#6fe3ff",
+      "damage": 1.2,
+      "kind": "orb",
+      "radius": 3,
+      "trail": {
+        "color": "#5ad3ff",
+        "count": 1,
+        "intervalMs": 80,
+        "sizeMax": 2.2,
+        "sizeMin": 1.2
+      }
+    },
+    "shots": [
+      {
+        "angleDeg": -0.5,
+        "offset": {
+          "x": -0.35,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 0.5,
+        "offset": {
+          "x": 0.35,
+          "y": 0
+        }
+      }
+    ],
+    "speed": 460
   }
 }

@@ -1,4 +1,4 @@
-import { LEVELS, type LevelDefinition } from "./levels";
+import { getLevels, type LevelDefinition } from "./levels";
 
 export interface LevelSession {
   id: string;
@@ -9,7 +9,7 @@ export interface LevelSession {
 let activeSession: LevelSession | null = null;
 
 export function startLevelSession(levelId: string): LevelSession | null {
-  const level = LEVELS[levelId];
+  const level = getLevels()[levelId];
   if (!level) return null;
   activeSession = {
     id: levelId,

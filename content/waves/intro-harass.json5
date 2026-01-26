@@ -1,0 +1,104 @@
+{
+  "id": "intro-harass",
+  "spawns": [
+    {
+      "atMs": 900,
+      "enemyId": "sine_silent",
+      "x": -0.2,
+      "y": -0.04
+    },
+    {
+      "atMs": 900,
+      "enemyId": "sine_silent",
+      "x": 0.2,
+      "y": -0.04
+    },
+    {
+      "atMs": 1000,
+      "enemyId": "sine_silent",
+      "x": -0.4,
+      "y": -0.1
+    },
+    {
+      "atMs": 1000,
+      "enemyId": "sine_silent",
+      "x": 0.4,
+      "y": -0.1
+    },
+    {
+      "atMs": 1200,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "atMs": 1700,
+      "enemyId": "asteroid",
+      "overrides": {
+        "move": {
+          "steps": [
+            {
+              "durationMs": 5800,
+              "kind": "dashTo",
+              "to": {
+                "x": 0,
+                "y": 900
+              }
+            }
+          ]
+        }
+      },
+      "x": -0.15,
+      "y": -0.15
+    },
+    {
+      "atMs": 2000,
+      "enemyId": "asteroid",
+      "overrides": {
+        "radius": 20
+      },
+      "x": 0,
+      "y": -0.15
+    },
+    {
+      "atMs": 3200,
+      "enemyId": "asteroid",
+      "overrides": {
+        "radius": 20
+      },
+      "x": 0.42,
+      "y": -0.15
+    },
+    {
+      "atMs": 3200,
+      "enemyId": "asteroid",
+      "overrides": {
+        "hp": 5,
+        "radius": 55
+      },
+      "x": -0.48,
+      "y": -0.15
+    },
+    {
+      "atMs": 2300,
+      "enemyId": "asteroid",
+      "overrides": {
+        "radius": 18,
+        "move": {
+          "steps": [
+            {
+              "durationMs": 5200,
+              "kind": "dashTo",
+              "to": {
+                "x": 0,
+                "y": 900
+              }
+            }
+          ]
+        }
+      },
+      "x": 0.15,
+      "y": -0.15
+    }
+  ]
+}

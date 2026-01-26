@@ -8,6 +8,8 @@ import { STORY_BEATS } from "../game/data/storyBeats";
 
 export type UiRoute = "gameover" | "hangar" | "menu" | "pause" | "play" | "story";
 
+const DEFAULT_LEVEL_ID = "L1_INTRO";
+
 export interface GameOverStats {
   gold: number;
   wave: number;
@@ -89,6 +91,7 @@ export class UiRouter {
       || route === "gameover"
       || route === "story";
     document.body.classList.toggle("ui-open", uiOpen);
+    document.body.classList.toggle("game-locked", route === "play" || route === "pause");
     this.root.classList.toggle("is-active", uiOpen);
 
     this.menuOverlay.classList.toggle("is-active", route === "menu");
@@ -164,6 +167,20 @@ export class UiRouter {
     this.gameOverStatsText.textContent = `Wave ${this.lastGameOver.wave}\nGold earned: ${this.lastGameOver.gold}`;
   }
 
+  private startStoryLevel(levelId: string): void {
+    const session = startLevelSession(levelId);
+    const level = session?.level;
+    if (!level) {
+      this.setRoute("menu");
+      return;
+    }
+    if (level.preBeatId) {
+      this.openStoryBeat(level.preBeatId, "hangar");
+    } else {
+      this.setRoute("hangar");
+    }
+  }
+
   private handleClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target) return;
@@ -171,8 +188,7 @@ export class UiRouter {
     if (!action) return;
     switch (action.dataset.action) {
       case "start":
-        clearActiveLevel();
-        this.setRoute("play");
+        this.startStoryLevel(DEFAULT_LEVEL_ID);
         break;
       case "hangar":
         clearActiveLevel();
@@ -193,14 +209,10 @@ export class UiRouter {
       case "menu":
         this.setRoute("menu");
         break;
-      case "story-squeeze": {
-        const session = startLevelSession("L2_SQUEEZE");
-        const level = session?.level;
-        if (level?.preBeatId) {
-          this.openStoryBeat(level.preBeatId, "hangar");
-        } else {
-          this.setRoute("hangar");
-        }
+      case "story-level": {
+        const levelId = action.dataset.level;
+        if (!levelId) break;
+        this.startStoryLevel(levelId);
         break;
       }
       case "story-continue":
@@ -225,7 +237,7 @@ export class UiRouter {
       }
     }
     if (event.key === "Enter" && this.route === "menu") {
-      this.setRoute("play");
+      this.startStoryLevel(DEFAULT_LEVEL_ID);
     }
   }
 
@@ -233,13 +245,7 @@ export class UiRouter {
     const params = new URLSearchParams(window.location.search);
     const levelId = params.get("level");
     if (!levelId) return;
-    const session = startLevelSession(levelId);
-    const level = session?.level;
-    if (level?.preBeatId) {
-      this.openStoryBeat(level.preBeatId, "hangar");
-    } else {
-      this.setRoute("hangar");
-    }
+    this.startStoryLevel(levelId);
     window.history.replaceState({}, "", window.location.pathname);
   }
 
@@ -250,7 +256,13 @@ export class UiRouter {
       this.buildPanel({
         actions: [
           { action: "start", label: "Start Mission", primary: true },
-          { action: "story-squeeze", label: "Story: The Squeeze", primary: false },
+          { action: "story-level", label: "Story: L1 Intro", levelId: "L1_INTRO", primary: false },
+          { action: "story-level", label: "Story: L2 The Squeeze", levelId: "L2_SQUEEZE", primary: false },
+          { action: "story-level", label: "Story: L3 Breakthrough", levelId: "L3_BREAKTHROUGH", primary: false },
+          { action: "story-level", label: "Story: L4 Deadline", levelId: "L4_DEADLINE", primary: false },
+          { action: "story-level", label: "Story: L5 Midboss", levelId: "L5_MIDBOSS", primary: false },
+          { action: "story-level", label: "Story: L6 Remix", levelId: "L6_REMIX", primary: false },
+          { action: "story-level", label: "Story: L7 Boss", levelId: "L7_BOSS", primary: false },
           { action: "hangar", label: "Hangar", primary: false },
         ],
         hint: "How to play: Drag to move, auto-fire.",
@@ -336,7 +348,7 @@ export class UiRouter {
   private buildPanel(config: {
     title: string;
     hint?: string;
-    actions: { action: string; label: string; primary: boolean }[];
+    actions: { action: string; label: string; levelId?: string; primary: boolean }[];
   }): HTMLDivElement {
     const panel = document.createElement("div");
     panel.className = "ui-panel";
@@ -353,6 +365,7 @@ export class UiRouter {
       button.className = `ui-button${item.primary ? " ui-button--primary" : ""}`;
       button.type = "button";
       button.dataset.action = item.action;
+      if (item.levelId) button.dataset.level = item.levelId;
       button.textContent = item.label;
       actions.appendChild(button);
     }

@@ -1,0 +1,36 @@
+{
+  "id": "haloOrbs",
+  "name": "Halo Orbs",
+  "description": "Tight halo of paired orbs.",
+  "cost": 180,
+  "gunId": "orb",
+  "size": "small",
+  "zones": [
+    "front",
+    "side"
+  ],
+  "zoneStats": {
+    "side": {
+      "angleDeg": 10
+    }
+  },
+  "stats": {
+    "fireRate": 3.4,
+    "bullet": {
+      "color": "#6fe3ff",
+      "damage": 1,
+      "kind": "orb",
+      "radius": 3
+    },
+    "shots": [
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    ],
+    "speed": 360
+  }
+}

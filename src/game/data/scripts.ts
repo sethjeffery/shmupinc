@@ -5,10 +5,26 @@ export interface Vec2 {
 }
 
 export type MoveStep =
-  | { kind: 'bezier'; points: Vec2[]; durationMs: number; ease?: 'in' | 'inOut' | 'linear' | 'out' }
-  | { kind: 'dashTo'; to: Vec2; durationMs: number; ease?: 'in' | 'inOut' | 'linear' | 'out' }
-  | { kind: 'hover'; durationMs: number }
-  | { kind: 'sineDown'; amp: number; freq: number; speed: number; durationMs: number };
+  | {
+      kind: "bezier";
+      points: Vec2[];
+      durationMs: number;
+      ease?: "in" | "inOut" | "linear" | "out" | "outIn";
+    }
+  | {
+      kind: "dashTo";
+      to: Vec2;
+      durationMs: number;
+      ease?: "in" | "inOut" | "linear" | "out" | "outIn";
+    }
+  | { kind: "hover"; durationMs: number }
+  | {
+      kind: "sineDown";
+      amp: number;
+      freq: number;
+      speed: number;
+      durationMs: number;
+    };
 
 export interface MoveScript {
   steps: MoveStep[];
@@ -16,11 +32,11 @@ export interface MoveScript {
 }
 
 export type Aim =
-  | { kind: 'atPlayer' }
-  | { kind: 'fixed'; angleDeg: number }
-  | { kind: 'sweep'; fromDeg: number; toDeg: number; periodMs: number };
+  | { kind: "atPlayer" }
+  | { kind: "fixed"; angleDeg: number }
+  | { kind: "sweep"; fromDeg: number; toDeg: number; periodMs: number };
 
-export type BulletKind = 'bomb' | 'dart' | 'missile' | 'orb';
+export type BulletKind = "bomb" | "dart" | "missile" | "orb";
 
 export interface BulletHoming {
   turnRateRadPerSec: number;
@@ -56,10 +72,24 @@ export interface BulletSpec {
 
 // originOffsets are local offsets from the emitter position (no rotation applied).
 export type FireStep =
-  | { kind: 'burst'; count: number; intervalMs: number; aim: Aim; bullet: BulletSpec; originOffsets?: Vec2[] }
-  | { kind: 'charge'; durationMs: number }
-  | { kind: 'cooldown'; durationMs: number }
-  | { kind: 'spray'; durationMs: number; ratePerSec: number; aim: Aim; bullet: BulletSpec; originOffsets?: Vec2[] };
+  | {
+      kind: "burst";
+      count: number;
+      intervalMs: number;
+      aim: Aim;
+      bullet: BulletSpec;
+      originOffsets?: Vec2[];
+    }
+  | { kind: "charge"; durationMs: number }
+  | { kind: "cooldown"; durationMs: number }
+  | {
+      kind: "spray";
+      durationMs: number;
+      ratePerSec: number;
+      aim: Aim;
+      bullet: BulletSpec;
+      originOffsets?: Vec2[];
+    };
 
 export interface FireScript {
   steps: FireStep[];

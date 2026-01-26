@@ -1,0 +1,35 @@
+{
+  "id": "midboss-screen",
+  "spawns": [
+    {
+      "atMs": 0,
+      "enemyId": "swooper",
+      "x": -0.2,
+      "y": -0.1
+    },
+    {
+      "atMs": 500,
+      "enemyId": "swooper",
+      "x": 0.2,
+      "y": -0.1
+    },
+    {
+      "atMs": 1200,
+      "enemyId": "skitter",
+      "x": 0,
+      "y": -0.1
+    },
+    {
+      "atMs": 2000,
+      "enemyId": "sniper",
+      "x": -0.1,
+      "y": -0.1
+    },
+    {
+      "atMs": 2400,
+      "enemyId": "sniper",
+      "x": 0.1,
+      "y": -0.1
+    }
+  ]
+}

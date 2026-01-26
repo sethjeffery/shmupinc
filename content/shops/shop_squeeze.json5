@@ -4,18 +4,19 @@
     "dartGun",
     "orbBlaster",
     "orbBlasterPlus",
-    "pulseArray"
-  ],
-  "allowedSecondaryWeapons": [
+    "pulseArray",
     "haloOrbs",
     "miniMissiles",
     "rapidDarts",
     "sideCannons"
   ],
-  "allowedShips": ["starter", "scout", "interceptor"],
+  "allowedShips": [
+    "starter",
+    "scout",
+    "interceptor"
+  ],
   "caps": {
-    "primaryCost": 260,
-    "secondaryCost": 220,
+    "weaponCost": 260,
     "shipCost": 220
   }
 }

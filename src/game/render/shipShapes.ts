@@ -1,14 +1,5 @@
-import type { ShipShape } from "../data/ships";
+import type { ShipShape, ShipVector } from "../data/shipTypes";
 import type Phaser from "phaser";
-
-interface Vec2 { x: number; y: number }
-
-interface LineSegment { from: Vec2; to: Vec2 }
-
-interface ShipVector {
-  outline: Vec2[];
-  lines?: LineSegment[];
-}
 
 export const SHIP_VECTORS: Record<ShipShape, ShipVector> = {
   bulwark: {
@@ -80,8 +71,11 @@ export const SHIP_VECTORS: Record<ShipShape, ShipVector> = {
   },
 };
 
+const resolveShipVector = (shape: ShipShape | ShipVector): ShipVector =>
+  typeof shape === "string" ? SHIP_VECTORS[shape] : shape;
+
 const drawOutline = (
-  outline: Vec2[],
+  outline: ShipVector["outline"],
   radius: number,
   moveTo: (x: number, y: number) => void,
   lineTo: (x: number, y: number) => void,
@@ -96,7 +90,7 @@ const drawOutline = (
 };
 
 const drawLines = (
-  lines: LineSegment[] | undefined,
+  lines: ShipVector["lines"],
   radius: number,
   moveTo: (x: number, y: number) => void,
   lineTo: (x: number, y: number) => void,
@@ -110,10 +104,10 @@ const drawLines = (
 
 export const drawShipToGraphics = (
   graphics: Phaser.GameObjects.Graphics,
-  shape: ShipShape,
+  shape: ShipShape | ShipVector,
   radius: number,
 ): void => {
-  const vector = SHIP_VECTORS[shape];
+  const vector = resolveShipVector(shape);
   graphics.beginPath();
   drawOutline(vector.outline, radius, (x, y) => graphics.moveTo(x, y), (x, y) => graphics.lineTo(x, y));
   graphics.closePath();
@@ -135,10 +129,10 @@ export const drawShipToGraphics = (
 
 export const drawShipToCanvas = (
   ctx: CanvasRenderingContext2D,
-  shape: ShipShape,
+  shape: ShipShape | ShipVector,
   radius: number,
 ): void => {
-  const vector = SHIP_VECTORS[shape];
+  const vector = resolveShipVector(shape);
   ctx.beginPath();
   drawOutline(vector.outline, radius, (x, y) => ctx.moveTo(x, y), (x, y) => ctx.lineTo(x, y));
   ctx.closePath();
