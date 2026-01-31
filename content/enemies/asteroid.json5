@@ -24,8 +24,8 @@
   },
   radius: 14,
   style: {
-    fillColor: "#1b2028",
-    lineColor: "#a7b3c2",
+    fillColor: 0x1b2028,
+    lineColor: 0xa7b3c2,
     shape: "asteroid",
     vector: {
       lines: [

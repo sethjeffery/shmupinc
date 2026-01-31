@@ -61,7 +61,7 @@ export interface BulletSpec {
   kind: BulletKind;
   damage: number;
   radius: number;
-  speed: number;
+  speed?: number;
   lifetimeMs?: number;
   homing?: BulletHoming;
   aoe?: BulletAoe;

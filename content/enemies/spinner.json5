@@ -14,7 +14,7 @@
           toDeg: 120,
         },
         bullet: {
-          color: "#ff9f43",
+          color: 0xff9f43,
           damage: 1,
           kind: "orb",
           radius: 3,

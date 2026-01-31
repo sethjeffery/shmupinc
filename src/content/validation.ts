@@ -69,19 +69,8 @@ export interface ContentBuildResult {
 }
 
 const parseColor = (value: number | string | undefined): number | undefined => {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim().toLowerCase();
-  const match = /^(?:#|0x)?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(trimmed);
-  if (!match) return undefined;
-  const hex =
-    match[1].length === 3
-      ? match[1]
-          .split("")
-          .map((digit) => digit + digit)
-          .join("")
-      : match[1];
-  const parsed = Number.parseInt(hex, 16);
-  return Number.isNaN(parsed) ? undefined : parsed;
+  if (typeof value === "number") return value;
+  return undefined;
 };
 
 const resolveColor = (

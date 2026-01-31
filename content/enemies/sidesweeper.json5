@@ -80,8 +80,8 @@
   },
   radius: 18,
   style: {
-    fillColor: "#1b1022",
-    lineColor: "#ff6b6b",
+    fillColor: 0x1b1022,
+    lineColor: 0xff6b6b,
     shape: "snake",
     vector: {
       outline: [

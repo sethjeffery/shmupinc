@@ -10,8 +10,8 @@
   rotationDeg: 180,
   style: {
     shape: "boss",
-    fillColor: "#1a1b28",
-    lineColor: "#ff99eb",
+    fillColor: 0x1a1b28,
+    lineColor: 0xff99eb,
     vector: {
       lines: [
         {
@@ -152,7 +152,7 @@
           toDeg: 110,
         },
         bullet: {
-          color: "#ff8c6c",
+          color: 0xff8c6c,
           damage: 1,
           kind: "orb",
           radius: 3,
@@ -207,7 +207,7 @@
               toDeg: 120,
             },
             bullet: {
-              color: "#ff784f",
+              color: 0xff784f,
               damage: 1,
               kind: "orb",
               radius: 3,

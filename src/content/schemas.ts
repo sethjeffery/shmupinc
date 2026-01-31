@@ -20,11 +20,9 @@ const idField = (description: string): z.ZodString =>
 const idArray = (description: string): z.ZodArray<z.ZodString> =>
   z.array(idSchema).describe(description);
 
-const colorSchema = z
-  .string()
-  .regex(/^(#|0x)?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+const colorSchema = z.number().int();
 const colorField = (description: string): typeof colorSchema =>
-  colorSchema.describe(`${description} (hex string).`);
+  colorSchema.describe(`${description} (hex number, e.g. 0xffb067).`);
 
 const vec2Schema = z.object({
   x: z.number().describe("Local X offset in pixels."),
@@ -101,9 +99,9 @@ const hazardMotionSchema = z.union([
 
 const laneWallSchema = z.object({
   damageOnTouch: z.boolean().describe("Deal damage on contact.").default(false),
-  fillColor: colorField("Fill color (kept subtle).").default("#0b1220"),
+  fillColor: colorField("Fill color (kept subtle).").default(0x0b1220),
   id: idField("Unique hazard id."),
-  lineColor: colorField("Outline color.").default("#1b3149"),
+  lineColor: colorField("Outline color.").default(0x1b3149),
   motion: hazardMotionSchema
     .describe("Optional motion applied to the center.")
     .optional(),
@@ -309,8 +307,8 @@ const weaponShotSchema = z.object({
 });
 
 const enemyStyleSchema = z.object({
-  fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
-  lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
+  fillColor: colorField("Fill color for the shape.").default(0x1c0f1a),
+  lineColor: colorField("Outline color for the shape.").default(0xff6b6b),
   shape: z
     .enum([
       "asteroid",

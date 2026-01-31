@@ -70,7 +70,7 @@ export class Bullet {
   spawn(x: number, y: number, angleRad: number, spec: BulletSpec): void {
     this.spec = spec;
     this.radius = spec.radius;
-    this.speed = spec.speed;
+    this.speed = spec.speed ?? 0;
     this.damage = spec.damage;
     this.angleRad = angleRad;
     this.x = x;
