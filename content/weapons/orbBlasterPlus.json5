@@ -1,38 +1,36 @@
 {
-  "id": "orbBlasterPlus",
-  "name": "Orb Blaster+",
-  "description": "Twin orbs with lighter impact.",
-  "cost": 140,
-  "gunId": "orb2",
-  "size": "small",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "fireRate": 8,
-    "multiShotMode": "roundRobin",
-    "bullet": {
-      "color": "#7df9ff",
-      "damage": 0.8,
-      "kind": "orb",
-      "radius": 3
+  id: "orbBlasterPlus",
+  name: "Orb Blaster+",
+  description: "Twin orbs with lighter impact.",
+  cost: 140,
+  gunId: "orb2",
+  size: "small",
+  zones: ["front"],
+  stats: {
+    fireRate: 8,
+    multiShotMode: "roundRobin",
+    bullet: {
+      color: "#7df9ff",
+      damage: 0.8,
+      kind: "orb",
+      radius: 3,
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": -1,
-        "offset": {
-          "x": -0.1,
-          "y": 0
-        }
+        angleDeg: -1,
+        offset: {
+          x: -0.1,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 1,
-        "offset": {
-          "x": 0.1,
-          "y": 0
-        }
-      }
+        angleDeg: 1,
+        offset: {
+          x: 0.1,
+          y: 0,
+        },
+      },
     ],
-    "speed": 400
-  }
+    speed: 400,
+  },
 }

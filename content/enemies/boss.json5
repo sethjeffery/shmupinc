@@ -1,1905 +1,1905 @@
 {
-  "fire": {
-    "loop": true,
-    "steps": [
+  fire: {
+    loop: true,
+    steps: [
       {
-        "durationMs": 500,
-        "kind": "cooldown"
+        durationMs: 500,
+        kind: "cooldown",
       },
       {
-        "aim": {
-          "angleDeg": 90,
-          "kind": "fixed"
+        aim: {
+          angleDeg: 90,
+          kind: "fixed",
         },
-        "bullet": {
-          "color": "#ffb067",
-          "damage": 1,
-          "kind": "dart",
-          "length": 10,
-          "radius": 2,
-          "speed": 260,
-          "thickness": 2
+        bullet: {
+          color: "#ffb067",
+          damage: 1,
+          kind: "dart",
+          length: 10,
+          radius: 2,
+          speed: 260,
+          thickness: 2,
         },
-        "durationMs": 900,
-        "kind": "spray",
-        "originOffsets": [
+        durationMs: 900,
+        kind: "spray",
+        originOffsets: [
           {
-            "x": -28,
-            "y": 8
+            x: -28,
+            y: 8,
           },
           {
-            "x": 28,
-            "y": 8
-          }
+            x: 28,
+            y: 8,
+          },
         ],
-        "ratePerSec": 6
+        ratePerSec: 6,
       },
       {
-        "durationMs": 300,
-        "kind": "cooldown"
+        durationMs: 300,
+        kind: "cooldown",
       },
       {
-        "aim": {
-          "fromDeg": 60,
-          "kind": "sweep",
-          "periodMs": 1800,
-          "toDeg": 120
+        aim: {
+          fromDeg: 60,
+          kind: "sweep",
+          periodMs: 1800,
+          toDeg: 120,
         },
-        "bullet": {
-          "color": "#ff784f",
-          "damage": 2,
-          "kind": "orb",
-          "radius": 4,
-          "speed": 180
+        bullet: {
+          color: "#ff784f",
+          damage: 2,
+          kind: "orb",
+          radius: 4,
+          speed: 180,
         },
-        "durationMs": 1800,
-        "kind": "spray",
-        "ratePerSec": 6
+        durationMs: 1800,
+        kind: "spray",
+        ratePerSec: 6,
       },
       {
-        "durationMs": 400,
-        "kind": "cooldown"
+        durationMs: 400,
+        kind: "cooldown",
       },
       {
-        "aim": {
-          "kind": "atPlayer"
+        aim: {
+          kind: "atPlayer",
         },
-        "bullet": {
-          "color": "#ffb067",
-          "damage": 1,
-          "kind": "dart",
-          "length": 10,
-          "radius": 2,
-          "speed": 260,
-          "thickness": 2
+        bullet: {
+          color: 0xffb067,
+          damage: 1,
+          kind: "dart",
+          length: 10,
+          radius: 2,
+          speed: 260,
+          thickness: 2,
         },
-        "count": 4,
-        "intervalMs": 160,
-        "kind": "burst"
+        count: 4,
+        intervalMs: 160,
+        kind: "burst",
       },
       {
-        "durationMs": 400,
-        "kind": "cooldown"
-      }
-    ]
+        durationMs: 400,
+        kind: "cooldown",
+      },
+    ],
   },
-  "goldDrop": {
-    "max": 36,
-    "min": 24
+  goldDrop: {
+    max: 36,
+    min: 24,
   },
-  "hp": 60,
-  "id": "boss",
-  "move": {
-    "loop": true,
-    "steps": [
+  hp: 60,
+  id: "boss",
+  move: {
+    loop: true,
+    steps: [
       {
-        "durationMs": 1400,
-        "ease": "out",
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 160
-        }
+        durationMs: 1400,
+        ease: "out",
+        kind: "dashTo",
+        to: {
+          x: 0,
+          y: 160,
+        },
       },
       {
-        "durationMs": 600,
-        "kind": "hover"
+        durationMs: 600,
+        kind: "hover",
       },
       {
-        "durationMs": 700,
-        "ease": "inOut",
-        "kind": "dashTo",
-        "to": {
-          "x": 110,
-          "y": 190
-        }
+        durationMs: 700,
+        ease: "inOut",
+        kind: "dashTo",
+        to: {
+          x: 110,
+          y: 30,
+        },
       },
       {
-        "durationMs": 500,
-        "kind": "hover"
+        durationMs: 500,
+        kind: "hover",
       },
       {
-        "durationMs": 700,
-        "ease": "inOut",
-        "kind": "dashTo",
-        "to": {
-          "x": -110,
-          "y": 190
-        }
+        durationMs: 700,
+        ease: "inOut",
+        kind: "dashTo",
+        to: {
+          x: -220,
+          y: 0,
+        },
       },
       {
-        "durationMs": 600,
-        "kind": "hover"
-      }
-    ]
+        durationMs: 600,
+        kind: "hover",
+      },
+    ],
   },
-  "phases": [
+  phases: [
     {
-      "fire": {
-        "loop": true,
-        "steps": [
+      fire: {
+        loop: true,
+        steps: [
           {
-            "durationMs": 400,
-            "kind": "cooldown"
+            durationMs: 400,
+            kind: "cooldown",
           },
           {
-            "durationMs": 1200,
-            "kind": "charge"
+            durationMs: 1200,
+            kind: "charge",
           },
           {
-            "aim": {
-              "angleDeg": 0,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 0,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 15,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 15,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 30,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 30,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 45,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 45,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 60,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 60,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 75,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 75,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 90,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 90,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 105,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 105,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 120,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 120,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 135,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 135,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 150,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 150,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 165,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 165,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 180,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 180,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 195,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 195,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 210,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 210,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 225,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 225,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 240,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 240,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 255,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 255,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 270,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 270,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 285,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 285,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 300,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 300,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 315,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 315,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 330,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 330,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 345,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 345,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "durationMs": 120,
-            "kind": "cooldown"
+            durationMs: 120,
+            kind: "cooldown",
           },
           {
-            "aim": {
-              "angleDeg": 7.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 7.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 22.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 22.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 37.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 37.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 52.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 52.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 67.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 67.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 82.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 82.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 97.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 97.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 112.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 112.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 127.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 127.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 142.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 142.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 157.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 157.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 172.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 172.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 187.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 187.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 202.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 202.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 217.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 217.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 232.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 232.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 247.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 247.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 262.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 262.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 277.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 277.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 292.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 292.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 307.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 307.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 322.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 322.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 337.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 337.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 352.5,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 352.5,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "durationMs": 260,
-            "kind": "cooldown"
+            durationMs: 260,
+            kind: "cooldown",
           },
           {
-            "aim": {
-              "angleDeg": 90,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 90,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ff9f43",
-              "damage": 1,
-              "kind": "orb",
-              "radius": 3,
-              "speed": 200
+            bullet: {
+              color: "#ff9f43",
+              damage: 1,
+              kind: "orb",
+              radius: 3,
+              speed: 200,
             },
-            "durationMs": 1200,
-            "kind": "spray",
-            "originOffsets": [
+            durationMs: 1200,
+            kind: "spray",
+            originOffsets: [
               {
-                "x": -28,
-                "y": 8
+                x: -28,
+                y: 8,
               },
               {
-                "x": 28,
-                "y": 8
-              }
+                x: 28,
+                y: 8,
+              },
             ],
-            "ratePerSec": 6
+            ratePerSec: 6,
           },
           {
-            "durationMs": 200,
-            "kind": "cooldown"
+            durationMs: 200,
+            kind: "cooldown",
           },
           {
-            "aim": {
-              "kind": "atPlayer"
+            aim: {
+              kind: "atPlayer",
             },
-            "bullet": {
-              "color": "#ff8c6c",
-              "damage": 2,
-              "homing": {
-                "acquireRadius": 260,
-                "turnRateRadPerSec": 2.6
+            bullet: {
+              color: "#ff8c6c",
+              damage: 2,
+              homing: {
+                acquireRadius: 260,
+                turnRateRadPerSec: 2.6,
               },
-              "kind": "missile",
-              "length": 10,
-              "lifetimeMs": 2400,
-              "radius": 3,
-              "speed": 260,
-              "thickness": 3
+              kind: "missile",
+              length: 10,
+              lifetimeMs: 2400,
+              radius: 3,
+              speed: 260,
+              thickness: 3,
             },
-            "count": 2,
-            "intervalMs": 320,
-            "kind": "burst",
-            "originOffsets": [
+            count: 2,
+            intervalMs: 320,
+            kind: "burst",
+            originOffsets: [
               {
-                "x": -28,
-                "y": 8
+                x: -28,
+                y: 8,
               },
               {
-                "x": 28,
-                "y": 8
-              }
-            ]
+                x: 28,
+                y: 8,
+              },
+            ],
           },
           {
-            "durationMs": 500,
-            "kind": "cooldown"
-          }
-        ]
+            durationMs: 500,
+            kind: "cooldown",
+          },
+        ],
       },
-      "hpThreshold": 0.66
+      hpThreshold: 0.66,
     },
     {
-      "fire": {
-        "loop": true,
-        "steps": [
+      fire: {
+        loop: true,
+        steps: [
           {
-            "durationMs": 300,
-            "kind": "cooldown"
+            durationMs: 300,
+            kind: "cooldown",
           },
           {
-            "durationMs": 1000,
-            "kind": "charge"
+            durationMs: 1000,
+            kind: "charge",
           },
           {
-            "aim": {
-              "angleDeg": 0,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 0,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 20,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 20,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 40,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 40,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 60,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 60,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 80,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 80,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 100,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 100,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 120,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 120,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 140,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 140,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 160,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 160,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 180,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 180,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 200,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 200,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 220,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 220,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 240,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 240,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 260,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 260,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 280,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 280,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 300,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 300,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 320,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 320,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 340,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 340,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "durationMs": 160,
-            "kind": "cooldown"
+            durationMs: 160,
+            kind: "cooldown",
           },
           {
-            "aim": {
-              "angleDeg": 10,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 10,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 30,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 30,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 50,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 50,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 70,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 70,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 90,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 90,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 110,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 110,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 130,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 130,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 150,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 150,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 170,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 170,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 190,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 190,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 210,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 210,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 230,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 230,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 250,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 250,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 270,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 270,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 290,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 290,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 310,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 310,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 330,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 330,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "aim": {
-              "angleDeg": 350,
-              "kind": "fixed"
+            aim: {
+              angleDeg: 350,
+              kind: "fixed",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 2,
-              "kind": "dart",
-              "length": 12,
-              "radius": 2,
-              "speed": 440,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 2,
+              kind: "dart",
+              length: 12,
+              radius: 2,
+              speed: 440,
+              thickness: 2,
             },
-            "count": 1,
-            "intervalMs": 1,
-            "kind": "burst"
+            count: 1,
+            intervalMs: 1,
+            kind: "burst",
           },
           {
-            "durationMs": 220,
-            "kind": "cooldown"
+            durationMs: 220,
+            kind: "cooldown",
           },
           {
-            "aim": {
-              "fromDeg": 50,
-              "kind": "sweep",
-              "periodMs": 1400,
-              "toDeg": 130
+            aim: {
+              fromDeg: 50,
+              kind: "sweep",
+              periodMs: 1400,
+              toDeg: 130,
             },
-            "bullet": {
-              "color": "#ff784f",
-              "damage": 2,
-              "kind": "orb",
-              "radius": 4,
-              "speed": 180
+            bullet: {
+              color: "#ff784f",
+              damage: 2,
+              kind: "orb",
+              radius: 4,
+              speed: 180,
             },
-            "durationMs": 1400,
-            "kind": "spray",
-            "ratePerSec": 8
+            durationMs: 1400,
+            kind: "spray",
+            ratePerSec: 8,
           },
           {
-            "durationMs": 200,
-            "kind": "cooldown"
+            durationMs: 200,
+            kind: "cooldown",
           },
           {
-            "aim": {
-              "kind": "atPlayer"
+            aim: {
+              kind: "atPlayer",
             },
-            "bullet": {
-              "color": "#ffb067",
-              "damage": 1,
-              "kind": "dart",
-              "length": 10,
-              "radius": 2,
-              "speed": 260,
-              "thickness": 2
+            bullet: {
+              color: "#ffb067",
+              damage: 1,
+              kind: "dart",
+              length: 10,
+              radius: 2,
+              speed: 260,
+              thickness: 2,
             },
-            "count": 4,
-            "intervalMs": 120,
-            "kind": "burst",
-            "originOffsets": [
+            count: 4,
+            intervalMs: 120,
+            kind: "burst",
+            originOffsets: [
               {
-                "x": -28,
-                "y": 8
+                x: -28,
+                y: 8,
               },
               {
-                "x": 28,
-                "y": 8
-              }
-            ]
+                x: 28,
+                y: 8,
+              },
+            ],
           },
           {
-            "durationMs": 400,
-            "kind": "cooldown"
-          }
-        ]
+            durationMs: 400,
+            kind: "cooldown",
+          },
+        ],
       },
-      "hpThreshold": 0.33
-    }
+      hpThreshold: 0.33,
+    },
   ],
-  "radius": 44,
-  "rotation": "fixed",
-  "rotationDeg": 180,
-  "style": {
-    "fillColor": "#161018",
-    "lineColor": "#ff6b6b",
-    "shape": "boss",
-    "vector": {
-      "lines": [
+  radius: 44,
+  rotation: "fixed",
+  rotationDeg: 180,
+  style: {
+    fillColor: "#161018",
+    lineColor: "#ff6b6b",
+    shape: "boss",
+    vector: {
+      lines: [
         {
-          "from": {
-            "x": -0.6,
-            "y": -0.1
+          from: {
+            x: -0.6,
+            y: -0.1,
           },
-          "to": {
-            "x": -0.3,
-            "y": 0.25
-          }
+          to: {
+            x: -0.3,
+            y: 0.25,
+          },
         },
         {
-          "from": {
-            "x": 0.6,
-            "y": -0.1
+          from: {
+            x: 0.6,
+            y: -0.1,
           },
-          "to": {
-            "x": 0.3,
-            "y": 0.25
-          }
+          to: {
+            x: 0.3,
+            y: 0.25,
+          },
         },
         {
-          "from": {
-            "x": -0.25,
-            "y": -0.45
+          from: {
+            x: -0.25,
+            y: -0.45,
           },
-          "to": {
-            "x": 0.25,
-            "y": -0.45
-          }
-        }
+          to: {
+            x: 0.25,
+            y: -0.45,
+          },
+        },
       ],
-      "outline": [
+      outline: [
         {
-          "x": 0,
-          "y": -1
+          x: 0,
+          y: -1,
         },
         {
-          "x": 0.7,
-          "y": -0.8
+          x: 0.7,
+          y: -0.8,
         },
         {
-          "x": 1.1,
-          "y": -0.35
+          x: 1.1,
+          y: -0.35,
         },
         {
-          "x": 1.25,
-          "y": 0.25
+          x: 1.25,
+          y: 0.25,
         },
         {
-          "x": 0.95,
-          "y": 0.85
+          x: 0.95,
+          y: 0.85,
         },
         {
-          "x": 0.35,
-          "y": 1.05
+          x: 0.35,
+          y: 1.05,
         },
         {
-          "x": -0.35,
-          "y": 1.05
+          x: -0.35,
+          y: 1.05,
         },
         {
-          "x": -0.95,
-          "y": 0.85
+          x: -0.95,
+          y: 0.85,
         },
         {
-          "x": -1.25,
-          "y": 0.25
+          x: -1.25,
+          y: 0.25,
         },
         {
-          "x": -1.1,
-          "y": -0.35
+          x: -1.1,
+          y: -0.35,
         },
         {
-          "x": -0.7,
-          "y": -0.8
-        }
-      ]
-    }
-  }
+          x: -0.7,
+          y: -0.8,
+        },
+      ],
+    },
+  },
 }

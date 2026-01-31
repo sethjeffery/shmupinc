@@ -30,8 +30,8 @@ export class WaveScheduler {
     if (this.completed) return;
     this.waveTimerMs += deltaMs;
     while (
-      this.waveEventCursor < this.waveEvents.length
-      && this.waveEvents[this.waveEventCursor].atMs <= this.waveTimerMs
+      this.waveEventCursor < this.waveEvents.length &&
+      this.waveEvents[this.waveEventCursor].atMs <= this.waveTimerMs
     ) {
       const event = this.waveEvents[this.waveEventCursor];
       this.config.spawn(event);
@@ -39,8 +39,8 @@ export class WaveScheduler {
     }
 
     const waveFinished =
-      this.waveEventCursor >= this.waveEvents.length
-      && this.config.getEnemyCount() === 0;
+      this.waveEventCursor >= this.waveEvents.length &&
+      this.config.getEnemyCount() === 0;
     if (waveFinished) {
       this.startWave(this.waveIndex + 1);
     }

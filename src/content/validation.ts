@@ -1,11 +1,26 @@
 import type { EnemyDef } from "../game/data/enemyTypes";
 import type { GunDefinition } from "../game/data/gunTypes";
-import type { HazardScript, LevelDefinition, ShopRules } from "../game/data/levels/types";
-import type { BulletSpec, FireScript, FireStep } from "../game/data/scripts";
+import type {
+  HazardScript,
+  LevelDefinition,
+  ShopRules,
+} from "../game/data/levels/types";
+import type {
+  BulletAoe,
+  BulletHoming,
+  BulletSpec,
+  FireScript,
+  FireStep,
+} from "../game/data/scripts";
 import type { ShipDefinition } from "../game/data/shipTypes";
 import type { StoryBeat } from "../game/data/storyBeatTypes";
 import type { WaveDefinition } from "../game/data/waves";
-import type { WeaponDefinition, WeaponShot, WeaponStats, WeaponZone } from "../game/data/weaponTypes";
+import type {
+  WeaponDefinition,
+  WeaponShot,
+  WeaponStats,
+  WeaponZone,
+} from "../game/data/weaponTypes";
 import type {
   BeatContent,
   ContentKind,
@@ -58,56 +73,87 @@ const parseColor = (value: number | string | undefined): number | undefined => {
   const trimmed = value.trim().toLowerCase();
   const match = /^(?:#|0x)?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(trimmed);
   if (!match) return undefined;
-  const hex = match[1].length === 3
-    ? match[1]
-        .split("")
-        .map((digit) => digit + digit)
-        .join("")
-    : match[1];
+  const hex =
+    match[1].length === 3
+      ? match[1]
+          .split("")
+          .map((digit) => digit + digit)
+          .join("")
+      : match[1];
   const parsed = Number.parseInt(hex, 16);
   return Number.isNaN(parsed) ? undefined : parsed;
 };
 
-const resolveColor = (value: number | string | undefined): number | undefined => {
+const resolveColor = (
+  value: number | string | undefined,
+): number | undefined => {
   if (typeof value === "undefined") return undefined;
   return parseColor(value);
 };
 
 type BulletTrailInput = Omit<NonNullable<BulletSpec["trail"]>, "color"> & {
-  color?: number | string;
+  color?: number;
 };
 
 type BulletSpecInput = Omit<BulletSpec, "color" | "trail"> & {
-  color?: number | string;
+  color?: number;
   trail?: BulletTrailInput;
 };
 
-const coerceBulletSpec = (spec: BulletSpecInput): BulletSpec => {
+type BulletEffectsInput = Partial<
+  Pick<BulletSpec, "aoe" | "homing" | "lifetimeMs" | "speed">
+>;
+
+const coerceBulletSpec = (
+  spec: BulletSpecInput,
+  effects?: BulletEffectsInput,
+): BulletSpec => {
   const rawColor = (spec as { color?: number | string }).color;
   const trail = spec.trail
     ? {
         ...spec.trail,
-        color: resolveColor((spec.trail as { color?: number | string }).color) ?? 0xffffff,
+        color:
+          resolveColor((spec.trail as { color?: number | string }).color) ??
+          0xffffff,
       }
     : undefined;
   return {
     ...spec,
+    aoe: effects?.aoe ?? spec.aoe,
     color: resolveColor(rawColor),
+    homing: effects?.homing ?? spec.homing,
+    lifetimeMs: effects?.lifetimeMs ?? spec.lifetimeMs,
+    speed: effects?.speed ?? spec.speed ?? 0,
     trail,
   };
 };
 
-const coerceFireStep = (step: FireStep): FireStep => {
+type FireStepInput = FireStep & {
+  speed?: number;
+  homing?: BulletHoming;
+  aoe?: BulletAoe;
+  lifetimeMs?: number;
+};
+
+type FireScriptInput = Omit<FireScript, "steps"> & { steps: FireStepInput[] };
+
+const coerceFireStep = (step: FireStepInput): FireStep => {
   if ("bullet" in step) {
+    const { aoe, homing, lifetimeMs, speed, ...rest } = step;
     return {
-      ...step,
-      bullet: coerceBulletSpec(step.bullet),
+      ...rest,
+      bullet: coerceBulletSpec(step.bullet, {
+        aoe,
+        homing,
+        lifetimeMs,
+        speed,
+      }),
     };
   }
   return step;
 };
 
-const coerceFireScript = (script: FireScript): FireScript => ({
+const coerceFireScript = (script: FireScriptInput): FireScript => ({
   ...script,
   steps: script.steps.map((step) => coerceFireStep(step)),
 });
@@ -174,7 +220,9 @@ const coerceEndCondition = (
   return condition;
 };
 
-export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResult => {
+export const buildContentRegistry = (
+  entries: ContentEntry[],
+): ContentBuildResult => {
   const errors: ContentError[] = [];
 
   const beatsById: Record<string, StoryBeat> = {};
@@ -297,10 +345,12 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
   for (const [id, enemy] of Object.entries(enemiesById)) {
     resolvedEnemies[id] = {
       ...enemy,
-      fire: coerceFireScript(enemy.fire as FireScript),
+      fire: coerceFireScript(enemy.fire as FireScriptInput),
       phases: enemy.phases?.map((phase) => ({
         ...phase,
-        fire: phase.fire ? coerceFireScript(phase.fire as FireScript) : undefined,
+        fire: phase.fire
+          ? coerceFireScript(phase.fire as FireScriptInput)
+          : undefined,
       })),
       style: enemy.style
         ? {
@@ -329,37 +379,44 @@ export const buildContentRegistry = (entries: ContentEntry[]): ContentBuildResul
     };
   }
 
-const normalizeWeaponShots = (shots?: WeaponShot[]): WeaponShot[] => {
-  const source = shots && shots.length > 0 ? shots : DEFAULT_WEAPON_SHOTS;
-  return source.map((shot) => ({
-    angleDeg: shot.angleDeg ?? 0,
-    offset: shot.offset ?? { x: 0, y: 0 },
-  }));
-};
-
-const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
-  const fallbackSpeed =
-    stats.speed
-    ?? (stats.bullet as BulletSpec | undefined)?.speed
-    ?? 0;
-  const bullet = coerceBulletSpec(stats.bullet);
-  return {
-    ...stats,
-    angleDeg: stats.angleDeg ?? 0,
-    bullet: {
-      ...bullet,
-      speed: fallbackSpeed,
-    },
-    speed: fallbackSpeed,
-    multiShotMode: stats.multiShotMode ?? "simultaneous",
-    shots: normalizeWeaponShots(stats.shots),
+  const normalizeWeaponShots = (shots?: WeaponShot[]): WeaponShot[] => {
+    const source = shots && shots.length > 0 ? shots : DEFAULT_WEAPON_SHOTS;
+    return source.map((shot) => ({
+      angleDeg: shot.angleDeg ?? 0,
+      offset: shot.offset ?? { x: 0, y: 0 },
+    }));
   };
-};
+
+  const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
+    const legacyBullet = stats.bullet as BulletSpec | undefined;
+    const fallbackSpeed = stats.speed ?? legacyBullet?.speed ?? 0;
+    const homing = stats.homing ?? legacyBullet?.homing;
+    const aoe = stats.aoe ?? legacyBullet?.aoe;
+    const lifetimeMs = stats.lifetimeMs ?? legacyBullet?.lifetimeMs;
+    const bullet = coerceBulletSpec(stats.bullet, {
+      aoe,
+      homing,
+      lifetimeMs,
+      speed: fallbackSpeed,
+    });
+    return {
+      ...stats,
+      angleDeg: stats.angleDeg ?? 0,
+      aoe,
+      bullet,
+      homing,
+      lifetimeMs,
+      multiShotMode: stats.multiShotMode ?? "simultaneous",
+      shots: normalizeWeaponShots(stats.shots),
+      speed: fallbackSpeed,
+    };
+  };
 
   const resolvedWeapons: Record<string, WeaponDefinition> = {};
   for (const [id, weapon] of Object.entries(weaponsById)) {
     const zoneStats = weapon.zoneStats ?? {};
-    const resolvedZoneStats: Partial<Record<WeaponZone, Partial<WeaponStats>>> = {};
+    const resolvedZoneStats: Partial<Record<WeaponZone, Partial<WeaponStats>>> =
+      {};
     for (const [zone, override] of Object.entries(zoneStats)) {
       if (!override) continue;
       const { bullet, shots, ...rest } = override;
@@ -375,13 +432,36 @@ const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
     resolvedWeapons[id] = {
       ...weapon,
       stats: resolveWeaponStats(weapon.stats as WeaponStats),
-      zoneStats: Object.keys(resolvedZoneStats).length ? resolvedZoneStats : undefined,
+      zoneStats: Object.keys(resolvedZoneStats).length
+        ? resolvedZoneStats
+        : undefined,
     };
   }
 
   const resolvedWaves: Record<string, WaveDefinition> = {};
   for (const [id, wave] of Object.entries(wavesById)) {
-    resolvedWaves[id] = wave as unknown as WaveDefinition;
+    resolvedWaves[id] = {
+      ...wave,
+      spawns: wave.spawns.map((spawn) => {
+        if (!spawn.overrides) return spawn as WaveDefinition["spawns"][number];
+        const overrides = { ...spawn.overrides };
+        if (overrides.fire) {
+          overrides.fire = coerceFireScript(overrides.fire as FireScriptInput);
+        }
+        if (overrides.phases) {
+          overrides.phases = overrides.phases.map((phase) => ({
+            ...phase,
+            fire: phase.fire
+              ? coerceFireScript(phase.fire as FireScriptInput)
+              : undefined,
+          }));
+        }
+        return {
+          ...spawn,
+          overrides,
+        } as WaveDefinition["spawns"][number];
+      }),
+    };
   }
 
   for (const [id, wave] of Object.entries(wavesById)) {
@@ -405,7 +485,11 @@ const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
     };
     for (const weaponId of shop.allowedWeapons ?? []) {
       if (!resolvedWeapons[weaponId]) {
-        addReferenceError(errors, `shops/${id}`, `Missing weapon "${weaponId}".`);
+        addReferenceError(
+          errors,
+          `shops/${id}`,
+          `Missing weapon "${weaponId}".`,
+        );
       }
     }
     for (const shipId of shop.allowedShips ?? []) {
@@ -417,13 +501,19 @@ const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
 
   for (const [id, weapon] of Object.entries(resolvedWeapons)) {
     if (!resolvedGuns[weapon.gunId]) {
-      addReferenceError(errors, `weapons/${id}`, `Missing gun "${weapon.gunId}".`);
+      addReferenceError(
+        errors,
+        `weapons/${id}`,
+        `Missing gun "${weapon.gunId}".`,
+      );
     }
   }
 
   const resolvedLevels: Record<string, LevelDefinition> = {};
   for (const [id, level] of Object.entries(levelsById)) {
-    const missingWaves = level.waveIds.filter((waveId) => !resolvedWaves[waveId]);
+    const missingWaves = level.waveIds.filter(
+      (waveId) => !resolvedWaves[waveId],
+    );
     for (const missing of missingWaves) {
       addReferenceError(errors, `levels/${id}`, `Missing wave "${missing}".`);
     }
@@ -443,23 +533,41 @@ const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
 
     const shopRules = level.shopId ? resolvedShops[level.shopId] : undefined;
     if (level.shopId && !shopRules) {
-      addReferenceError(errors, `levels/${id}`, `Missing shop "${level.shopId}".`);
+      addReferenceError(
+        errors,
+        `levels/${id}`,
+        `Missing shop "${level.shopId}".`,
+      );
     }
 
     if (level.preBeatId && !beatsById[level.preBeatId]) {
-      addReferenceError(errors, `levels/${id}`, `Missing beat "${level.preBeatId}".`);
+      addReferenceError(
+        errors,
+        `levels/${id}`,
+        `Missing beat "${level.preBeatId}".`,
+      );
     }
     if (level.postBeatId && !beatsById[level.postBeatId]) {
-      addReferenceError(errors, `levels/${id}`, `Missing beat "${level.postBeatId}".`);
+      addReferenceError(
+        errors,
+        `levels/${id}`,
+        `Missing beat "${level.postBeatId}".`,
+      );
     }
-    if (level.winCondition.kind === "defeatBoss" && !resolvedEnemies[level.winCondition.bossId]) {
+    if (
+      level.winCondition.kind === "defeatBoss" &&
+      !resolvedEnemies[level.winCondition.bossId]
+    ) {
       addReferenceError(
         errors,
         `levels/${id}`,
         `Missing boss "${level.winCondition.bossId}".`,
       );
     }
-    if (level.endCondition?.kind === "defeatBoss" && !resolvedEnemies[level.endCondition.bossId]) {
+    if (
+      level.endCondition?.kind === "defeatBoss" &&
+      !resolvedEnemies[level.endCondition.bossId]
+    ) {
       addReferenceError(
         errors,
         `levels/${id}`,

@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
 interface Star {
   x: number;
@@ -27,7 +27,12 @@ export class ParallaxBackground {
   constructor(scene: Phaser.Scene, bounds?: Phaser.Geom.Rectangle) {
     this.scene = scene;
     this.bounds = bounds
-      ? new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height)
+      ? new Phaser.Geom.Rectangle(
+          bounds.x,
+          bounds.y,
+          bounds.width,
+          bounds.height,
+        )
       : new Phaser.Geom.Rectangle(0, 0, scene.scale.width, scene.scale.height);
     this.createLayers();
   }
@@ -71,9 +76,27 @@ export class ParallaxBackground {
   private createLayers(): void {
     const { height, width } = this.bounds;
     const configs = [
-      { color: 0x0f1724, count: 28, size: [0.7, 1.2], speed: 18, stretchChance: 0.1 },
-      { color: 0x16263b, count: 24, size: [0.8, 1.6], speed: 36, stretchChance: 0.35 },
-      { color: 0x1f3c5e, count: 16, size: [1, 2.4], speed: 62, stretchChance: 0.55 },
+      {
+        color: 0x0f1724,
+        count: 28,
+        size: [0.7, 1.2],
+        speed: 18,
+        stretchChance: 0.1,
+      },
+      {
+        color: 0x16263b,
+        count: 24,
+        size: [0.8, 1.6],
+        speed: 36,
+        stretchChance: 0.35,
+      },
+      {
+        color: 0x1f3c5e,
+        count: 16,
+        size: [1, 2.4],
+        speed: 62,
+        stretchChance: 0.55,
+      },
     ];
 
     for (const cfg of configs) {

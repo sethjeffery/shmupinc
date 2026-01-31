@@ -1,95 +1,95 @@
 {
-  "fire": {
-    "loop": false,
-    "steps": []
+  fire: {
+    loop: false,
+    steps: [],
   },
-  "goldDrop": {
-    "max": 3,
-    "min": 1
+  goldDrop: {
+    max: 3,
+    min: 1,
   },
-  "hp": 3,
-  "id": "asteroid",
-  "move": {
-    "loop": false,
-    "steps": [
+  hp: 3,
+  id: "asteroid",
+  move: {
+    loop: false,
+    steps: [
       {
-        "durationMs": 3200,
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 900
-        }
-      }
-    ]
+        durationMs: 3200,
+        kind: "dashTo",
+        to: {
+          x: 0,
+          y: 1000,
+        },
+      },
+    ],
   },
-  "radius": 14,
-  "style": {
-    "fillColor": "#1b2028",
-    "lineColor": "#a7b3c2",
-    "shape": "asteroid",
-    "vector": {
-      "lines": [
+  radius: 14,
+  style: {
+    fillColor: "#1b2028",
+    lineColor: "#a7b3c2",
+    shape: "asteroid",
+    vector: {
+      lines: [
         {
-          "from": {
-            "x": -0.2,
-            "y": -0.2
+          from: {
+            x: -0.2,
+            y: -0.2,
           },
-          "to": {
-            "x": 0.2,
-            "y": 0.2
-          }
+          to: {
+            x: 0.2,
+            y: 0.2,
+          },
         },
         {
-          "from": {
-            "x": -0.45,
-            "y": 0.2
+          from: {
+            x: -0.45,
+            y: 0.2,
           },
-          "to": {
-            "x": -0.1,
-            "y": 0.5
-          }
-        }
+          to: {
+            x: -0.1,
+            y: 0.5,
+          },
+        },
       ],
-      "outline": [
+      outline: [
         {
-          "x": 0.1,
-          "y": -1
+          x: 0.1,
+          y: -1,
         },
         {
-          "x": 0.6,
-          "y": -0.8
+          x: 0.6,
+          y: -0.8,
         },
         {
-          "x": 1,
-          "y": -0.2
+          x: 1,
+          y: -0.2,
         },
         {
-          "x": 0.85,
-          "y": 0.45
+          x: 0.85,
+          y: 0.45,
         },
         {
-          "x": 0.35,
-          "y": 0.95
+          x: 0.35,
+          y: 0.95,
         },
         {
-          "x": -0.25,
-          "y": 0.85
+          x: -0.25,
+          y: 0.85,
         },
         {
-          "x": -0.8,
-          "y": 0.5
+          x: -0.8,
+          y: 0.5,
         },
         {
-          "x": -1,
-          "y": -0.1
+          x: -1,
+          y: -0.1,
         },
         {
-          "x": -0.5,
-          "y": -0.75
-        }
-      ]
-    }
+          x: -0.5,
+          y: -0.75,
+        },
+      ],
+    },
   },
-  "rotation": "fixed",
-  "rotationDeg": 0
+  rotation: "fixed",
+  rotationDeg: 0,
 }

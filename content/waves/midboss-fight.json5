@@ -1,11 +1,11 @@
 {
-  "id": "midboss-fight",
-  "spawns": [
+  id: "midboss-fight",
+  spawns: [
     {
-      "atMs": 0,
-      "enemyId": "midboss",
-      "x": 0,
-      "y": -0.1
-    }
-  ]
+      atMs: 0,
+      enemyId: "midboss",
+      x: 0,
+      y: -0.1,
+    },
+  ],
 }

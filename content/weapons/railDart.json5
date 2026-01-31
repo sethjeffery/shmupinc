@@ -1,32 +1,30 @@
 {
-  "id": "railDart",
-  "name": "Rail Dart",
-  "description": "Slow, high-damage dart lance.",
-  "cost": 260,
-  "gunId": "dart",
-  "size": "large",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "fireRate": 2,
-    "bullet": {
-      "color": "#ffd6a3",
-      "damage": 2.4,
-      "kind": "dart",
-      "length": 16,
-      "radius": 2,
-      "thickness": 2
+  id: "railDart",
+  name: "Rail Dart",
+  description: "Slow, high-damage dart lance.",
+  cost: 260,
+  gunId: "dart",
+  size: "large",
+  zones: ["front"],
+  stats: {
+    fireRate: 2,
+    bullet: {
+      color: "#ffd6a3",
+      damage: 2.4,
+      kind: "dart",
+      length: 16,
+      radius: 2,
+      thickness: 2,
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
-      }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
+      },
     ],
-    "speed": 680
-  }
+    speed: 680,
+  },
 }

@@ -1,141 +1,141 @@
 {
-  "fire": {
-    "loop": true,
-    "steps": [
+  fire: {
+    loop: true,
+    steps: [
       {
-        "durationMs": 500,
-        "kind": "cooldown"
+        durationMs: 500,
+        kind: "cooldown",
       },
       {
-        "aim": {
-          "fromDeg": 60,
-          "kind": "sweep",
-          "periodMs": 1400,
-          "toDeg": 120
+        aim: {
+          fromDeg: 60,
+          kind: "sweep",
+          periodMs: 1400,
+          toDeg: 120,
         },
-        "bullet": {
-          "color": "#ff9f43",
-          "damage": 1,
-          "kind": "orb",
-          "radius": 3,
-          "speed": 200
+        bullet: {
+          color: "#ff9f43",
+          damage: 1,
+          kind: "orb",
+          radius: 3,
+          speed: 200,
         },
-        "durationMs": 1400,
-        "kind": "spray",
-        "ratePerSec": 5
+        durationMs: 1400,
+        kind: "spray",
+        ratePerSec: 5,
       },
       {
-        "durationMs": 300,
-        "kind": "cooldown"
-      }
-    ]
+        durationMs: 300,
+        kind: "cooldown",
+      },
+    ],
   },
-  "goldDrop": {
-    "max": 8,
-    "min": 6
+  goldDrop: {
+    max: 8,
+    min: 6,
   },
-  "hp": 7,
-  "id": "spinner",
-  "move": {
-    "steps": [
+  hp: 7,
+  id: "spinner",
+  move: {
+    steps: [
       {
-        "durationMs": 1200,
-        "kind": "bezier",
-        "points": [
+        durationMs: 1200,
+        kind: "bezier",
+        points: [
           {
-            "x": 0,
-            "y": 0
+            x: 0,
+            y: 0,
           },
           {
-            "x": -120,
-            "y": 110
+            x: -120,
+            y: 110,
           },
           {
-            "x": 120,
-            "y": 220
+            x: 120,
+            y: 220,
           },
           {
-            "x": 0,
-            "y": 320
-          }
-        ]
+            x: 0,
+            y: 320,
+          },
+        ],
       },
       {
-        "durationMs": 1400,
-        "kind": "hover"
+        durationMs: 1400,
+        kind: "hover",
       },
       {
-        "durationMs": 900,
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 780
-        }
-      }
-    ]
+        durationMs: 900,
+        kind: "dashTo",
+        to: {
+          x: 0,
+          y: 460,
+        },
+      },
+    ],
   },
-  "radius": 15,
-  "style": {
-    "fillColor": "#1a0f22",
-    "lineColor": "#ffb86c",
-    "shape": "spinner",
-    "vector": {
-      "lines": [
+  radius: 15,
+  style: {
+    fillColor: "#1a0f22",
+    lineColor: "#ffb86c",
+    shape: "spinner",
+    vector: {
+      lines: [
         {
-          "from": {
-            "x": -0.4,
-            "y": -0.05
+          from: {
+            x: -0.4,
+            y: -0.05,
           },
-          "to": {
-            "x": 0.4,
-            "y": -0.05
-          }
+          to: {
+            x: 0.4,
+            y: -0.05,
+          },
         },
         {
-          "from": {
-            "x": -0.2,
-            "y": 0.35
+          from: {
+            x: -0.2,
+            y: 0.35,
           },
-          "to": {
-            "x": 0.2,
-            "y": 0.35
-          }
-        }
+          to: {
+            x: 0.2,
+            y: 0.35,
+          },
+        },
       ],
-      "outline": [
+      outline: [
         {
-          "x": 0,
-          "y": -1
+          x: 0,
+          y: -1,
         },
         {
-          "x": 0.55,
-          "y": -0.55
+          x: 0.55,
+          y: -0.55,
         },
         {
-          "x": 1,
-          "y": 0
+          x: 1,
+          y: 0,
         },
         {
-          "x": 0.55,
-          "y": 0.55
+          x: 0.55,
+          y: 0.55,
         },
         {
-          "x": 0,
-          "y": 1
+          x: 0,
+          y: 1,
         },
         {
-          "x": -0.55,
-          "y": 0.55
+          x: -0.55,
+          y: 0.55,
         },
         {
-          "x": -1,
-          "y": 0
+          x: -1,
+          y: 0,
         },
         {
-          "x": -0.55,
-          "y": -0.55
-        }
-      ]
-    }
-  }
+          x: -0.55,
+          y: -0.55,
+        },
+      ],
+    },
+  },
 }

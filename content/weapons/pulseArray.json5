@@ -1,44 +1,42 @@
 {
-  "id": "pulseArray",
-  "name": "Pulse Array",
-  "description": "Twin pulse orbs with brighter impact.",
-  "cost": 200,
-  "gunId": "orb",
-  "size": "small",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "fireRate": 3.8,
-    "bullet": {
-      "color": "#6fe3ff",
-      "damage": 1.2,
-      "kind": "orb",
-      "radius": 3,
-      "trail": {
-        "color": "#5ad3ff",
-        "count": 1,
-        "intervalMs": 80,
-        "sizeMax": 2.2,
-        "sizeMin": 1.2
-      }
+  id: "pulseArray",
+  name: "Pulse Array",
+  description: "Twin pulse orbs with brighter impact.",
+  cost: 200,
+  gunId: "orb",
+  size: "small",
+  zones: ["front"],
+  stats: {
+    fireRate: 3.8,
+    bullet: {
+      color: "#6fe3ff",
+      damage: 1.2,
+      kind: "orb",
+      radius: 3,
+      trail: {
+        color: "#5ad3ff",
+        count: 1,
+        intervalMs: 80,
+        sizeMax: 2.2,
+        sizeMin: 1.2,
+      },
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": -0.5,
-        "offset": {
-          "x": -0.35,
-          "y": 0
-        }
+        angleDeg: -0.5,
+        offset: {
+          x: -0.35,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 0.5,
-        "offset": {
-          "x": 0.35,
-          "y": 0
-        }
-      }
+        angleDeg: 0.5,
+        offset: {
+          x: 0.35,
+          y: 0,
+        },
+      },
     ],
-    "speed": 460
-  }
+    speed: 460,
+  },
 }

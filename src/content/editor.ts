@@ -28,8 +28,8 @@ import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import Phaser from "phaser";
 
-import { drawGunToCanvas } from "../game/render/gunShapes";
 import { drawEnemyToCanvas } from "../game/render/enemyShapes";
+import { drawGunToCanvas } from "../game/render/gunShapes";
 import { drawShipToCanvas } from "../game/render/shipShapes";
 import { ContentPreviewScene } from "../game/scenes/ContentPreviewScene";
 import { getDebugFlags, setDebugFlags } from "../game/systems/DebugFlags";
@@ -215,9 +215,9 @@ export const initContentEditor = (): void => {
             <span aria-hidden="true">●</span>
           </div>
           <div class="content-editor__actions">
-            <button class="content-editor__button" data-action="save" disabled>Save</button>
-            <button class="content-editor__button" data-action="play" disabled>Play Level</button>
-            <button class="content-editor__button" data-action="restart" disabled>Restart Level</button>
+            <button class="content-editor__button" data-action="save" type="button" disabled>Save</button>
+            <button class="content-editor__button" data-action="play" type="button" disabled>Play Level</button>
+            <button class="content-editor__button" data-action="restart" type="button" disabled>Restart Level</button>
           </div>
         </div>
       </div>
@@ -379,7 +379,7 @@ export const initContentEditor = (): void => {
   let currentWaveDef: null | WaveDefinition = null;
   let currentWeaponDef: null | WeaponDefinition = null;
   let currentGunDef: GunDefinition | null = null;
-  let currentShipDef: ShipDefinition | null = null;
+  let currentShipDef: null | ShipDefinition = null;
   let currentKind: ContentKind | null = null;
   let registryCache: ContentRegistryResponse | null = null;
   let lastReferencePath: (number | string)[] | null = null;
@@ -399,7 +399,6 @@ export const initContentEditor = (): void => {
   let gunPreviewCanvas: HTMLCanvasElement | null = null;
   let shipPreviewCanvas: HTMLCanvasElement | null = null;
   let enemyPreviewCanvas: HTMLCanvasElement | null = null;
-  let currentGunZone: GunPreviewZone = "front";
   let currentWeaponZone: GunPreviewZone = "front";
   const loadTree = async (): Promise<void> => {
     const response = await fetch("/__content/list");
@@ -418,9 +417,11 @@ export const initContentEditor = (): void => {
     previewCanvasHost.style.aspectRatio = aspect;
   };
 
+  const hasUnsavedChanges = (): boolean =>
+    Boolean(currentPath) && currentText !== originalText;
+
   const updateDirtyState = (): void => {
-    const dirty = Boolean(currentPath) && currentText !== originalText;
-    saveButton.disabled = !dirty;
+    saveButton.disabled = !hasUnsavedChanges();
   };
 
   const setLevelButtonsEnabled = (enabled: boolean): void => {
@@ -748,7 +749,7 @@ export const initContentEditor = (): void => {
     gotoButton.addEventListener("click", () => {
       const targetPath = resolveContentPath(picker.contentKind, select.value);
       if (!targetPath) return;
-      void openFile(targetPath);
+      void requestOpenFile(targetPath);
     });
 
     select.addEventListener("change", updateGotoState);
@@ -975,7 +976,7 @@ export const initContentEditor = (): void => {
     bezierState = resolved;
     setPanelVisible(bezierSection, true);
     const activePoint = draggingPointIndex ?? resolved.points.length - 1;
-    bezierInfo.textContent = `Points: ${resolved.points.length}. Origin: top-center (0,0). X is centered.`;
+    bezierInfo.textContent = `Points: ${resolved.points.length}. Origin: step start (0,0). X is centered.`;
     drawBezierPreview(activePoint);
   };
 
@@ -1196,12 +1197,13 @@ export const initContentEditor = (): void => {
 
     const zoneColors: Record<string, string> = {
       front: "#7df9ff",
-      side: "#ffd166",
       rear: "#ff6b6b",
+      side: "#ffd166",
     };
     for (const mount of ship.mounts) {
       const colorHex = zoneColors[mount.zone] ?? "#8fa6c7";
-      const marker = Math.max(4, radius * 0.08) * (mount.size === "large" ? 1.1 : 0.85);
+      const marker =
+        Math.max(4, radius * 0.08) * (mount.size === "large" ? 1.1 : 0.85);
       const x = centerX + mount.offset.x * radius;
       const y = centerY + mount.offset.y * radius;
       ctx.save();
@@ -1629,7 +1631,7 @@ export const initContentEditor = (): void => {
     if (typeof value !== "string") return;
     const targetPath = resolveContentPath(picker.contentKind, value);
     if (!targetPath) return;
-    void openFile(targetPath);
+    void requestOpenFile(targetPath);
   });
 
   const updateBezierPoint = (
@@ -1751,7 +1753,7 @@ export const initContentEditor = (): void => {
       row.textContent = node.name;
       if (node.type === "file") {
         row.classList.add("is-file");
-        row.addEventListener("click", () => void openFile(node.path));
+        row.addEventListener("click", () => void requestOpenFile(node.path));
       }
       treeContainer.appendChild(row);
       if (node.type === "dir" && node.children?.length) {
@@ -1760,8 +1762,8 @@ export const initContentEditor = (): void => {
     }
   };
 
-  const handleSave = async (): Promise<void> => {
-    if (!currentPath) return;
+  const handleSave = async (): Promise<boolean> => {
+    if (!currentPath) return false;
     const contents = editor.getValue();
     currentText = contents;
     const response = await fetch("/__content/write", {
@@ -1771,15 +1773,38 @@ export const initContentEditor = (): void => {
     });
     if (!response.ok) {
       renderValidation([`Failed to save ${currentPath}.`]);
-      return;
+      return false;
     }
     originalText = currentText;
     updateDirtyState();
     validateCurrent();
     void refreshRegistry();
+    return true;
   };
 
-  saveButton.addEventListener("click", () => void handleSave());
+  const confirmUnsavedChanges = async (): Promise<boolean> => {
+    if (!hasUnsavedChanges()) return true;
+    const shouldSave = window.confirm(
+      "You have unsaved changes. Save before switching files?",
+    );
+    if (shouldSave) {
+      return await handleSave();
+    }
+    return window.confirm("Discard unsaved changes?");
+  };
+
+  const requestOpenFile = async (path: string): Promise<void> => {
+    if (path === currentPath) return;
+    const ok = await confirmUnsavedChanges();
+    if (!ok) return;
+    await openFile(path);
+  };
+
+  saveButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void handleSave();
+  });
 
   const navigateToLevel = (): void => {
     if (!currentLevelId) return;

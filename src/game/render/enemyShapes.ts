@@ -79,6 +79,22 @@ export const ENEMY_VECTORS: Record<EnemyShape, EnemyVector> = {
       { x: -0.45, y: -0.6 },
     ],
   },
+  sidesweeper: {
+    lines: [
+      { from: { x: -0.6, y: -0.1 }, to: { x: 0.6, y: -0.1 } },
+      { from: { x: -0.4, y: 0.2 }, to: { x: 0.4, y: 0.2 } },
+    ],
+    outline: [
+      { x: 0, y: -1 },
+      { x: 0.85, y: -0.55 },
+      { x: 1, y: 0 },
+      { x: 0.55, y: 0.55 },
+      { x: 0, y: 0.75 },
+      { x: -0.55, y: 0.55 },
+      { x: -1, y: 0 },
+      { x: -0.85, y: -0.55 },
+    ],
+  },
   sine: {
     lines: [{ from: { x: -0.25, y: -0.15 }, to: { x: 0.25, y: -0.15 } }],
     outline: [
@@ -110,22 +126,6 @@ export const ENEMY_VECTORS: Record<EnemyShape, EnemyVector> = {
       { x: -0.7, y: 0.3 },
       { x: -0.9, y: -0.2 },
       { x: -0.5, y: -0.65 },
-    ],
-  },
-  sidesweeper: {
-    lines: [
-      { from: { x: -0.6, y: -0.1 }, to: { x: 0.6, y: -0.1 } },
-      { from: { x: -0.4, y: 0.2 }, to: { x: 0.4, y: 0.2 } },
-    ],
-    outline: [
-      { x: 0, y: -1 },
-      { x: 0.85, y: -0.55 },
-      { x: 1, y: 0 },
-      { x: 0.55, y: 0.55 },
-      { x: 0, y: 0.75 },
-      { x: -0.55, y: 0.55 },
-      { x: -1, y: 0 },
-      { x: -0.85, y: -0.55 },
     ],
   },
   snake: {
@@ -224,7 +224,12 @@ export const drawEnemyToGraphics = (
 ): void => {
   const vector = resolveEnemyVector(shape);
   graphics.beginPath();
-  drawOutline(vector.outline, radius, (x, y) => graphics.moveTo(x, y), (x, y) => graphics.lineTo(x, y));
+  drawOutline(
+    vector.outline,
+    radius,
+    (x, y) => graphics.moveTo(x, y),
+    (x, y) => graphics.lineTo(x, y),
+  );
   graphics.closePath();
   graphics.fillPath();
   graphics.strokePath();
@@ -249,7 +254,12 @@ export const drawEnemyToCanvas = (
 ): void => {
   const vector = resolveEnemyVector(shape);
   ctx.beginPath();
-  drawOutline(vector.outline, radius, (x, y) => ctx.moveTo(x, y), (x, y) => ctx.lineTo(x, y));
+  drawOutline(
+    vector.outline,
+    radius,
+    (x, y) => ctx.moveTo(x, y),
+    (x, y) => ctx.lineTo(x, y),
+  );
   ctx.closePath();
   ctx.fill();
   ctx.stroke();

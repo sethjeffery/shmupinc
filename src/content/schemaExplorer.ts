@@ -11,7 +11,11 @@ const formatDefault = (value: unknown): string | undefined => {
   if (value === undefined) return undefined;
   if (value === null) return "null";
   if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
     return String(value);
   }
   if (typeof value === "symbol") return value.toString();
@@ -88,13 +92,17 @@ const formatType = (schema: z.ZodTypeAny): string => {
     case "literal":
       return JSON.stringify(def.values?.[0]);
     case "enum":
-      return Object.values(def.entries ?? {}).map((value) => JSON.stringify(value)).join(" | ");
+      return Object.values(def.entries ?? {})
+        .map((value) => JSON.stringify(value))
+        .join(" | ");
     case "array":
       return `${formatType(def.element ?? z.unknown())}[]`;
     case "object":
       return "object";
     case "union":
-      return (def.options ?? []).map((option) => formatType(option)).join(" | ");
+      return (def.options ?? [])
+        .map((option) => formatType(option))
+        .join(" | ");
     case "record":
       return "record";
     case "any":
@@ -114,7 +122,9 @@ const getShape = (schema: z.ZodTypeAny): Record<string, z.ZodTypeAny> => {
   return {};
 };
 
-export const buildSchemaExplorer = (schema: z.ZodTypeAny): SchemaExplorerEntry[] => {
+export const buildSchemaExplorer = (
+  schema: z.ZodTypeAny,
+): SchemaExplorerEntry[] => {
   const entries = new Map<string, SchemaExplorerEntry>();
 
   const addEntry = (entry: SchemaExplorerEntry): void => {

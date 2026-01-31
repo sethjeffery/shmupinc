@@ -109,7 +109,12 @@ export const drawShipToGraphics = (
 ): void => {
   const vector = resolveShipVector(shape);
   graphics.beginPath();
-  drawOutline(vector.outline, radius, (x, y) => graphics.moveTo(x, y), (x, y) => graphics.lineTo(x, y));
+  drawOutline(
+    vector.outline,
+    radius,
+    (x, y) => graphics.moveTo(x, y),
+    (x, y) => graphics.lineTo(x, y),
+  );
   graphics.closePath();
   graphics.fillPath();
   graphics.strokePath();
@@ -134,7 +139,12 @@ export const drawShipToCanvas = (
 ): void => {
   const vector = resolveShipVector(shape);
   ctx.beginPath();
-  drawOutline(vector.outline, radius, (x, y) => ctx.moveTo(x, y), (x, y) => ctx.lineTo(x, y));
+  drawOutline(
+    vector.outline,
+    radius,
+    (x, y) => ctx.moveTo(x, y),
+    (x, y) => ctx.lineTo(x, y),
+  );
   ctx.closePath();
   ctx.fill();
   ctx.stroke();

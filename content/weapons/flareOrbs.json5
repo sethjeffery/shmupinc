@@ -1,61 +1,58 @@
 {
-  "id": "flareOrbs",
-  "name": "Flare Orbs",
-  "description": "Three hot flares with a tight spread.",
-  "cost": 190,
-  "gunId": "orb",
-  "size": "small",
-  "zones": [
-    "side",
-    "rear"
-  ],
-  "zoneStats": {
-    "side": {
-      "angleDeg": 20
+  id: "flareOrbs",
+  name: "Flare Orbs",
+  description: "Three hot flares with a tight spread.",
+  cost: 190,
+  gunId: "orb",
+  size: "small",
+  zones: ["side", "rear"],
+  zoneStats: {
+    side: {
+      angleDeg: 20,
     },
-    "rear": {
-      "angleDeg": 180,
-      "fireRate": 2
-    }
+    rear: {
+      angleDeg: 180,
+      fireRate: 2,
+    },
   },
-  "stats": {
-    "fireRate": 3.2,
-    "bullet": {
-      "color": "#ffd166",
-      "damage": 1,
-      "kind": "orb",
-      "radius": 3,
-      "trail": {
-        "color": "#ff7b3b",
-        "count": 1,
-        "intervalMs": 70,
-        "sizeMax": 2.2,
-        "sizeMin": 1.1
-      }
+  stats: {
+    fireRate: 3.2,
+    bullet: {
+      color: "#ffd166",
+      damage: 1,
+      kind: "orb",
+      radius: 3,
+      trail: {
+        color: "#ff7b3b",
+        count: 1,
+        intervalMs: 70,
+        sizeMax: 2.2,
+        sizeMin: 1.1,
+      },
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": -15,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
+        angleDeg: -15,
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 15,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
-      }
+        angleDeg: 15,
+        offset: {
+          x: 0,
+          y: 0,
+        },
+      },
     ],
-    "speed": 380
-  }
+    speed: 380,
+  },
 }

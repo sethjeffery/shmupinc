@@ -1,119 +1,621 @@
 {
-  "id": "intro-approach",
-  "spawns": [
+  id: "intro-approach",
+  spawns: [
     {
-      "atMs": 2000,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 2000,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 2200,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 2250,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 2400,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 2500,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 2600,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 2750,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 2800,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 5000,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 3000,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 5250,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 3200,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 5500,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 3400,
-      "enemyId": "circler",
-      "x": 0,
-      "y": 0
+      atMs: 5750,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 8000,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 8000,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 8300,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 8250,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 8600,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 8500,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 8900,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 8750,
+      enemyId: "circler",
+      x: 0,
+      y: 0,
     },
     {
-      "atMs": 9200,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 10000,
+      enemyId: "swooper",
+      x: -0.3,
+      y: 0,
+      overrides: {
+        fire: {
+          steps: [
+            {
+              durationMs: 1100,
+              kind: "cooldown",
+            },
+            {
+              aim: {
+                kind: "atPlayer",
+              },
+              bullet: {
+                color: "#ff9f43",
+                damage: 1,
+                kind: "orb",
+                radius: 30,
+                speed: 200,
+              },
+              count: 1,
+              intervalMs: 180,
+              kind: "burst",
+            },
+          ],
+        },
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
     },
     {
-      "atMs": 9500,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 10000,
+      enemyId: "swooper",
+      x: 0.3,
+      y: 0,
+      overrides: {
+        fire: {
+          steps: [
+            {
+              durationMs: 1100,
+              kind: "cooldown",
+            },
+            {
+              aim: {
+                kind: "atPlayer",
+              },
+              bullet: {
+                color: "#ff9f43",
+                damage: 1,
+                kind: "orb",
+                radius: 30,
+                speed: 200,
+              },
+              count: 1,
+              intervalMs: 180,
+              kind: "burst",
+            },
+          ],
+        },
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
     },
     {
-      "atMs": 9800,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 13000,
+      enemyId: "swooper",
+      x: -0.3,
+      y: 0,
+      overrides: {
+        fire: {
+          steps: [
+            {
+              durationMs: 1100,
+              kind: "cooldown",
+            },
+            {
+              aim: {
+                kind: "atPlayer",
+              },
+              bullet: {
+                color: "#ff9f43",
+                damage: 1,
+                kind: "orb",
+                radius: 30,
+                speed: 200,
+              },
+              count: 1,
+              intervalMs: 180,
+              kind: "burst",
+            },
+          ],
+        },
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
     },
     {
-      "atMs": 10100,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 13000,
+      enemyId: "swooper",
+      x: 0.3,
+      y: 0,
+      overrides: {
+        fire: {
+          steps: [
+            {
+              durationMs: 1100,
+              kind: "cooldown",
+            },
+            {
+              aim: {
+                kind: "atPlayer",
+              },
+              bullet: {
+                color: "#ff9f43",
+                damage: 1,
+                kind: "orb",
+                radius: 10,
+                speed: 200,
+              },
+              count: 3,
+              intervalMs: 180,
+              kind: "burst",
+            },
+          ],
+        },
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
     },
     {
-      "atMs": 10400,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 16000,
+      enemyId: "swooper",
+      x: -0.3,
+      y: 0,
+      overrides: {
+        fire: {
+          steps: [
+            {
+              durationMs: 1100,
+              kind: "cooldown",
+            },
+            {
+              aim: {
+                kind: "atPlayer",
+              },
+              bullet: {
+                color: "#ff9f43",
+                damage: 1,
+                kind: "orb",
+                radius: 3,
+                speed: 200,
+              },
+              count: 3,
+              intervalMs: 180,
+              kind: "burst",
+            },
+          ],
+        },
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
     },
     {
-      "atMs": 10700,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
+      atMs: 16000,
+      enemyId: "swooper",
+      x: 0.3,
+      y: 0,
+      overrides: {
+        fire: {
+          steps: [
+            {
+              durationMs: 1100,
+              kind: "cooldown",
+            },
+            {
+              aim: {
+                kind: "atPlayer",
+              },
+              bullet: {
+                color: "#ff9f43",
+                damage: 1,
+                kind: "orb",
+                radius: 3,
+                speed: 200,
+              },
+              count: 1,
+              intervalMs: 180,
+              kind: "burst",
+            },
+          ],
+        },
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
     },
     {
-      "atMs": 11000,
-      "enemyId": "sidesweeper",
-      "x": 0,
-      "y": 0
-    }
-  ]
+      atMs: 14000,
+      enemyId: "sine_silent",
+      x: -0.1,
+      y: 0,
+      overrides: {
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      atMs: 14000,
+      enemyId: "sine_silent",
+      x: 0.1,
+      y: 0,
+      overrides: {
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      atMs: 17000,
+      enemyId: "sine_silent",
+      x: -0.1,
+      y: 0,
+      overrides: {
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      atMs: 17000,
+      enemyId: "sine_silent",
+      x: 0.1,
+      y: 0,
+      overrides: {
+        move: {
+          steps: [
+            {
+              kind: "dashTo",
+              ease: "out",
+              durationMs: 800,
+              to: {
+                x: 0,
+                y: 200,
+              },
+            },
+            {
+              kind: "hover",
+              durationMs: 2000,
+            },
+            {
+              kind: "dashTo",
+              ease: "in",
+              durationMs: 2000,
+              to: {
+                x: 0,
+                y: 700,
+              },
+            },
+          ],
+        },
+      },
+    },
+    // {
+    //   "atMs": 6000,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 8300,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 8600,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 8900,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 9200,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 9500,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 9800,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 10100,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 10400,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 10700,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // },
+    // {
+    //   "atMs": 11000,
+    //   "enemyId": "sidesweeper",
+    //   "x": 0,
+    //   "y": 0
+    // }
+  ],
 }

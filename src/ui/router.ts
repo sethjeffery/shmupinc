@@ -1,12 +1,15 @@
 import type Phaser from "phaser";
 
-import {
-  clearActiveLevel,
-  startLevelSession,
-} from "../game/data/levelState";
+import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
 import { STORY_BEATS } from "../game/data/storyBeats";
 
-export type UiRoute = "gameover" | "hangar" | "menu" | "pause" | "play" | "story";
+export type UiRoute =
+  | "gameover"
+  | "hangar"
+  | "menu"
+  | "pause"
+  | "play"
+  | "story";
 
 const DEFAULT_LEVEL_ID = "L1_INTRO";
 
@@ -16,10 +19,10 @@ export interface GameOverStats {
 }
 
 const isTextTarget = (target: EventTarget | null): boolean =>
-  target instanceof HTMLInputElement
-  || target instanceof HTMLTextAreaElement
-  || target instanceof HTMLSelectElement
-  || (target instanceof HTMLElement && target.isContentEditable);
+  target instanceof HTMLInputElement ||
+  target instanceof HTMLTextAreaElement ||
+  target instanceof HTMLSelectElement ||
+  (target instanceof HTMLElement && target.isContentEditable);
 
 export class UiRouter {
   private game: Phaser.Game;
@@ -44,9 +47,7 @@ export class UiRouter {
     this.pauseOverlay = this.buildPauseOverlay();
     this.gameOverOverlay = this.buildGameOverOverlay();
     this.storyOverlay = this.buildStoryOverlay();
-    this.gameOverStatsText = this.gameOverOverlay.querySelector(
-      ".ui-stats",
-    )!;
+    this.gameOverStatsText = this.gameOverOverlay.querySelector(".ui-stats")!;
     this.root.append(
       this.menuOverlay,
       this.pauseOverlay,
@@ -80,18 +81,24 @@ export class UiRouter {
     this.tryAutoStartLevel();
   }
 
-  setRoute(route: UiRoute, options?: { restart?: boolean; force?: boolean }): void {
+  setRoute(
+    route: UiRoute,
+    options?: { restart?: boolean; force?: boolean },
+  ): void {
     if (this.route === route && !options?.force) return;
     const previous = this.route;
     this.route = route;
 
     const uiOpen =
-      route === "menu"
-      || route === "pause"
-      || route === "gameover"
-      || route === "story";
+      route === "menu" ||
+      route === "pause" ||
+      route === "gameover" ||
+      route === "story";
     document.body.classList.toggle("ui-open", uiOpen);
-    document.body.classList.toggle("game-locked", route === "play" || route === "pause");
+    document.body.classList.toggle(
+      "game-locked",
+      route === "play" || route === "pause",
+    );
     this.root.classList.toggle("is-active", uiOpen);
 
     this.menuOverlay.classList.toggle("is-active", route === "menu");
@@ -136,7 +143,11 @@ export class UiRouter {
     if (this.game.scene.isActive("BootScene")) {
       this.game.scene.stop("BootScene");
     }
-    if (!restart && previous === "pause" && this.game.scene.isPaused("PlayScene")) {
+    if (
+      !restart &&
+      previous === "pause" &&
+      this.game.scene.isPaused("PlayScene")
+    ) {
       this.game.scene.resume("PlayScene");
       this.setPlayInputEnabled(true);
       return;
@@ -256,13 +267,48 @@ export class UiRouter {
       this.buildPanel({
         actions: [
           { action: "start", label: "Start Mission", primary: true },
-          { action: "story-level", label: "Story: L1 Intro", levelId: "L1_INTRO", primary: false },
-          { action: "story-level", label: "Story: L2 The Squeeze", levelId: "L2_SQUEEZE", primary: false },
-          { action: "story-level", label: "Story: L3 Breakthrough", levelId: "L3_BREAKTHROUGH", primary: false },
-          { action: "story-level", label: "Story: L4 Deadline", levelId: "L4_DEADLINE", primary: false },
-          { action: "story-level", label: "Story: L5 Midboss", levelId: "L5_MIDBOSS", primary: false },
-          { action: "story-level", label: "Story: L6 Remix", levelId: "L6_REMIX", primary: false },
-          { action: "story-level", label: "Story: L7 Boss", levelId: "L7_BOSS", primary: false },
+          {
+            action: "story-level",
+            label: "Story: L1 Intro",
+            levelId: "L1_INTRO",
+            primary: false,
+          },
+          {
+            action: "story-level",
+            label: "Story: L2 The Squeeze",
+            levelId: "L2_SQUEEZE",
+            primary: false,
+          },
+          {
+            action: "story-level",
+            label: "Story: L3 Breakthrough",
+            levelId: "L3_BREAKTHROUGH",
+            primary: false,
+          },
+          {
+            action: "story-level",
+            label: "Story: L4 Deadline",
+            levelId: "L4_DEADLINE",
+            primary: false,
+          },
+          {
+            action: "story-level",
+            label: "Story: L5 Midboss",
+            levelId: "L5_MIDBOSS",
+            primary: false,
+          },
+          {
+            action: "story-level",
+            label: "Story: L6 Remix",
+            levelId: "L6_REMIX",
+            primary: false,
+          },
+          {
+            action: "story-level",
+            label: "Story: L7 Boss",
+            levelId: "L7_BOSS",
+            primary: false,
+          },
           { action: "hangar", label: "Hangar", primary: false },
         ],
         hint: "How to play: Drag to move, auto-fire.",
@@ -348,7 +394,12 @@ export class UiRouter {
   private buildPanel(config: {
     title: string;
     hint?: string;
-    actions: { action: string; label: string; levelId?: string; primary: boolean }[];
+    actions: {
+      action: string;
+      label: string;
+      levelId?: string;
+      primary: boolean;
+    }[];
   }): HTMLDivElement {
     const panel = document.createElement("div");
     panel.className = "ui-panel";

@@ -1,9 +1,9 @@
-import type { BulletSpec } from '../data/scripts';
-import type { Enemy } from './Enemy';
+import type { BulletSpec } from "../data/scripts";
+import type { Enemy } from "./Enemy";
 
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
-export type BulletOwner = 'enemy' | 'player';
+export type BulletOwner = "enemy" | "player";
 
 export interface BulletConfig {
   owner: BulletOwner;
@@ -16,8 +16,18 @@ export interface BulletUpdateContext {
   playerAlive: boolean;
 }
 
-export type EmitBulletTrail = (x: number, y: number, angleRad: number, spec: BulletSpec) => void;
-export type EmitBulletExplosion = (x: number, y: number, spec: BulletSpec, owner: BulletOwner) => void;
+export type EmitBulletTrail = (
+  x: number,
+  y: number,
+  angleRad: number,
+  spec: BulletSpec,
+) => void;
+export type EmitBulletExplosion = (
+  x: number,
+  y: number,
+  spec: BulletSpec,
+  owner: BulletOwner,
+) => void;
 
 export class Bullet {
   scene: Phaser.Scene;
@@ -33,7 +43,7 @@ export class Bullet {
   vy: number;
   angleRad: number;
   graphics: Phaser.GameObjects.Graphics;
-  private lastSignature = '';
+  private lastSignature = "";
   private lifeMs = 0;
   private trailTimerMs = 0;
   private target: Enemy | null = null;
@@ -103,17 +113,17 @@ export class Bullet {
     this.updateTrail(deltaMs, emitTrail);
 
     const offscreen =
-      this.y < bounds.y - 50
-      || this.y > bounds.y + bounds.height + 50
-      || this.x < bounds.x - 50
-      || this.x > bounds.x + bounds.width + 50;
+      this.y < bounds.y - 50 ||
+      this.y > bounds.y + bounds.height + 50 ||
+      this.x < bounds.x - 50 ||
+      this.x > bounds.x + bounds.width + 50;
     if (offscreen) {
       this.deactivate();
     }
   }
 
   hit(emitExplosion?: EmitBulletExplosion): void {
-    if (this.spec.kind === 'bomb' || this.spec.aoe) {
+    if (this.spec.kind === "bomb" || this.spec.aoe) {
       this.explode(emitExplosion);
     } else {
       this.deactivate();
@@ -144,36 +154,47 @@ export class Bullet {
       this.spec.radius,
       this.spec.length ?? 0,
       this.spec.thickness ?? 0,
-    ].join('|');
+    ].join("|");
     if (signature === this.lastSignature) return;
     this.lastSignature = signature;
 
     this.graphics.clear();
-    const color = this.spec.color ?? (this.owner === 'player' ? 0x7df9ff : 0xff9f43);
+    const color =
+      this.spec.color ?? (this.owner === "player" ? 0x7df9ff : 0xff9f43);
     const thickness = this.spec.thickness ?? 2;
     const length = this.spec.length ?? this.radius * 2;
 
     switch (this.spec.kind) {
-      case 'dart':
+      case "dart":
         this.graphics.lineStyle(thickness, color, 1);
         this.graphics.beginPath();
         this.graphics.moveTo(-length * 0.5, 0);
         this.graphics.lineTo(length * 0.5, 0);
         this.graphics.strokePath();
         break;
-      case 'missile':
+      case "missile":
         this.graphics.lineStyle(1, color, 1);
         this.graphics.fillStyle(color, 1);
-        this.graphics.fillRect(-length * 0.5, -thickness * 0.5, length, thickness);
-        this.graphics.strokeRect(-length * 0.5, -thickness * 0.5, length, thickness);
+        this.graphics.fillRect(
+          -length * 0.5,
+          -thickness * 0.5,
+          length,
+          thickness,
+        );
+        this.graphics.strokeRect(
+          -length * 0.5,
+          -thickness * 0.5,
+          length,
+          thickness,
+        );
         break;
-      case 'bomb':
+      case "bomb":
         this.graphics.lineStyle(2, color, 1);
         this.graphics.fillStyle(color, 0.7);
         this.graphics.fillCircle(0, 0, this.radius);
         this.graphics.strokeCircle(0, 0, this.radius);
         break;
-      case 'orb':
+      case "orb":
       default:
         this.graphics.fillStyle(color, 1);
         this.graphics.fillCircle(0, 0, this.radius);
@@ -190,20 +211,33 @@ export class Bullet {
     if (!homing) return;
 
     this.targetAcquireMs -= deltaMs;
-    if (this.owner === 'player') {
+    if (this.owner === "player") {
       if (!this.target?.active) {
         this.target = null;
       }
       const needsAcquire = !this.target || this.targetAcquireMs <= 0;
       if (needsAcquire) {
         this.targetAcquireMs = 180;
-        this.target = this.findNearestEnemy(context.enemies, homing.acquireRadius);
+        this.target = this.findNearestEnemy(
+          context.enemies,
+          homing.acquireRadius,
+        );
       }
       if (this.target) {
-        this.applyTurn(delta, this.target.x, this.target.y, homing.turnRateRadPerSec);
+        this.applyTurn(
+          delta,
+          this.target.x,
+          this.target.y,
+          homing.turnRateRadPerSec,
+        );
       }
     } else if (context.playerAlive) {
-      this.applyTurn(delta, context.playerX, context.playerY, homing.turnRateRadPerSec);
+      this.applyTurn(
+        delta,
+        context.playerX,
+        context.playerY,
+        homing.turnRateRadPerSec,
+      );
     }
 
     this.vx = Math.cos(this.angleRad) * this.speed;
@@ -222,7 +256,12 @@ export class Bullet {
     }
   }
 
-  private applyTurn(delta: number, targetX: number, targetY: number, turnRate: number): void {
+  private applyTurn(
+    delta: number,
+    targetX: number,
+    targetY: number,
+    turnRate: number,
+  ): void {
     const desired = Math.atan2(targetY - this.y, targetX - this.x);
     const diff = Phaser.Math.Angle.Wrap(desired - this.angleRad);
     const maxTurn = turnRate * delta;

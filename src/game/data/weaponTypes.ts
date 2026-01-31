@@ -1,4 +1,4 @@
-import type { BulletSpec, Vec2 } from "./scripts";
+import type { BulletAoe, BulletHoming, BulletSpec, Vec2 } from "./scripts";
 
 export type WeaponId = string;
 
@@ -6,7 +6,7 @@ export type WeaponZone = "front" | "rear" | "side";
 
 export type WeaponSize = "large" | "small";
 
-export type MultiShotMode = "simultaneous" | "roundRobin";
+export type MultiShotMode = "roundRobin" | "simultaneous";
 
 export interface WeaponShot {
   angleDeg?: number;
@@ -21,6 +21,9 @@ export interface WeaponStats {
   speed: number;
   fireRate: number;
   bullet: BulletSpec;
+  homing?: BulletHoming;
+  aoe?: BulletAoe;
+  lifetimeMs?: number;
   angleDeg?: number;
   shots?: WeaponShot[];
   multiShotMode?: MultiShotMode;

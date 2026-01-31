@@ -32,7 +32,10 @@ const readJsonFile = async (filePath: string): Promise<unknown> => {
   return JSON5.parse(raw) as unknown;
 };
 
-const writeJsonFile = async (filePath: string, data: unknown): Promise<void> => {
+const writeJsonFile = async (
+  filePath: string,
+  data: unknown,
+): Promise<void> => {
   const formatted = `${JSON.stringify(data, null, 2)}\n`;
   await fs.writeFile(filePath, formatted, "utf-8");
 };
@@ -82,7 +85,10 @@ const runScaffoldLevel = async (args: string[]): Promise<number> => {
         .access(json5Path)
         .then(() => json5Path)
         .catch(() => jsonPath);
-      const source = (await readJsonFile(sourcePath)) as Record<string, unknown>;
+      const source = (await readJsonFile(sourcePath)) as Record<
+        string,
+        unknown
+      >;
       base = { ...source };
     } catch {
       console.error(`Unable to read source level: ${fromId}`);

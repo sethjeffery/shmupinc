@@ -1,9 +1,9 @@
-import type { WeaponInstanceId } from "./weaponInstances";
 import type { ShipDefinition, ShipId, WeaponMount } from "./shipTypes";
+import type { WeaponInstanceId } from "./weaponInstances";
 import type { WeaponDefinition, WeaponId, WeaponStats } from "./weaponTypes";
 
-import { canMountWeapon, resolveWeaponStats } from "./weaponMounts";
 import { SHIPS, STARTER_SHIP_ID } from "./ships";
+import { canMountWeapon, resolveWeaponStats } from "./weaponMounts";
 import { STARTER_WEAPON_ID, WEAPONS } from "./weapons";
 
 const STORAGE_KEY = "shmupinc-save-v2";
@@ -17,7 +17,7 @@ export interface WeaponInstance {
 
 export interface MountAssignment {
   mountId: string;
-  weaponInstanceId: WeaponInstanceId | null;
+  weaponInstanceId: null | WeaponInstanceId;
 }
 
 export interface SaveData {
@@ -52,7 +52,10 @@ function getStorage(): null | Storage {
   return localStorage;
 }
 
-const createWeaponInstance = (save: SaveData, weaponId: WeaponId): WeaponInstance => {
+const createWeaponInstance = (
+  save: SaveData,
+  weaponId: WeaponId,
+): WeaponInstance => {
   const id = `w${save.nextWeaponInstanceId}`;
   save.nextWeaponInstanceId += 1;
   const instance = { id, weaponId };
@@ -60,19 +63,10 @@ const createWeaponInstance = (save: SaveData, weaponId: WeaponId): WeaponInstanc
   return instance;
 };
 
-const ensureWeaponInstance = (
-  save: SaveData,
-  weaponId: WeaponId,
-): WeaponInstance => {
-  const existing = save.ownedWeapons.find((item) => item.weaponId === weaponId);
-  if (existing) return existing;
-  return createWeaponInstance(save, weaponId);
-};
-
 const buildMountAssignments = (ship: ShipDefinition): MountAssignment[] =>
   ship.mounts.map((mount) => ({ mountId: mount.id, weaponInstanceId: null }));
 
-const getWeaponDefinition = (weaponId: WeaponId): WeaponDefinition | null =>
+const getWeaponDefinition = (weaponId: WeaponId): null | WeaponDefinition =>
   WEAPONS[weaponId] ?? null;
 
 const normalizeNextWeaponInstanceId = (save: SaveData): void => {
@@ -94,8 +88,11 @@ const findFirstCompatibleMount = (
   weapon: WeaponDefinition,
   assignments: MountAssignment[],
 ): MountAssignment | null => {
-  const candidates = ship.mounts.filter((mount) => canMountWeapon(weapon, mount));
-  const preferred = candidates.find((mount) => mount.zone === "front") ?? candidates[0];
+  const candidates = ship.mounts.filter((mount) =>
+    canMountWeapon(weapon, mount),
+  );
+  const preferred =
+    candidates.find((mount) => mount.zone === "front") ?? candidates[0];
   if (!preferred) return null;
   return assignments.find((entry) => entry.mountId === preferred.id) ?? null;
 };
@@ -104,7 +101,8 @@ const normalizeMountedWeapons = (save: SaveData): void => {
   const used = new Set<WeaponInstanceId>();
   const cleaned: Record<string, MountAssignment[]> = {};
   for (const [shipId, ship] of Object.entries(SHIPS)) {
-    const assignments = save.mountedWeapons[shipId] ?? buildMountAssignments(ship);
+    const assignments =
+      save.mountedWeapons[shipId] ?? buildMountAssignments(ship);
     const normalized: MountAssignment[] = [];
     for (const mount of ship.mounts) {
       const entry = assignments.find((item) => item.mountId === mount.id);
@@ -139,7 +137,8 @@ const ensureDefaultLoadout = (save: SaveData): void => {
   const assignments = save.mountedWeapons[ship.id];
   const hasWeapon = assignments.some((entry) => entry.weaponInstanceId);
   if (hasWeapon) return;
-  const instance = save.ownedWeapons[0] ?? createWeaponInstance(save, STARTER_WEAPON_ID);
+  const instance =
+    save.ownedWeapons[0] ?? createWeaponInstance(save, STARTER_WEAPON_ID);
   const weapon = getWeaponDefinition(instance.weaponId);
   if (!weapon) return;
   const assignment = findFirstCompatibleMount(ship, weapon, assignments);
@@ -166,7 +165,9 @@ export function loadSave(): SaveData {
   if (!cached.unlockedShips.includes(cached.selectedShipId)) {
     cached.unlockedShips = [...cached.unlockedShips, cached.selectedShipId];
   }
-  cached.ownedWeapons = cached.ownedWeapons.filter((item) => WEAPONS[item.weaponId]);
+  cached.ownedWeapons = cached.ownedWeapons.filter(
+    (item) => WEAPONS[item.weaponId],
+  );
   if (cached.ownedWeapons.length === 0 && WEAPONS[STARTER_WEAPON_ID]) {
     createWeaponInstance(cached, STARTER_WEAPON_ID);
   }
@@ -213,14 +214,19 @@ export function computePlayerLoadout(baseHp: number = BASE_HP): {
   const ship = SHIPS[save.selectedShipId] ?? SHIPS[STARTER_SHIP_ID];
   const fallbackHp = ship.maxHp || baseHp;
   const mounted = buildMountedWeapons(save, ship);
-  return { save, mountedWeapons: mounted, ship: { ...ship, maxHp: fallbackHp } };
+  return {
+    mountedWeapons: mounted,
+    save,
+    ship: { ...ship, maxHp: fallbackHp },
+  };
 }
 
 export function buildMountedWeapons(
   save: SaveData,
   ship: ShipDefinition,
 ): MountedWeapon[] {
-  const assignments = save.mountedWeapons[ship.id] ?? buildMountAssignments(ship);
+  const assignments =
+    save.mountedWeapons[ship.id] ?? buildMountAssignments(ship);
   const mounted: MountedWeapon[] = [];
   for (const assignment of assignments) {
     if (!assignment.weaponInstanceId) continue;

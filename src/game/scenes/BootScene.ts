@@ -1,15 +1,15 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
-    super('BootScene');
+    super("BootScene");
   }
 
   preload(): void {
-    this.cameras.main.setBackgroundColor('#05060a');
+    this.cameras.main.setBackgroundColor("#05060a");
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor('#05060a');
+    this.cameras.main.setBackgroundColor("#05060a");
   }
 }

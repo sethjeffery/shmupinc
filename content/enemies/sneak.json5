@@ -1,83 +1,83 @@
 {
-  "fire": {
-    "steps": []
+  fire: {
+    steps: [],
   },
-  "goldDrop": {
-    "max": 4,
-    "min": 2
+  goldDrop: {
+    max: 4,
+    min: 2,
   },
-  "hp": 3,
-  "id": "snake",
-  "move": {
-    "steps": [
+  hp: 3,
+  id: "snake",
+  move: {
+    steps: [
       {
-        "durationMs": 3200,
-        "kind": "bezier",
-        "points": [
+        durationMs: 3200,
+        kind: "bezier",
+        points: [
           {
-            "x": 0,
-            "y": 0
+            x: 0,
+            y: 0,
           },
           {
-            "x": 80,
-            "y": 90
+            x: 80,
+            y: 90,
           },
           {
-            "x": -80,
-            "y": 170
+            x: -80,
+            y: 170,
           },
           {
-            "x": 60,
-            "y": 260
+            x: 60,
+            y: 260,
           },
           {
-            "x": -60,
-            "y": 360
-          }
-        ]
+            x: -60,
+            y: 360,
+          },
+        ],
       },
       {
-        "durationMs": 900,
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 740
-        }
-      }
-    ]
+        durationMs: 900,
+        kind: "dashTo",
+        to: {
+          x: 60,
+          y: 380,
+        },
+      },
+    ],
   },
-  "radius": 12,
-  "style": {
-    "fillColor": "#1b1022",
-    "lineColor": "#ff6b6b",
-    "shape": "snake",
-    "vector": {
-      "outline": [
+  radius: 12,
+  style: {
+    fillColor: "#1b1022",
+    lineColor: "#ff6b6b",
+    shape: "snake",
+    vector: {
+      outline: [
         {
-          "x": 0,
-          "y": -1
+          x: 0,
+          y: -1,
         },
         {
-          "x": 0.6,
-          "y": -0.15
+          x: 0.6,
+          y: -0.15,
         },
         {
-          "x": 0.3,
-          "y": 0.95
+          x: 0.3,
+          y: 0.95,
         },
         {
-          "x": 0,
-          "y": 0.45
+          x: 0,
+          y: 0.45,
         },
         {
-          "x": -0.3,
-          "y": 0.95
+          x: -0.3,
+          y: 0.95,
         },
         {
-          "x": -0.6,
-          "y": -0.15
-        }
-      ]
-    }
-  }
+          x: -0.6,
+          y: -0.15,
+        },
+      ],
+    },
+  },
 }

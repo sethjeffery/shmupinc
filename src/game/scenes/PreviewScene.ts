@@ -1,5 +1,5 @@
-import type { BulletSpec } from "../data/scripts";
 import type { MountedWeapon } from "../data/save";
+import type { BulletSpec } from "../data/scripts";
 import type { ShipDefinition } from "../data/ships";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
@@ -30,7 +30,10 @@ export class PreviewScene extends Phaser.Scene {
   private mountedWeapons: MountedWeapon[] = [];
   private playerFiring = new PlayerFiring();
   private ready = false;
-  private pendingLoadout?: { mountedWeapons: MountedWeapon[]; ship: ShipDefinition };
+  private pendingLoadout?: {
+    mountedWeapons: MountedWeapon[];
+    ship: ShipDefinition;
+  };
 
   private emitMissileTrail = (
     x: number,
@@ -91,7 +94,10 @@ export class PreviewScene extends Phaser.Scene {
     );
     this.ready = true;
     if (this.pendingLoadout) {
-      this.setLoadout(this.pendingLoadout.mountedWeapons, this.pendingLoadout.ship);
+      this.setLoadout(
+        this.pendingLoadout.mountedWeapons,
+        this.pendingLoadout.ship,
+      );
       this.pendingLoadout = undefined;
     }
     if (this.pendingResize) {
@@ -110,10 +116,7 @@ export class PreviewScene extends Phaser.Scene {
     this.updateBullets(delta);
   }
 
-  setLoadout(
-    mountedWeapons: MountedWeapon[],
-    ship: ShipDefinition,
-  ): void {
+  setLoadout(mountedWeapons: MountedWeapon[], ship: ShipDefinition): void {
     if (!this.ready) {
       this.pendingLoadout = { mountedWeapons, ship };
       return;
@@ -137,7 +140,9 @@ export class PreviewScene extends Phaser.Scene {
     this.bounds.setTo(0, 0, width, height);
     this.parallax.setBounds(this.bounds);
     if (this.currentShip) {
-      this.ship.setRadius(this.baseRadius * (this.currentShip.radiusMultiplier ?? 1));
+      this.ship.setRadius(
+        this.baseRadius * (this.currentShip.radiusMultiplier ?? 1),
+      );
     } else {
       this.ship.setRadius(this.baseRadius);
     }
@@ -168,5 +173,4 @@ export class PreviewScene extends Phaser.Scene {
       );
     });
   }
-
 }

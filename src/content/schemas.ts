@@ -128,7 +128,7 @@ const moveStepSchema = z.union([
     points: z
       .array(vec2Schema)
       .describe(
-        "Bezier points in local space (0,0 is top-center in the editor).",
+        "Bezier points relative to the step start (0,0 at current position).",
       ),
   }),
   z.object({
@@ -136,9 +136,15 @@ const moveStepSchema = z.union([
     ease: z
       .enum(["in", "inOut", "outIn", "linear", "out"])
       .describe("Easing curve.")
-      .default("linear"),
-    kind: z.literal("dashTo").describe("Dash to a local offset."),
-    to: vec2Schema.describe("Target offset in local space."),
+      .default("linear")
+      .optional(),
+    kind: z.literal("dashTo").describe("Dash by a local offset."),
+    position: z
+      .enum(["absolute", "relative"])
+      .describe("Interpret the target as absolute (spawn anchor) or relative.")
+      .default("relative")
+      .optional(),
+    to: vec2Schema.describe("Target offset from the step start."),
   }),
   z.object({
     durationMs: z.number().describe("Step duration (ms)."),
@@ -197,15 +203,25 @@ const bulletTrailSchema = z.object({
 });
 
 const bulletSpecSchema = z.object({
-  aoe: bulletAoeSchema.describe("Area of effect.").optional(),
+  aoe: bulletAoeSchema
+    .describe("Deprecated: set aoe on the weapon or fire step.")
+    .optional(),
   color: colorField("Bullet color.").optional(),
   damage: z.number().describe("Damage per hit."),
-  homing: bulletHomingSchema.describe("Homing settings.").optional(),
+  homing: bulletHomingSchema
+    .describe("Deprecated: set homing on the weapon or fire step.")
+    .optional(),
   kind: z.enum(["bomb", "dart", "missile", "orb"]).describe("Bullet kind."),
   length: z.number().describe("Visual length (for darts).").optional(),
-  lifetimeMs: z.number().describe("Lifetime in ms.").optional(),
+  lifetimeMs: z
+    .number()
+    .describe("Deprecated: set lifetime on the weapon or fire step.")
+    .optional(),
   radius: z.number().describe("Collision radius in pixels."),
-  speed: z.number().describe("Bullet speed."),
+  speed: z
+    .number()
+    .describe("Deprecated: set speed on the weapon or fire step.")
+    .optional(),
   thickness: z.number().describe("Stroke thickness in pixels.").optional(),
   trail: bulletTrailSchema.describe("Trail settings.").optional(),
 });
@@ -213,13 +229,27 @@ const bulletSpecSchema = z.object({
 const fireStepSchema = z.union([
   z.object({
     aim: aimSchema.describe("Aim definition."),
-    bullet: bulletSpecSchema.describe("Bullet spec."),
+    aoe: bulletAoeSchema
+      .describe("AoE settings (per burst bullet).")
+      .optional(),
+    bullet: bulletSpecSchema.describe("Bullet visuals + base damage."),
     count: z.number().describe("Shots per burst."),
+    homing: bulletHomingSchema
+      .describe("Homing settings (per burst bullet).")
+      .optional(),
     intervalMs: z.number().describe("Burst interval (ms)."),
     kind: z.literal("burst").describe("Fire a short burst."),
+    lifetimeMs: z
+      .number()
+      .describe("Bullet lifetime in ms (per burst bullet).")
+      .optional(),
     originOffsets: z
       .array(vec2Schema)
       .describe("Local muzzle offsets.")
+      .optional(),
+    speed: z
+      .number()
+      .describe("Projectile speed (per burst bullet).")
       .optional(),
   }),
   z.object({
@@ -232,14 +262,28 @@ const fireStepSchema = z.union([
   }),
   z.object({
     aim: aimSchema.describe("Aim definition."),
-    bullet: bulletSpecSchema.describe("Bullet spec."),
+    aoe: bulletAoeSchema
+      .describe("AoE settings (per spray bullet).")
+      .optional(),
+    bullet: bulletSpecSchema.describe("Bullet visuals + base damage."),
     durationMs: z.number().describe("Spray duration (ms)."),
+    homing: bulletHomingSchema
+      .describe("Homing settings (per spray bullet).")
+      .optional(),
     kind: z.literal("spray").describe("Continuous fire."),
+    lifetimeMs: z
+      .number()
+      .describe("Bullet lifetime in ms (per spray bullet).")
+      .optional(),
     originOffsets: z
       .array(vec2Schema)
       .describe("Local muzzle offsets.")
       .optional(),
     ratePerSec: z.number().describe("Shots per second."),
+    speed: z
+      .number()
+      .describe("Projectile speed (per spray bullet).")
+      .optional(),
   }),
 ]);
 
@@ -329,11 +373,31 @@ const enemySchema = z.object({
   style: enemyStyleSchema.describe("Visual styling overrides.").optional(),
 });
 
+const enemyOverrideSchema = z.object({
+  fire: fireScriptSchema.describe("Override fire script.").optional(),
+  goldDrop: z
+    .object({
+      max: z.number().describe("Override max gold drop."),
+      min: z.number().describe("Override min gold drop."),
+    })
+    .describe("Override gold drop range.")
+    .optional(),
+  hp: z.number().describe("Override hit points.").optional(),
+  move: moveScriptSchema.describe("Override move script.").optional(),
+  phases: z.array(bossPhaseSchema).describe("Override boss phases.").optional(),
+  radius: z.number().describe("Override collision radius.").optional(),
+  rotation: z
+    .enum(["fixed", "movement"])
+    .describe("Override rotation mode.")
+    .optional(),
+  rotationDeg: z.number().describe("Override rotation angle.").optional(),
+  style: enemyStyleSchema.describe("Override styling.").optional(),
+});
+
 const spawnSchema = z.object({
   atMs: z.number().min(0).describe("Spawn time since wave start (ms)."),
   enemyId: idField("Enemy id to spawn."),
-  overrides: z
-    .record(z.string(), z.unknown())
+  overrides: enemyOverrideSchema
     .describe("Partial overrides applied to the enemy definition.")
     .optional(),
   x: z
@@ -417,6 +481,9 @@ const weaponStatsSchema = z.object({
     .describe("Angle offset from straight up (deg).")
     .default(0)
     .optional(),
+  aoe: bulletAoeSchema
+    .describe("AoE settings (applied to all bullets fired).")
+    .optional(),
   bullet: bulletSpecSchema
     .extend({
       speed: z
@@ -424,8 +491,15 @@ const weaponStatsSchema = z.object({
         .describe("Deprecated for weapons; use stats.speed instead.")
         .optional(),
     })
-    .describe("Bullet spec (minus speed)."),
+    .describe("Bullet visuals + base damage (speed/effects live on stats)."),
   fireRate: z.number().describe("Shots per second."),
+  homing: bulletHomingSchema
+    .describe("Homing settings (applied to all bullets fired).")
+    .optional(),
+  lifetimeMs: z
+    .number()
+    .describe("Bullet lifetime in ms (applied to all bullets fired).")
+    .optional(),
   multiShotMode: z
     .enum(["simultaneous", "roundRobin"])
     .describe("How multi-shot patterns fire (all at once or cycling).")

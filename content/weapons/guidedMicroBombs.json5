@@ -1,54 +1,51 @@
 {
-  "id": "guidedMicroBombs",
-  "name": "Guided Micro Bombs",
-  "description": "Guided mini-bombs with a splash.",
-  "cost": 330,
-  "gunId": "bomb",
-  "size": "small",
-  "zones": [
-    "side",
-    "rear"
-  ],
-  "stats": {
-    "fireRate": 1.4,
-    "bullet": {
-      "aoe": {
-        "damage": 1,
-        "radius": 50
+  id: "guidedMicroBombs",
+  name: "Guided Micro Bombs",
+  description: "Guided mini-bombs with a splash.",
+  cost: 330,
+  gunId: "bomb",
+  size: "small",
+  zones: ["side", "rear"],
+  stats: {
+    fireRate: 1.4,
+    bullet: {
+      aoe: {
+        damage: 1,
+        radius: 50,
       },
-      "color": "#ff9b6a",
-      "damage": 1,
-      "homing": {
-        "acquireRadius": 200,
-        "turnRateRadPerSec": 1.6
+      color: "#ff9b6a",
+      damage: 1,
+      homing: {
+        acquireRadius: 200,
+        turnRateRadPerSec: 1.6,
       },
-      "kind": "bomb",
-      "lifetimeMs": 2000,
-      "radius": 5,
-      "trail": {
-        "color": "#ff6b3d",
-        "count": 1,
-        "intervalMs": 70,
-        "sizeMax": 2.2,
-        "sizeMin": 1.1
-      }
+      kind: "bomb",
+      lifetimeMs: 2000,
+      radius: 5,
+      trail: {
+        color: "#ff6b3d",
+        count: 1,
+        intervalMs: 70,
+        sizeMax: 2.2,
+        sizeMin: 1.1,
+      },
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": -60,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
+        angleDeg: -60,
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 60,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
-      }
+        angleDeg: 60,
+        offset: {
+          x: 0,
+          y: 0,
+        },
+      },
     ],
-    "speed": 190
-  }
+    speed: 190,
+  },
 }

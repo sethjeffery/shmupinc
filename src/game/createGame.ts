@@ -1,11 +1,11 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
-import { BootScene } from './scenes/BootScene';
-import { PlayScene } from './scenes/PlayScene';
-import { ShopScene } from './scenes/ShopScene';
-import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from './util/playArea';
+import { BootScene } from "./scenes/BootScene";
+import { PlayScene } from "./scenes/PlayScene";
+import { ShopScene } from "./scenes/ShopScene";
+import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "./util/playArea";
 
-const GAME_BACKGROUND = '#05060a';
+const GAME_BACKGROUND = "#05060a";
 
 export function createGame(): Phaser.Game {
   const config: Phaser.Types.Core.GameConfig = {
@@ -13,7 +13,7 @@ export function createGame(): Phaser.Game {
     fps: {
       smoothStep: false,
     },
-    parent: 'app',
+    parent: "app",
     render: {
       antialias: true,
       pixelArt: true,
@@ -30,7 +30,7 @@ export function createGame(): Phaser.Game {
   };
 
   const game = new Phaser.Game(config);
-  game.scene.add('PlayScene', PlayScene, false);
-  game.scene.add('ShopScene', ShopScene, false);
+  game.scene.add("PlayScene", PlayScene, false);
+  game.scene.add("ShopScene", ShopScene, false);
   return game;
 }

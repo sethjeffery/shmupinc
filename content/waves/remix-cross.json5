@@ -1,29 +1,29 @@
 {
-  "id": "remix-cross",
-  "spawns": [
+  id: "remix-cross",
+  spawns: [
     {
-      "atMs": 0,
-      "enemyId": "bomber",
-      "x": 0,
-      "y": -0.1
+      atMs: 0,
+      enemyId: "bomber",
+      x: 0,
+      y: -0.1,
     },
     {
-      "atMs": 600,
-      "enemyId": "sniper",
-      "x": -0.2,
-      "y": -0.1
+      atMs: 600,
+      enemyId: "sniper",
+      x: -0.2,
+      y: -0.1,
     },
     {
-      "atMs": 1000,
-      "enemyId": "sniper",
-      "x": 0.2,
-      "y": -0.1
+      atMs: 1000,
+      enemyId: "sniper",
+      x: 0.2,
+      y: -0.1,
     },
     {
-      "atMs": 1600,
-      "enemyId": "crossfire",
-      "x": 0,
-      "y": -0.1
-    }
-  ]
+      atMs: 1600,
+      enemyId: "crossfire",
+      x: 0,
+      y: -0.1,
+    },
+  ],
 }

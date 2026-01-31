@@ -1,5 +1,5 @@
-import type { BulletSpec } from "../data/scripts";
 import type { MountedWeapon } from "../data/save";
+import type { BulletSpec } from "../data/scripts";
 import type { WeaponShot } from "../data/weaponTypes";
 import type { EmitBullet } from "./FireScriptRunner";
 
@@ -94,7 +94,7 @@ export class PlayerFiring {
   private emitPattern(
     weaponId: string,
     shots: WeaponShot[],
-    multiShotMode?: MountedWeapon["stats"]["multiShotMode"],
+    multiShotMode: MountedWeapon["stats"]["multiShotMode"] | undefined,
     originX: number,
     originY: number,
     shipRadius: number,

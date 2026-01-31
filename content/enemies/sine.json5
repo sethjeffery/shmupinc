@@ -1,120 +1,142 @@
 {
-  "fire": {
-    "loop": true,
-    "steps": [
+  fire: {
+    loop: true,
+    steps: [
       {
-        "durationMs": 700,
-        "kind": "cooldown"
+        durationMs: 700,
+        kind: "cooldown",
       },
       {
-        "aim": {
-          "angleDeg": 90,
-          "kind": "fixed"
+        aim: {
+          angleDeg: 90,
+          kind: "fixed",
         },
-        "bullet": {
-          "color": "#ffb067",
-          "damage": 1,
-          "kind": "dart",
-          "length": 10,
-          "radius": 2,
-          "speed": 260,
-          "thickness": 2
+        bullet: {
+          color: "#ffb067",
+          damage: 1,
+          kind: "dart",
+          length: 10,
+          radius: 2,
+          speed: 260,
+          thickness: 2,
         },
-        "durationMs": 1200,
-        "kind": "spray",
-        "ratePerSec": 6
+        durationMs: 1200,
+        kind: "spray",
+        ratePerSec: 6,
       },
       {
-        "durationMs": 800,
-        "kind": "cooldown"
-      }
-    ]
+        durationMs: 800,
+        kind: "cooldown",
+      },
+    ],
   },
-  "goldDrop": {
-    "max": 6,
-    "min": 4
+  goldDrop: {
+    max: 6,
+    min: 4,
   },
-  "hp": 5,
-  "id": "sine",
-  "move": {
-    "steps": [
+  hp: 5,
+  id: "sine",
+  move: {
+    steps: [
       {
-        "amp": 70,
-        "durationMs": 4200,
-        "freq": 1.1,
-        "kind": "sineDown",
-        "speed": 90
+        amp: 70,
+        durationMs: 4200,
+        freq: 1.1,
+        kind: "sineDown",
+        speed: 90,
       },
       {
-        "durationMs": 900,
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 680
-        }
-      }
-    ]
-  },
-  "radius": 13,
-  "style": {
-    "fillColor": "#0f1a2b",
-    "lineColor": "#6cf2ff",
-    "shape": "sine",
-    "vector": {
-      "lines": [
-        {
-          "from": {
-            "x": -0.25,
-            "y": -0.15
+        kind: "bezier",
+        durationMs: 2400,
+        points: [
+          {
+            x: 0,
+            y: 0,
           },
-          "to": {
-            "x": 0.25,
-            "y": -0.15
-          }
-        }
+          {
+            x: -152.08,
+            y: 20,
+          },
+          {
+            x: -152.08,
+            y: 100,
+          },
+          {
+            x: 0,
+            y: 200,
+          },
+          {
+            x: 0,
+            y: 300,
+          },
+          {
+            x: 50,
+            y: 500,
+          },
+        ],
+      },
+    ],
+  },
+  radius: 13,
+  style: {
+    fillColor: "#0f1a2b",
+    lineColor: "#6cf2ff",
+    shape: "sine",
+    vector: {
+      lines: [
+        {
+          from: {
+            x: -0.25,
+            y: -0.15,
+          },
+          to: {
+            x: 0.25,
+            y: -0.15,
+          },
+        },
       ],
-      "outline": [
+      outline: [
         {
-          "x": 0,
-          "y": -1
+          x: 0,
+          y: -1,
         },
         {
-          "x": 0.7,
-          "y": -0.55
+          x: 0.7,
+          y: -0.55,
         },
         {
-          "x": 1.05,
-          "y": -0.05
+          x: 1.05,
+          y: -0.05,
         },
         {
-          "x": 0.8,
-          "y": 0.35
+          x: 0.8,
+          y: 0.35,
         },
         {
-          "x": 0.45,
-          "y": 0.9
+          x: 0.45,
+          y: 0.9,
         },
         {
-          "x": 0,
-          "y": 0.65
+          x: 0,
+          y: 0.65,
         },
         {
-          "x": -0.45,
-          "y": 0.9
+          x: -0.45,
+          y: 0.9,
         },
         {
-          "x": -0.8,
-          "y": 0.35
+          x: -0.8,
+          y: 0.35,
         },
         {
-          "x": -1.05,
-          "y": -0.05
+          x: -1.05,
+          y: -0.05,
         },
         {
-          "x": -0.7,
-          "y": -0.55
-        }
-      ]
-    }
-  }
+          x: -0.7,
+          y: -0.55,
+        },
+      ],
+    },
+  },
 }

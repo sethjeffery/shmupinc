@@ -1,33 +1,30 @@
 {
-  "id": "dartGun",
-  "name": "Dart Gun",
-  "description": "Fast darts, good for precision.",
-  "cost": 130,
-  "gunId": "dart",
-  "size": "small",
-  "zones": [
-    "front",
-    "side"
-  ],
-  "stats": {
-    "fireRate": 6,
-    "bullet": {
-      "color": "#ffb86c",
-      "damage": 1,
-      "kind": "dart",
-      "length": 12,
-      "radius": 2,
-      "thickness": 2
+  id: "dartGun",
+  name: "Dart Gun",
+  description: "Fast darts, good for precision.",
+  cost: 130,
+  gunId: "dart",
+  size: "small",
+  zones: ["front", "side"],
+  stats: {
+    fireRate: 6,
+    bullet: {
+      color: "#ffb86c",
+      damage: 1,
+      kind: "dart",
+      length: 12,
+      radius: 2,
+      thickness: 2,
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
-      }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
+      },
     ],
-    "speed": 520
-  }
+    speed: 520,
+  },
 }

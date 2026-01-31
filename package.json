@@ -10,6 +10,7 @@
     "content:print": "tsx scripts/content-cli.ts print",
     "content:scaffold": "tsx scripts/content-cli.ts scaffold",
     "content:validate": "tsx scripts/content-cli.ts validate",
+    "format": "prettier --write .",
     "lint": "eslint . --fix",
     "test": "tsc --noEmit && eslint .",
     "preview": "vite preview"
@@ -27,6 +28,7 @@
   "dependencies": {
     "json5": "^2.2.3",
     "phaser": "^3.90.0",
+    "prettier": "^3.8.1",
     "zod": "^4.1.11"
   }
 }

@@ -19,7 +19,8 @@ export interface LoadContentResult {
 
 const CONTENT_ROOT = path.resolve(process.cwd(), "content");
 
-const normalizePath = (value: string): string => value.split(path.sep).join("/");
+const normalizePath = (value: string): string =>
+  value.split(path.sep).join("/");
 
 const ensureInsideContentRoot = (relativePath: string): string => {
   const resolved = path.resolve(CONTENT_ROOT, relativePath);
@@ -30,7 +31,10 @@ const ensureInsideContentRoot = (relativePath: string): string => {
 };
 
 export const listContentTree = async (): Promise<ContentTreeNode[]> => {
-  const readDir = async (dir: string, basePath: string): Promise<ContentTreeNode[]> => {
+  const readDir = async (
+    dir: string,
+    basePath: string,
+  ): Promise<ContentTreeNode[]> => {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     const nodes: ContentTreeNode[] = [];
     for (const entry of entries) {
@@ -59,7 +63,9 @@ export const listContentTree = async (): Promise<ContentTreeNode[]> => {
   return readDir(CONTENT_ROOT, "");
 };
 
-export const readContentFile = async (relativePath: string): Promise<string> => {
+export const readContentFile = async (
+  relativePath: string,
+): Promise<string> => {
   const safePath = ensureInsideContentRoot(relativePath);
   return fs.readFile(safePath, "utf-8");
 };

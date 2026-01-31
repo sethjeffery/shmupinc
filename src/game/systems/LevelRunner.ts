@@ -19,7 +19,12 @@ interface LevelRunnerContext {
   ) => void;
   getEnemyCount: () => number;
   isEnemyActive: (enemyId: EnemyId) => boolean;
-  getPlayerState: () => { x: number; y: number; radius: number; alive: boolean };
+  getPlayerState: () => {
+    x: number;
+    y: number;
+    radius: number;
+    alive: boolean;
+  };
   applyContactDamage: (amount: number, fxX?: number, fxY?: number) => void;
   pushPlayer: (
     offsetX: number,
@@ -131,7 +136,11 @@ export class LevelRunner {
           impact.contactY,
         );
         if (impact.damageOnTouch) {
-          this.context.applyContactDamage(damage, impact.contactX, impact.contactY);
+          this.context.applyContactDamage(
+            damage,
+            impact.contactX,
+            impact.contactY,
+          );
         }
       }
     }

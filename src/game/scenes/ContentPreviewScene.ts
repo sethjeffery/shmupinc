@@ -41,7 +41,6 @@ export class ContentPreviewScene extends Phaser.Scene {
   private playerShip?: Ship;
   private mountedWeapons: MountedWeapon[] = [];
   private shipDef: null | ShipDefinition = null;
-  private weaponZone: null | WeaponZone = null;
   private playerFiring = new PlayerFiring();
   private bulletContext: BulletUpdateContext = {
     enemies: [],
@@ -260,7 +259,6 @@ export class ContentPreviewScene extends Phaser.Scene {
       return;
     }
     this.mode = "weapon";
-    this.weaponZone = zone ?? null;
     const mount = this.getPreviewMount(weapon, ship, zone);
     this.mountedWeapons = mount
       ? [
@@ -293,7 +291,6 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.enemyDef = null;
     this.mountedWeapons = [];
     this.shipDef = null;
-    this.weaponZone = null;
     this.waveSpawns = [];
     this.spawnCursor = 0;
     this.elapsedMs = 0;

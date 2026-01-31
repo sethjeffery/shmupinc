@@ -1,124 +1,124 @@
 {
-  "fire": {
-    "loop": true,
-    "steps": [
+  fire: {
+    loop: true,
+    steps: [
       {
-        "durationMs": 700,
-        "kind": "cooldown"
+        durationMs: 700,
+        kind: "cooldown",
       },
       {
-        "aim": {
-          "kind": "atPlayer"
+        aim: {
+          kind: "atPlayer",
         },
-        "bullet": {
-          "color": "#ffb067",
-          "damage": 2,
-          "kind": "dart",
-          "length": 10,
-          "radius": 2,
-          "speed": 300,
-          "thickness": 2
+        bullet: {
+          color: "#ffb067",
+          damage: 2,
+          kind: "dart",
+          length: 10,
+          radius: 2,
+          speed: 300,
+          thickness: 2,
         },
-        "count": 1,
-        "intervalMs": 1,
-        "kind": "burst"
+        count: 1,
+        intervalMs: 1,
+        kind: "burst",
       },
       {
-        "durationMs": 900,
-        "kind": "cooldown"
-      }
-    ]
+        durationMs: 900,
+        kind: "cooldown",
+      },
+    ],
   },
-  "goldDrop": {
-    "max": 7,
-    "min": 5
+  goldDrop: {
+    max: 7,
+    min: 5,
   },
-  "hp": 5,
-  "id": "sniper",
-  "move": {
-    "steps": [
+  hp: 5,
+  id: "sniper",
+  move: {
+    steps: [
       {
-        "durationMs": 650,
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 140
-        }
+        durationMs: 650,
+        kind: "dashTo",
+        to: {
+          x: 0,
+          y: 140,
+        },
       },
       {
-        "durationMs": 1700,
-        "kind": "hover"
+        durationMs: 1700,
+        kind: "hover",
       },
       {
-        "durationMs": 850,
-        "kind": "dashTo",
-        "to": {
-          "x": 0,
-          "y": 760
-        }
-      }
-    ]
+        durationMs: 850,
+        kind: "dashTo",
+        to: {
+          x: 0,
+          y: 620,
+        },
+      },
+    ],
   },
-  "radius": 12,
-  "style": {
-    "fillColor": "#141a14",
-    "lineColor": "#b8ff7a",
-    "shape": "sniper",
-    "vector": {
-      "lines": [
+  radius: 12,
+  style: {
+    fillColor: "#141a14",
+    lineColor: "#b8ff7a",
+    shape: "sniper",
+    vector: {
+      lines: [
         {
-          "from": {
-            "x": -0.15,
-            "y": -0.4
+          from: {
+            x: -0.15,
+            y: -0.4,
           },
-          "to": {
-            "x": 0.15,
-            "y": -0.4
-          }
-        }
+          to: {
+            x: 0.15,
+            y: -0.4,
+          },
+        },
       ],
-      "outline": [
+      outline: [
         {
-          "x": 0,
-          "y": -1.15
+          x: 0,
+          y: -1.15,
         },
         {
-          "x": 0.25,
-          "y": -0.7
+          x: 0.25,
+          y: -0.7,
         },
         {
-          "x": 0.55,
-          "y": -0.4
+          x: 0.55,
+          y: -0.4,
         },
         {
-          "x": 0.9,
-          "y": 0.15
+          x: 0.9,
+          y: 0.15,
         },
         {
-          "x": 0.35,
-          "y": 0.95
+          x: 0.35,
+          y: 0.95,
         },
         {
-          "x": 0,
-          "y": 0.55
+          x: 0,
+          y: 0.55,
         },
         {
-          "x": -0.35,
-          "y": 0.95
+          x: -0.35,
+          y: 0.95,
         },
         {
-          "x": -0.9,
-          "y": 0.15
+          x: -0.9,
+          y: 0.15,
         },
         {
-          "x": -0.55,
-          "y": -0.4
+          x: -0.55,
+          y: -0.4,
         },
         {
-          "x": -0.25,
-          "y": -0.7
-        }
-      ]
-    }
-  }
+          x: -0.25,
+          y: -0.7,
+        },
+      ],
+    },
+  },
 }

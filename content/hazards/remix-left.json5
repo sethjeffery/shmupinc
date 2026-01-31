@@ -1,9 +1,15 @@
 {
-  "id": "remix-left",
-  "type": "laneWall",
-  "rect": { "x": 0.1, "y": 0.5, "w": 0.2, "h": 0.9 },
-  "motion": { "kind": "sine", "axis": "x", "amplitude": 0.08, "periodMs": 12000, "phase": 0.8 },
-  "damageOnTouch": true,
-  "fillColor": "#0b1220",
-  "lineColor": "#1b3149"
+  id: "remix-left",
+  type: "laneWall",
+  rect: { x: 0.1, y: 0.5, w: 0.2, h: 0.9 },
+  motion: {
+    kind: "sine",
+    axis: "x",
+    amplitude: 0.08,
+    periodMs: 12000,
+    phase: 0.8,
+  },
+  damageOnTouch: true,
+  fillColor: "#0b1220",
+  lineColor: "#1b3149",
 }

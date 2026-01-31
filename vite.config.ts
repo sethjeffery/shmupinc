@@ -19,13 +19,22 @@ const parseBody = async (req: Connect.IncomingMessage): Promise<string> => {
   return Buffer.concat(chunks).toString("utf-8");
 };
 
-const sendJson = (res: Connect.ServerResponse, status: number, payload: unknown): void => {
+const sendJson = (
+  res: Connect.ServerResponse,
+  status: number,
+  payload: unknown,
+): void => {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(payload));
 };
 
 export default defineConfig({
+  server: {
+    watch: {
+      ignored: ["**/content/**"],
+    },
+  },
   plugins: [
     {
       name: "content-json5",
@@ -80,7 +89,10 @@ export default defineConfig({
           }
           try {
             const raw = await parseBody(req);
-            const payload = JSON.parse(raw) as { contents?: string; path?: string };
+            const payload = JSON.parse(raw) as {
+              contents?: string;
+              path?: string;
+            };
             if (!payload.path || typeof payload.contents !== "string") {
               sendJson(res, 400, { error: "Missing path or contents." });
               return;
@@ -92,22 +104,25 @@ export default defineConfig({
           }
         });
 
-        server.middlewares.use("/__content/registry", async (req, res, next) => {
-          if (req.method !== "GET") {
-            next();
-            return;
-          }
-          try {
-            const { entries, errors } = await loadContentEntries();
-            const result = buildContentRegistry(entries);
-            sendJson(res, 200, {
-              errors: [...errors, ...result.errors],
-              registry: result.registry,
-            });
-          } catch (error) {
-            sendJson(res, 500, { error: (error as Error).message });
-          }
-        });
+        server.middlewares.use(
+          "/__content/registry",
+          async (req, res, next) => {
+            if (req.method !== "GET") {
+              next();
+              return;
+            }
+            try {
+              const { entries, errors } = await loadContentEntries();
+              const result = buildContentRegistry(entries);
+              sendJson(res, 200, {
+                errors: [...errors, ...result.errors],
+                registry: result.registry,
+              });
+            } catch (error) {
+              sendJson(res, 500, { error: (error as Error).message });
+            }
+          },
+        );
       },
     },
   ],

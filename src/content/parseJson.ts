@@ -9,7 +9,10 @@ export interface JsonParseResult {
   error?: JsonParseError;
 }
 
-const getLineColumn = (text: string, position: number): { column: number; line: number } => {
+const getLineColumn = (
+  text: string,
+  position: number,
+): { column: number; line: number } => {
   const slice = text.slice(0, position);
   const lastBreak = slice.lastIndexOf("\n");
   const column = position - (lastBreak >= 0 ? lastBreak : -1);

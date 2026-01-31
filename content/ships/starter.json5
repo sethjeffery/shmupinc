@@ -1,94 +1,94 @@
 {
-  "color": "#9fb7ff",
-  "cost": 0,
-  "description": "Your trusty starter craft.",
-  "id": "starter",
-  "magnetMultiplier": 1,
-  "maxHp": 6,
-  "moveSpeed": 7,
-  "mounts": [
+  color: "#9fb7ff",
+  cost: 0,
+  description: "Your trusty starter craft.",
+  id: "starter",
+  magnetMultiplier: 1,
+  maxHp: 6,
+  moveSpeed: 7,
+  mounts: [
     {
-      "id": "front",
-      "offset": {
-        "x": 0,
-        "y": -0.6
+      id: "front",
+      offset: {
+        x: 0,
+        y: -0.6,
       },
-      "size": "large",
-      "zone": "front"
+      size: "large",
+      zone: "front",
     },
     {
-      "id": "side-left",
-      "offset": {
-        "x": -0.7,
-        "y": 0.1
+      id: "side-left",
+      offset: {
+        x: -0.7,
+        y: 0.1,
       },
-      "size": "small",
-      "zone": "side"
+      size: "small",
+      zone: "side",
     },
     {
-      "id": "side-right",
-      "offset": {
-        "x": 0.7,
-        "y": 0.1
+      id: "side-right",
+      offset: {
+        x: 0.7,
+        y: 0.1,
       },
-      "size": "small",
-      "zone": "side"
+      size: "small",
+      zone: "side",
     },
     {
-      "id": "rear",
-      "offset": {
-        "x": 0,
-        "y": 0.65
+      id: "rear",
+      offset: {
+        x: 0,
+        y: 0.65,
       },
-      "size": "small",
-      "zone": "rear"
-    }
+      size: "small",
+      zone: "rear",
+    },
   ],
-  "name": "Starling",
-  "radiusMultiplier": 1,
-  "shape": "starling",
-  "vector": {
-    "outline": [
+  name: "Starling",
+  radiusMultiplier: 1,
+  shape: "starling",
+  vector: {
+    outline: [
       {
-        "x": 0,
-        "y": -1
+        x: 0,
+        y: -1,
       },
       {
-        "x": 0.5,
-        "y": 0.3
+        x: 0.5,
+        y: 0.3,
       },
       {
-        "x": 0.8,
-        "y": -0.1
+        x: 0.8,
+        y: -0.1,
       },
       {
-        "x": 0.95,
-        "y": 0
+        x: 0.95,
+        y: 0,
       },
       {
-        "x": 0.8,
-        "y": 1
+        x: 0.8,
+        y: 1,
       },
       {
-        "x": 0,
-        "y": 0.8
+        x: 0,
+        y: 0.8,
       },
       {
-        "x": -0.8,
-        "y": 1
+        x: -0.8,
+        y: 1,
       },
       {
-        "x": -0.95,
-        "y": 0
+        x: -0.95,
+        y: 0,
       },
       {
-        "x": -0.8,
-        "y": -0.1
+        x: -0.8,
+        y: -0.1,
       },
       {
-        "x": -0.5,
-        "y": 0.3
-      }
-    ]
-  }
+        x: -0.5,
+        y: 0.3,
+      },
+    ],
+  },
 }

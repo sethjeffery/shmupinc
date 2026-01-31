@@ -1,6 +1,6 @@
 {
-  "id": "shop_squeeze",
-  "allowedWeapons": [
+  id: "shop_squeeze",
+  allowedWeapons: [
     "dartGun",
     "orbBlaster",
     "orbBlasterPlus",
@@ -8,15 +8,10 @@
     "haloOrbs",
     "miniMissiles",
     "rapidDarts",
-    "sideCannons"
   ],
-  "allowedShips": [
-    "starter",
-    "scout",
-    "interceptor"
-  ],
-  "caps": {
-    "weaponCost": 260,
-    "shipCost": 220
-  }
+  allowedShips: ["starter", "scout", "interceptor"],
+  caps: {
+    weaponCost: 260,
+    shipCost: 220,
+  },
 }

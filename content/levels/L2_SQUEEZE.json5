@@ -1,15 +1,15 @@
 {
-  "id": "L2_SQUEEZE",
-  "title": "The Squeeze",
-  "pressureProfile": {
-    "primary": "space",
-    "secondary": ["enemy", "focus"]
+  id: "L2_SQUEEZE",
+  title: "The Squeeze",
+  pressureProfile: {
+    primary: "space",
+    secondary: ["enemy", "focus"],
   },
-  "preBeatId": "beat_squeeze_pre",
-  "postBeatId": "beat_squeeze_post",
-  "waveIds": ["squeeze-entry", "squeeze-lock"],
-  "hazardIds": ["squeeze-left", "squeeze-right"],
-  "shopId": "shop_squeeze",
-  "winCondition": { "kind": "clearWaves" },
-  "endCondition": { "kind": "clearWaves" }
+  preBeatId: "beat_squeeze_pre",
+  postBeatId: "beat_squeeze_post",
+  waveIds: ["squeeze-entry", "squeeze-lock"],
+  hazardIds: ["squeeze-left", "squeeze-right"],
+  shopId: "shop_squeeze",
+  winCondition: { kind: "clearWaves" },
+  endCondition: { kind: "clearWaves" },
 }

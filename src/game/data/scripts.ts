@@ -1,4 +1,4 @@
-// All MoveScript coordinates are local to the spawn anchor (0,0 at spawn).
+// All MoveScript coordinates are local offsets from the current step start.
 export interface Vec2 {
   x: number;
   y: number;
@@ -15,6 +15,7 @@ export type MoveStep =
       kind: "dashTo";
       to: Vec2;
       durationMs: number;
+      position?: "absolute" | "relative";
       ease?: "in" | "inOut" | "linear" | "out" | "outIn";
     }
   | { kind: "hover"; durationMs: number }

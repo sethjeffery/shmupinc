@@ -1,117 +1,117 @@
 {
-  "color": "#ffd166",
-  "cost": 120,
-  "description": "Fast, light, low HP.",
-  "id": "scout",
-  "magnetMultiplier": 1.25,
-  "maxHp": 5,
-  "moveSpeed": 8.2,
-  "mounts": [
+  color: "#ffd166",
+  cost: 120,
+  description: "Fast, light, low HP.",
+  id: "scout",
+  magnetMultiplier: 1.25,
+  maxHp: 5,
+  moveSpeed: 8.2,
+  mounts: [
     {
-      "id": "front",
-      "offset": {
-        "x": 0,
-        "y": -0.7
+      id: "front",
+      offset: {
+        x: 0,
+        y: -0.7,
       },
-      "size": "large",
-      "zone": "front"
+      size: "large",
+      zone: "front",
     },
     {
-      "id": "side-left",
-      "offset": {
-        "x": -0.65,
-        "y": 0.15
+      id: "side-left",
+      offset: {
+        x: -0.65,
+        y: 0.15,
       },
-      "size": "small",
-      "zone": "side"
+      size: "small",
+      zone: "side",
     },
     {
-      "id": "side-right",
-      "offset": {
-        "x": 0.65,
-        "y": 0.15
+      id: "side-right",
+      offset: {
+        x: 0.65,
+        y: 0.15,
       },
-      "size": "small",
-      "zone": "side"
-    }
+      size: "small",
+      zone: "side",
+    },
   ],
-  "name": "Scout",
-  "radiusMultiplier": 1.4,
-  "shape": "scout",
-  "vector": {
-    "outline": [
+  name: "Scout",
+  radiusMultiplier: 1.4,
+  shape: "scout",
+  vector: {
+    outline: [
       {
-        "x": 0,
-        "y": -1
+        x: 0,
+        y: -1,
       },
       {
-        "x": 0.14,
-        "y": -0.9
+        x: 0.14,
+        y: -0.9,
       },
       {
-        "x": 0.4,
-        "y": -0.25
+        x: 0.4,
+        y: -0.25,
       },
       {
-        "x": 1,
-        "y": 0.25
+        x: 1,
+        y: 0.25,
       },
       {
-        "x": 1,
-        "y": 0.5
+        x: 1,
+        y: 0.5,
       },
       {
-        "x": 0.2,
-        "y": 0.3
+        x: 0.2,
+        y: 0.3,
       },
       {
-        "x": 0.15,
-        "y": 0.7
+        x: 0.15,
+        y: 0.7,
       },
       {
-        "x": 0.45,
-        "y": 1
+        x: 0.45,
+        y: 1,
       },
       {
-        "x": 0.25,
-        "y": 1
+        x: 0.25,
+        y: 1,
       },
       {
-        "x": 0,
-        "y": 0.9
+        x: 0,
+        y: 0.9,
       },
       {
-        "x": -0.25,
-        "y": 1
+        x: -0.25,
+        y: 1,
       },
       {
-        "x": -0.45,
-        "y": 1
+        x: -0.45,
+        y: 1,
       },
       {
-        "x": -0.15,
-        "y": 0.7
+        x: -0.15,
+        y: 0.7,
       },
       {
-        "x": -0.2,
-        "y": 0.3
+        x: -0.2,
+        y: 0.3,
       },
       {
-        "x": -1,
-        "y": 0.5
+        x: -1,
+        y: 0.5,
       },
       {
-        "x": -1,
-        "y": 0.25
+        x: -1,
+        y: 0.25,
       },
       {
-        "x": -0.4,
-        "y": -0.25
+        x: -0.4,
+        y: -0.25,
       },
       {
-        "x": -0.14,
-        "y": -0.9
-      }
-    ]
-  }
+        x: -0.14,
+        y: -0.9,
+      },
+    ],
+  },
 }

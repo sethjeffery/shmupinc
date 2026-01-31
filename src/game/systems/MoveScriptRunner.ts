@@ -140,12 +140,17 @@ export class MoveScriptRunner {
         this.currentLocalY = this.stepStartLocalY;
         break;
       case "dashTo": {
-        const targetX = step.to.x;
-        const targetY = step.to.y;
-        this.currentLocalX =
-          this.stepStartLocalX + (targetX - this.stepStartLocalX) * easedT;
-        this.currentLocalY =
-          this.stepStartLocalY + (targetY - this.stepStartLocalY) * easedT;
+        if (step.position === "absolute") {
+          const targetX = step.to.x;
+          const targetY = step.to.y;
+          this.currentLocalX =
+            this.stepStartLocalX + (targetX - this.stepStartLocalX) * easedT;
+          this.currentLocalY =
+            this.stepStartLocalY + (targetY - this.stepStartLocalY) * easedT;
+        } else {
+          this.currentLocalX = this.stepStartLocalX + step.to.x * easedT;
+          this.currentLocalY = this.stepStartLocalY + step.to.y * easedT;
+        }
         break;
       }
       default:
@@ -168,8 +173,8 @@ export class MoveScriptRunner {
         this.tempY[i] += (this.tempY[i + 1] - this.tempY[i]) * t;
       }
     }
-    this.currentLocalX = this.tempX[0];
-    this.currentLocalY = this.tempY[0];
+    this.currentLocalX = this.stepStartLocalX + this.tempX[0];
+    this.currentLocalY = this.stepStartLocalY + this.tempY[0];
   }
 
   private applyEase(

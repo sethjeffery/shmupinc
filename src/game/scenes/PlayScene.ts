@@ -1,5 +1,5 @@
-import type { BulletSpec } from "../data/scripts";
 import type { MountedWeapon } from "../data/save";
+import type { BulletSpec } from "../data/scripts";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
@@ -483,7 +483,9 @@ export class PlayScene extends Phaser.Scene {
         const push = this.getEnemyPush(enemy.x, enemy.y, enemy.radius);
         if (push) {
           const fxColor =
-            enemy.def.style?.lineColor ?? enemy.def.style?.fillColor ?? 0xff6b6b;
+            enemy.def.style?.lineColor ??
+            enemy.def.style?.fillColor ??
+            0xff6b6b;
           const contactX = this.ship.x - push.nx * this.ship.radius;
           const contactY = this.ship.y - push.ny * this.ship.radius;
           this.applyPlayerPush(push.x, push.y, fxColor, contactX, contactY);
@@ -630,8 +632,22 @@ export class PlayScene extends Phaser.Scene {
       if (enemy.def.id === "boss") {
         this.particles.spawnBurst(enemy.x, enemy.y, 40, 0xff6b6b);
         this.particles.spawnBurst(enemy.x, enemy.y, 30, 0xff9fae);
-        this.particles.spawnRing(enemy.x, enemy.y, enemy.radius * 6, 0xff6b6b, 5, 0.8);
-        this.particles.spawnRing(enemy.x, enemy.y, enemy.radius * 3.5, 0xffa3b8, 3, 0.6);
+        this.particles.spawnRing(
+          enemy.x,
+          enemy.y,
+          enemy.radius * 6,
+          0xff6b6b,
+          5,
+          0.8,
+        );
+        this.particles.spawnRing(
+          enemy.x,
+          enemy.y,
+          enemy.radius * 3.5,
+          0xffa3b8,
+          3,
+          0.6,
+        );
       } else {
         this.particles.spawnBurst(enemy.x, enemy.y, 18, 0xff6b6b);
       }
@@ -760,8 +776,9 @@ export class PlayScene extends Phaser.Scene {
   private setTargetFromPointer(pointer: Phaser.Input.Pointer): void {
     const nativeEvent = pointer.event as PointerEvent | TouchEvent;
     const isTouchEvent =
-      (typeof TouchEvent !== "undefined" && nativeEvent instanceof TouchEvent)
-      || (nativeEvent as PointerEvent).pointerType === "touch";
+      (typeof TouchEvent !== "undefined" &&
+        nativeEvent instanceof TouchEvent) ||
+      (nativeEvent as PointerEvent).pointerType === "touch";
     const targetY = isTouchEvent
       ? pointer.worldY - this.touchOffsetY
       : pointer.worldY;
@@ -892,18 +909,9 @@ export class PlayScene extends Phaser.Scene {
     root.style.setProperty("--play-y", `${playY}px`);
     root.style.setProperty("--play-w", `${playW}px`);
     root.style.setProperty("--play-h", `${playH}px`);
-    root.style.setProperty(
-      "--play-cx",
-      `${playX + playW / 2}px`,
-    );
-    root.style.setProperty(
-      "--play-cy",
-      `${playY + playH / 2}px`,
-    );
-    root.style.setProperty(
-      "--play-r",
-      `${PLAYFIELD_CORNER_RADIUS * scaleX}px`,
-    );
+    root.style.setProperty("--play-cx", `${playX + playW / 2}px`);
+    root.style.setProperty("--play-cy", `${playY + playH / 2}px`);
+    root.style.setProperty("--play-r", `${PLAYFIELD_CORNER_RADIUS * scaleX}px`);
   }
 
   private onResize = (_gameSize: Phaser.Structs.Size): void => {

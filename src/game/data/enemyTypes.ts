@@ -13,11 +13,11 @@ export type EnemyShape =
   | "bomber"
   | "boss"
   | "crossfire"
+  | "sidesweeper"
   | "sine"
   | "skitter"
   | "snake"
   | "sniper"
-  | "sidesweeper"
   | "spinner"
   | "swooper";
 

@@ -1,54 +1,52 @@
 {
-  "id": "gatlingGun",
-  "name": "Gatling Gun",
-  "description": "High energy bullets.",
-  "cost": 260,
-  "gunId": "gatling",
-  "size": "small",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "multiShotMode": "roundRobin",
-    "fireRate": 10,
-    "bullet": {
-      "color": "#ffb86c",
-      "damage": 0.5,
-      "kind": "dart",
-      "length": 7,
-      "radius": 2,
-      "thickness": 2
+  id: "gatlingGun",
+  name: "Gatling Gun",
+  description: "High energy bullets.",
+  cost: 260,
+  gunId: "gatling",
+  size: "small",
+  zones: ["front"],
+  stats: {
+    multiShotMode: "roundRobin",
+    fireRate: 10,
+    bullet: {
+      color: "#ffb86c",
+      damage: 0.5,
+      kind: "dart",
+      length: 7,
+      radius: 2,
+      thickness: 2,
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": -1,
-        "offset": {
-          "x": -0.15,
-          "y": 0
-        }
+        angleDeg: -1,
+        offset: {
+          x: -0.15,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 1,
-        "offset": {
-          "x": 0.15,
-          "y": 0
-        }
+        angleDeg: 1,
+        offset: {
+          x: 0.15,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
-      }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
+      },
     ],
-    "speed": 800
-  }
+    speed: 800,
+  },
 }

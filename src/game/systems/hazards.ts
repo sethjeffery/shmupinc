@@ -1,4 +1,8 @@
-import type { HazardMotion, HazardScript, LaneWallScript } from "../data/levels";
+import type {
+  HazardMotion,
+  HazardScript,
+  LaneWallScript,
+} from "../data/levels";
 import type Phaser from "phaser";
 
 export interface PlayerSnapshot {
@@ -65,7 +69,14 @@ class LaneWallHazard implements Hazard {
     bounds: Phaser.Geom.Rectangle,
   ) {
     this.script = script;
-    this.rect = scene.add.rectangle(0, 0, 10, 10, script.fillColor ?? 0x0b1220, 0.85);
+    this.rect = scene.add.rectangle(
+      0,
+      0,
+      10,
+      10,
+      script.fillColor ?? 0x0b1220,
+      0.85,
+    );
     this.rect.setOrigin(0.5);
     this.rect.setDepth(2);
     this.rect.setStrokeStyle(2, script.lineColor ?? 0x1b3149, 0.65);

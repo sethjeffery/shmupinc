@@ -1,12 +1,12 @@
 {
-  "id": "L6_REMIX",
-  "title": "Remix",
-  "pressureProfile": {
-    "primary": "enemy",
-    "secondary": ["space"]
+  id: "L6_REMIX",
+  title: "Remix",
+  pressureProfile: {
+    primary: "enemy",
+    secondary: ["space"],
   },
-  "waveIds": ["remix-press", "remix-cross"],
-  "hazardIds": ["remix-left", "remix-right"],
-  "shopId": "shop_remix",
-  "winCondition": { "kind": "clearWaves" }
+  waveIds: ["remix-press", "remix-cross"],
+  hazardIds: ["remix-left", "remix-right"],
+  shopId: "shop_remix",
+  winCondition: { kind: "clearWaves" },
 }

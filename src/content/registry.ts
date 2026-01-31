@@ -21,7 +21,9 @@ const toRelativePath = (filePath: string): string => {
 };
 
 const loadContentEntries = (): ContentEntry[] => {
-  const modules = import.meta.glob("/content/**/*.{json,json5}", { eager: true });
+  const modules = import.meta.glob("/content/**/*.{json,json5}", {
+    eager: true,
+  });
   const entries: ContentEntry[] = [];
   for (const [path, module] of Object.entries(modules)) {
     const kind = extractKind(path);

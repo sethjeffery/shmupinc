@@ -2,7 +2,7 @@ import type { ShopRules } from "../data/levels";
 import type { MountAssignment, SaveData } from "../data/save";
 import type { BulletKind } from "../data/scripts";
 import type { ShipId } from "../data/ships";
-import type { ShipDefinition, ShipShape, ShipVector, WeaponMount } from "../data/shipTypes";
+import type { ShipDefinition, ShipShape, ShipVector } from "../data/shipTypes";
 import type { WeaponInstanceId } from "../data/weaponInstances";
 import type { WeaponDefinition, WeaponId } from "../data/weapons";
 import type { WeaponSize } from "../data/weaponTypes";
@@ -59,7 +59,6 @@ export class ShopScene extends Phaser.Scene {
   private mountCallouts = new Map<string, HTMLDivElement>();
   private mountCalloutLines = new Map<string, HTMLDivElement>();
   private dragHoverMountId: null | string = null;
-  private dragDropHandled = false;
   private dragPreviewEl?: HTMLDivElement;
   private currentCategory: ShopCategory = "loadout";
   private tabButtons: Partial<Record<ShopCategory, HTMLButtonElement>> = {};
@@ -401,10 +400,10 @@ export class ShopScene extends Phaser.Scene {
   private updateCatalogNote(category: ShopCategory): void {
     if (!this.catalogNote) return;
     const level = getActiveLevelSession()?.level;
-    const restriction = level ? "Mission-approved gear only." : "";
+    const restriction = level ? "Mission-approved gear for purchase." : "";
     if (category === "ships") {
       this.catalogNote.textContent = level
-        ? "Mission-approved hulls only."
+        ? "Mission-approved hulls for purchase. Owned ships stay available."
         : "Select a ship to equip.";
       return;
     }
@@ -419,7 +418,7 @@ export class ShopScene extends Phaser.Scene {
     }
     this.catalogNote.textContent = [
       "Drag weapons onto mounts to equip. Drop back to inventory to detach.",
-      restriction,
+      level ? "Owned gear is always available." : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -427,11 +426,7 @@ export class ShopScene extends Phaser.Scene {
 
   private ensureAllowedSelections(): void {
     if (!this.shopRules) return;
-    const availableShips = this.getFilteredShips();
-    const availableWeapons = this.getFilteredWeapons();
-    const allowedWeaponIds = new Set(
-      availableWeapons.map((weapon) => weapon.id),
-    );
+    const availableShips = Object.values(SHIPS);
 
     this.updateSave(
       (data) => {
@@ -454,10 +449,6 @@ export class ShopScene extends Phaser.Scene {
             (entry) => entry.id === assignment.mountId,
           );
           if (!weapon || !mount) {
-            assignment.weaponInstanceId = null;
-            continue;
-          }
-          if (!allowedWeaponIds.has(weapon.id)) {
             assignment.weaponInstanceId = null;
             continue;
           }
@@ -516,6 +507,25 @@ export class ShopScene extends Phaser.Scene {
     return filtered.some((item) => item.id === weapon.id);
   }
 
+  private isShipAllowedForPurchase(id: ShipId): boolean {
+    if (!this.shopRules) return true;
+    return this.getFilteredShips().some((ship) => ship.id === id);
+  }
+
+  private getVisibleShips(): (typeof SHIPS)[ShipId][] {
+    const ships = Object.values(SHIPS);
+    if (!this.shopRules) return ships;
+    const allowedIds = new Set(this.getFilteredShips().map((ship) => ship.id));
+    const ownedIds = new Set(this.save.unlockedShips);
+    const selectedId = this.save.selectedShipId;
+    return ships.filter(
+      (ship) =>
+        allowedIds.has(ship.id) ||
+        ownedIds.has(ship.id) ||
+        ship.id === selectedId,
+    );
+  }
+
   private getFilteredShips(): (typeof SHIPS)[ShipId][] {
     const ships = Object.values(SHIPS);
     return filterShopItems(
@@ -537,11 +547,13 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private buildShipCards(): HTMLElement[] {
-    return this.getFilteredShips()
+    const allowedIds = new Set(this.getFilteredShips().map((ship) => ship.id));
+    return this.getVisibleShips()
       .sort((a, b) => a.cost - b.cost)
       .map((ship) => {
         const owned = this.save.unlockedShips.includes(ship.id);
         const selected = this.save.selectedShipId === ship.id;
+        const purchasable = allowedIds.has(ship.id);
         const state: ShopCardState = selected
           ? "equipped"
           : owned
@@ -551,7 +563,9 @@ export class ShopScene extends Phaser.Scene {
           ? "Equipped"
           : owned
             ? "Owned"
-            : `${ship.cost}g`;
+            : purchasable
+              ? `${ship.cost}g`
+              : "Restricted";
         return this.buildCard({
           accent: formatColor(ship.color),
           accentColor: ship.color,
@@ -807,7 +821,7 @@ export class ShopScene extends Phaser.Scene {
                 ? "right"
                 : "center";
         callout.dataset.side = side;
-        callout.dataset.instanceId = instance.id;
+        callout.dataset.instanceId = instance?.id;
         callout.dataset.mountId = mount.id;
         callout.setAttribute("draggable", "true");
         callout.addEventListener("dragstart", this.handleDragStartBound);
@@ -927,7 +941,7 @@ export class ShopScene extends Phaser.Scene {
         (item) => item.id === payload.instanceId,
       );
       const weapon = instance ? WEAPONS[instance.weaponId] : null;
-      if (weapon && this.isWeaponAllowed(weapon)) {
+      if (weapon) {
         for (const mount of ship.mounts) {
           if (canMountWeapon(weapon, mount)) {
             eligibleMounts.add(mount.id);
@@ -943,70 +957,14 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
-  private buildMountCard(
-    mount: WeaponMount,
-    assignment: MountAssignment | null,
-  ): HTMLElement {
-    const instanceId = assignment?.weaponInstanceId ?? null;
-    const instance = instanceId
-      ? (this.save.ownedWeapons.find((item) => item.id === instanceId) ?? null)
-      : null;
-    const weapon = instance ? WEAPONS[instance.weaponId] : null;
-    const accentColor = weapon?.stats.bullet.color ?? 0x2b3240;
-    const accent = formatColor(accentColor);
-    const title = weapon ? weapon.name : "Empty Mount";
-    const description = weapon
-      ? weapon.description
-      : `${mount.size.toUpperCase()} ${mount.zone} mount`;
-    const status = weapon ? "Mounted" : "Drop weapon here";
-    const state: ShopCardState = weapon ? "mounted" : "locked";
-
-    const { card, inner } = this.createCardBase({
-      accent,
-      accentColor,
-      description,
-      gunId: weapon?.gunId,
-      iconKind: weapon ? "gun" : "ship",
-      name: title,
-      state,
-      status,
-      tag: "div",
-      weaponSize: weapon?.size,
-    });
-    card.dataset.type = "mount";
-    card.dataset.mountId = mount.id;
-    if (instanceId) {
-      card.dataset.instanceId = instanceId;
-      card.setAttribute("draggable", "true");
-      card.addEventListener("dragstart", this.handleDragStartBound);
-      card.addEventListener("dragend", this.handleDragEndBound);
-    }
-
-    if (instanceId) {
-      const actions = document.createElement("div");
-      actions.className = "shop-card-actions";
-      const detach = document.createElement("button");
-      detach.type = "button";
-      detach.className = "shop-card-action";
-      detach.dataset.action = "detach-weapon";
-      detach.dataset.mountId = mount.id;
-      detach.textContent = "Detach";
-      actions.appendChild(detach);
-      inner.appendChild(actions);
-    }
-
-    return card;
-  }
-
   private buildInventoryCard(
     instanceId: WeaponInstanceId,
     weapon: WeaponDefinition,
   ): HTMLElement {
     const accentColor = weapon.stats.bullet.color ?? 0x7df9ff;
     const accent = formatColor(accentColor);
-    const restricted = !this.isWeaponAllowed(weapon);
-    const status = restricted ? "Restricted" : "Drag to mount";
-    const state: ShopCardState = restricted ? "restricted" : "owned";
+    const status = "Drag to mount";
+    const state: ShopCardState = "owned";
     const { card, inner } = this.createCardBase({
       accent,
       accentColor,
@@ -1023,11 +981,9 @@ export class ShopScene extends Phaser.Scene {
     card.dataset.type = "inventory";
     card.dataset.instanceId = instanceId;
     card.dataset.weaponId = weapon.id;
-    if (!restricted) {
-      card.setAttribute("draggable", "true");
-      card.addEventListener("dragstart", this.handleDragStartBound);
-      card.addEventListener("dragend", this.handleDragEndBound);
-    }
+    card.setAttribute("draggable", "true");
+    card.addEventListener("dragstart", this.handleDragStartBound);
+    card.addEventListener("dragend", this.handleDragEndBound);
 
     const actions = document.createElement("div");
     actions.className = "shop-card-actions";
@@ -1087,16 +1043,14 @@ export class ShopScene extends Phaser.Scene {
     if (type === "ship") {
       const ship = SHIPS[id];
       if (!ship) return;
-      if (
-        this.shopRules &&
-        !this.getFilteredShips().some((item) => item.id === id)
-      ) {
-        return;
-      }
+      const owned = this.save.unlockedShips.includes(id);
+      const canPurchase = this.isShipAllowedForPurchase(id);
+      if (!owned && !canPurchase) return;
       this.updateSave((data) => {
         const unlocked = data.unlockedShips.includes(id);
         if (!unlocked) {
           if (data.gold < ship.cost) return;
+          if (!canPurchase) return;
           data.gold -= ship.cost;
           data.unlockedShips = [...data.unlockedShips, id];
         }
@@ -1177,7 +1131,6 @@ export class ShopScene extends Phaser.Scene {
         const mount = ship.mounts.find((entry) => entry.id === mountId);
         if (!weapon || !mount) return;
         if (!canMountWeapon(weapon, mount)) return;
-        if (!this.isWeaponAllowed(weapon)) return;
 
         for (const entry of assignments) {
           if (entry.weaponInstanceId === payload.instanceId) {
@@ -1219,7 +1172,6 @@ export class ShopScene extends Phaser.Scene {
       sourceMountId: card.dataset.mountId,
     };
     this.dragPayload = payload;
-    this.dragDropHandled = false;
     this.dragHoverMountId = null;
     this.updateMountVisualHighlights();
     event.dataTransfer?.setData("text/plain", JSON.stringify(payload));
@@ -1249,7 +1201,7 @@ export class ShopScene extends Phaser.Scene {
     }
     this.dragPreviewEl?.classList.toggle(
       "is-droppable",
-      Boolean(overMount || overInventory || overDetach),
+      Boolean(overMount ?? overInventory ?? overDetach),
     );
     const payload = this.dragPayload ?? this.readDragPayload(event);
     if (payload && !this.dragPayload) {
@@ -1276,7 +1228,6 @@ export class ShopScene extends Phaser.Scene {
       if (mountId) this.assignWeaponToMount(payload, mountId);
       this.dragPayload = null;
       this.dragHoverMountId = null;
-      this.dragDropHandled = true;
       this.updateMountVisualHighlights();
       return;
     }
@@ -1286,7 +1237,6 @@ export class ShopScene extends Phaser.Scene {
     const detachTarget = target.closest<HTMLElement>("[data-drop='detach']");
     if ((inventoryTarget || detachTarget) && payload.sourceMountId) {
       this.detachWeaponFromMount(payload.sourceMountId);
-      this.dragDropHandled = true;
     }
     this.dragPayload = null;
     this.dragHoverMountId = null;
@@ -1296,7 +1246,6 @@ export class ShopScene extends Phaser.Scene {
   private handleDragEnd(): void {
     this.dragPayload = null;
     this.dragHoverMountId = null;
-    this.dragDropHandled = false;
     this.dragPreviewEl?.remove();
     this.dragPreviewEl = undefined;
     this.updateMountVisualHighlights();

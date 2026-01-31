@@ -1,46 +1,44 @@
 {
-  "id": "gatlingGunPlus",
-  "name": "Gatling Gun+",
-  "description": "Super high energy bullets.",
-  "cost": 320,
-  "gunId": "gatling",
-  "size": "small",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "fireRate": 12,
-    "bullet": {
-      "color": "#ffb86c",
-      "damage": 0.5,
-      "kind": "dart",
-      "length": 7,
-      "radius": 2,
-      "thickness": 2
+  id: "gatlingGunPlus",
+  name: "Gatling Gun+",
+  description: "Super high energy bullets.",
+  cost: 320,
+  gunId: "gatling",
+  size: "small",
+  zones: ["front"],
+  stats: {
+    fireRate: 12,
+    bullet: {
+      color: "#ffb86c",
+      damage: 0.5,
+      kind: "dart",
+      length: 7,
+      radius: 2,
+      thickness: 2,
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": -0.25,
-          "y": 0.15
-        }
+        angleDeg: 0,
+        offset: {
+          x: -0.25,
+          y: 0.15,
+        },
       },
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0.25,
-          "y": 0.15
-        }
-      }
+        angleDeg: 0,
+        offset: {
+          x: 0.25,
+          y: 0.15,
+        },
+      },
     ],
-    "speed": 800
-  }
+    speed: 800,
+  },
 }

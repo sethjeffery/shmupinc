@@ -1,44 +1,42 @@
 {
-  "id": "missilePod",
-  "name": "Missile Pod",
-  "description": "Rapid homing missiles.",
-  "cost": 240,
-  "gunId": "missile",
-  "size": "small",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "fireRate": 2.4,
-    "bullet": {
-      "color": "#ffb86c",
-      "damage": 2,
-      "homing": {
-        "acquireRadius": 220,
-        "turnRateRadPerSec": 3.2
+  id: "missilePod",
+  name: "Missile Pod",
+  description: "Rapid homing missiles.",
+  cost: 240,
+  gunId: "missile",
+  size: "small",
+  zones: ["front"],
+  stats: {
+    fireRate: 2.4,
+    bullet: {
+      color: "#ffb86c",
+      damage: 2,
+      homing: {
+        acquireRadius: 220,
+        turnRateRadPerSec: 3.2,
       },
-      "kind": "missile",
-      "length": 10,
-      "lifetimeMs": 2200,
-      "radius": 3,
-      "thickness": 3,
-      "trail": {
-        "color": "#ff9b5e",
-        "count": 1,
-        "intervalMs": 70,
-        "sizeMax": 2,
-        "sizeMin": 1
-      }
+      kind: "missile",
+      length: 10,
+      lifetimeMs: 2200,
+      radius: 3,
+      thickness: 3,
+      trail: {
+        color: "#ff9b5e",
+        count: 1,
+        intervalMs: 70,
+        sizeMax: 2,
+        sizeMin: 1,
+      },
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
-      }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
+      },
     ],
-    "speed": 320
-  }
+    speed: 320,
+  },
 }

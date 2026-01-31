@@ -1,58 +1,56 @@
 {
-  "id": "orbBlasterPlusPlusPlus",
-  "name": "Orb Blaster+++",
-  "description": "You want some orbs with that?",
-  "cost": 380,
-  "gunId": "orb",
-  "size": "small",
-  "zones": [
-    "front"
-  ],
-  "stats": {
-    "fireRate": 5,
-    "bullet": {
-      "color": "#7df9ff",
-      "damage": 0.7,
-      "kind": "orb",
-      "radius": 3
+  id: "orbBlasterPlusPlusPlus",
+  name: "Orb Blaster+++",
+  description: "You want some orbs with that?",
+  cost: 380,
+  gunId: "orb",
+  size: "small",
+  zones: ["front"],
+  stats: {
+    fireRate: 5,
+    bullet: {
+      color: "#7df9ff",
+      damage: 0.7,
+      kind: "orb",
+      radius: 3,
     },
-    "shots": [
+    shots: [
       {
-        "angleDeg": -4,
-        "offset": {
-          "x": -0.6,
-          "y": 0.4
-        }
+        angleDeg: -4,
+        offset: {
+          x: -0.6,
+          y: 0.4,
+        },
       },
       {
-        "angleDeg": -2,
-        "offset": {
-          "x": -0.5,
-          "y": 0.2
-        }
+        angleDeg: -2,
+        offset: {
+          x: -0.5,
+          y: 0.2,
+        },
       },
       {
-        "angleDeg": 0,
-        "offset": {
-          "x": 0,
-          "y": 0
-        }
+        angleDeg: 0,
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       {
-        "angleDeg": 2,
-        "offset": {
-          "x": 0.5,
-          "y": 0.2
-        }
+        angleDeg: 2,
+        offset: {
+          x: 0.5,
+          y: 0.2,
+        },
       },
       {
-        "angleDeg": 4,
-        "offset": {
-          "x": 0.6,
-          "y": 0.4
-        }
-      }
+        angleDeg: 4,
+        offset: {
+          x: 0.6,
+          y: 0.4,
+        },
+      },
     ],
-    "speed": 500
-  }
+    speed: 500,
+  },
 }

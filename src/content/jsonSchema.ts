@@ -8,8 +8,11 @@ type JsonSchema = Record<string, unknown>;
 const cloneSchema = (schema: JsonSchema): JsonSchema =>
   JSON.parse(JSON.stringify(schema)) as JsonSchema;
 
-const getProperties = (schema: JsonSchema): null | Record<string, JsonSchema> => {
-  const props = (schema as { properties?: Record<string, JsonSchema> }).properties;
+const getProperties = (
+  schema: JsonSchema,
+): null | Record<string, JsonSchema> => {
+  const props = (schema as { properties?: Record<string, JsonSchema> })
+    .properties;
   return props ?? null;
 };
 
@@ -79,7 +82,10 @@ export const buildJsonSchemaForKind = (
       const winOptions = getUnionOptions(props.winCondition);
       const bossOption = winOptions.find((option) => {
         const optionProps = getProperties(option);
-        return optionProps?.kind && (optionProps.kind as { const?: string }).const === "defeatBoss";
+        return (
+          optionProps?.kind &&
+          (optionProps.kind as { const?: string }).const === "defeatBoss"
+        );
       });
       const bossProps = bossOption ? getProperties(bossOption) : null;
       if (bossProps?.bossId) {
@@ -91,7 +97,10 @@ export const buildJsonSchemaForKind = (
       const endOptions = getUnionOptions(props.endCondition);
       const bossOption = endOptions.find((option) => {
         const optionProps = getProperties(option);
-        return optionProps?.kind && (optionProps.kind as { const?: string }).const === "defeatBoss";
+        return (
+          optionProps?.kind &&
+          (optionProps.kind as { const?: string }).const === "defeatBoss"
+        );
       });
       const bossProps = bossOption ? getProperties(bossOption) : null;
       if (bossProps?.bossId) {
@@ -102,7 +111,10 @@ export const buildJsonSchemaForKind = (
 
   if (kind === "shops") {
     if (props.allowedWeapons) {
-      setEnumOnArrayItems(props.allowedWeapons, Object.keys(registry.weaponsById));
+      setEnumOnArrayItems(
+        props.allowedWeapons,
+        Object.keys(registry.weaponsById),
+      );
     }
     if (props.allowedShips) {
       setEnumOnArrayItems(props.allowedShips, Object.keys(registry.shipsById));
