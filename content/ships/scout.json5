@@ -1,5 +1,5 @@
 {
-  color: "#ffd166",
+  color: 0xffd166,
   cost: 120,
   description: "Fast, light, low HP.",
   id: "scout",

@@ -7,5 +7,8 @@
   },
   waveIds: ["deadline-rush"],
   shopId: "shop_deadline",
-  winCondition: { kind: "survive", durationMs: 48000 },
+  winCondition: {
+    kind: "survive",
+    durationMs: 48000,
+  },
 }

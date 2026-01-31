@@ -13,8 +13,7 @@
         damage: 1,
         radius: 50,
       },
-      color: "#ff9b6a",
-      damage: 1,
+      color: 0xff9b6a,
       homing: {
         acquireRadius: 200,
         turnRateRadPerSec: 1.6,
@@ -23,7 +22,7 @@
       lifetimeMs: 2000,
       radius: 5,
       trail: {
-        color: "#ff6b3d",
+        color: 0xff6b3d,
         count: 1,
         intervalMs: 70,
         sizeMax: 2.2,
@@ -47,5 +46,6 @@
       },
     ],
     speed: 190,
+    damage: 1,
   },
 }

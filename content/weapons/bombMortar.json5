@@ -13,8 +13,7 @@
         damage: 3,
         radius: 90,
       },
-      color: "#ff5c73",
-      damage: 3,
+      color: 0xff5c73,
       kind: "bomb",
       lifetimeMs: 2200,
       radius: 7,
@@ -29,5 +28,6 @@
       },
     ],
     speed: 200,
+    damage: 3,
   },
 }

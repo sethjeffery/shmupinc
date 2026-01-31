@@ -9,5 +9,8 @@
   postBeatId: "beat_s1_boss_post",
   waveIds: ["boss-approach", "boss-finale"],
   shopId: "shop_boss",
-  winCondition: { kind: "defeatBoss", bossId: "boss" },
+  winCondition: {
+    kind: "defeatBoss",
+    bossId: "boss",
+  },
 }

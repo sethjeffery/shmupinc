@@ -12,17 +12,17 @@
           kind: "fixed",
         },
         bullet: {
-          color: "#ffb067",
-          damage: 1,
+          color: 0xffb067,
           kind: "dart",
           length: 10,
           radius: 2,
-          speed: 260,
           thickness: 2,
         },
         count: 2,
         intervalMs: 140,
         kind: "burst",
+        damage: 1,
+        speed: 260,
       },
       {
         aim: {
@@ -30,17 +30,17 @@
           kind: "fixed",
         },
         bullet: {
-          color: "#ffb067",
-          damage: 1,
+          color: 0xffb067,
           kind: "dart",
           length: 10,
           radius: 2,
-          speed: 260,
           thickness: 2,
         },
         count: 2,
         intervalMs: 140,
         kind: "burst",
+        damage: 1,
+        speed: 260,
       },
       {
         aim: {
@@ -48,17 +48,17 @@
           kind: "fixed",
         },
         bullet: {
-          color: "#ffb067",
-          damage: 1,
+          color: 0xffb067,
           kind: "dart",
           length: 10,
           radius: 2,
-          speed: 260,
           thickness: 2,
         },
         count: 2,
         intervalMs: 140,
         kind: "burst",
+        damage: 1,
+        speed: 260,
       },
       {
         durationMs: 400,
@@ -98,8 +98,8 @@
   },
   radius: 14,
   style: {
-    fillColor: "#14162e",
-    lineColor: "#8ecbff",
+    fillColor: 0x14162e,
+    lineColor: 0x8ecbff,
     shape: "crossfire",
     vector: {
       lines: [

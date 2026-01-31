@@ -1,5 +1,5 @@
 {
-  color: "#ff6b6b",
+  color: 0xff6b6b,
   cost: 260,
   description: "High armor, slower handling.",
   id: "bulwark",

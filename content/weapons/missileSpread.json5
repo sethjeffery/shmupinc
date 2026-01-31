@@ -9,8 +9,7 @@
   stats: {
     fireRate: 1.6,
     bullet: {
-      color: "#ffc28b",
-      damage: 1.4,
+      color: 0xffc28b,
       homing: {
         acquireRadius: 220,
         turnRateRadPerSec: 3.1,
@@ -21,7 +20,7 @@
       radius: 3,
       thickness: 3,
       trail: {
-        color: "#ffa36c",
+        color: 0xffa36c,
         count: 1,
         intervalMs: 75,
         sizeMax: 2,
@@ -52,5 +51,6 @@
       },
     ],
     speed: 300,
+    damage: 1.4,
   },
 }

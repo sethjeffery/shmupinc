@@ -7,5 +7,7 @@
   },
   waveIds: ["breakthrough-storm", "breakthrough-surge", "breakthrough-push"],
   shopId: "shop_breakthrough",
-  winCondition: { kind: "clearWaves" },
+  winCondition: {
+    kind: "clearWaves",
+  },
 }

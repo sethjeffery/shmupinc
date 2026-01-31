@@ -13,16 +13,16 @@
         },
         bullet: {
           color: 0xffb067,
-          damage: 1,
           kind: "dart",
           length: 10,
           radius: 2,
-          speed: 260,
           thickness: 2,
         },
         durationMs: 1200,
         kind: "spray",
         ratePerSec: 6,
+        damage: 1,
+        speed: 260,
       },
       {
         durationMs: 800,

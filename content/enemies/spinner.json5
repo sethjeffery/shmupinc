@@ -15,14 +15,14 @@
         },
         bullet: {
           color: 0xff9f43,
-          damage: 1,
           kind: "orb",
           radius: 3,
-          speed: 200,
         },
         durationMs: 1400,
         kind: "spray",
         ratePerSec: 5,
+        damage: 1,
+        speed: 200,
       },
       {
         durationMs: 300,
@@ -76,8 +76,8 @@
   },
   radius: 15,
   style: {
-    fillColor: "#1a0f22",
-    lineColor: "#ffb86c",
+    fillColor: 0x1a0f22,
+    lineColor: 0xffb86c,
     shape: "spinner",
     vector: {
       lines: [

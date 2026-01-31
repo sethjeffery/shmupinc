@@ -10,8 +10,7 @@
     fireRate: 1.75,
     multiShotMode: "roundRobin",
     bullet: {
-      color: "#ff8a6b",
-      damage: 4,
+      color: 0xff8a6b,
       homing: {
         acquireRadius: 240,
         turnRateRadPerSec: 4.2,
@@ -22,7 +21,7 @@
       radius: 3,
       thickness: 6,
       trail: {
-        color: "#ff6b3d",
+        color: 0xff6b3d,
         count: 2,
         intervalMs: 45,
         sizeMax: 4.6,
@@ -46,5 +45,6 @@
       },
     ],
     speed: 250,
+    damage: 4,
   },
 }

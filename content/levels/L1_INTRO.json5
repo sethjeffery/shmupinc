@@ -8,5 +8,7 @@
   preBeatId: "beat_s1_intro_pre",
   waveIds: ["intro-intro", "intro-approach", "intro-cross", "intro-harass"],
   shopId: "shop_intro",
-  winCondition: { kind: "clearWaves" },
+  winCondition: {
+    kind: "clearWaves",
+  },
 }

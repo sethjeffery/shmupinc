@@ -23,8 +23,7 @@
   stats: {
     fireRate: 5.6,
     bullet: {
-      color: "#ffc07a",
-      damage: 1,
+      color: 0xffc07a,
       kind: "dart",
       length: 12,
       radius: 2,
@@ -47,5 +46,6 @@
       },
     ],
     speed: 640,
+    damage: 1,
   },
 }

@@ -11,17 +11,17 @@
           kind: "atPlayer",
         },
         bullet: {
-          color: "#ffb067",
-          damage: 2,
+          color: 0xffb067,
           kind: "dart",
           length: 10,
           radius: 2,
-          speed: 300,
           thickness: 2,
         },
         count: 1,
         intervalMs: 1,
         kind: "burst",
+        damage: 2,
+        speed: 300,
       },
       {
         durationMs: 900,
@@ -61,8 +61,8 @@
   },
   radius: 12,
   style: {
-    fillColor: "#141a14",
-    lineColor: "#b8ff7a",
+    fillColor: 0x141a14,
+    lineColor: 0xb8ff7a,
     shape: "sniper",
     vector: {
       lines: [

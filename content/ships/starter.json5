@@ -1,5 +1,5 @@
 {
-  color: "#9fb7ff",
+  color: 0x9fb7ff,
   cost: 0,
   description: "Your trusty starter craft.",
   id: "starter",

@@ -8,5 +8,7 @@
   waveIds: ["remix-press", "remix-cross"],
   hazardIds: ["remix-left", "remix-right"],
   shopId: "shop_remix",
-  winCondition: { kind: "clearWaves" },
+  winCondition: {
+    kind: "clearWaves",
+  },
 }

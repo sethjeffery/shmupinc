@@ -15,8 +15,7 @@
     fireRate: 1.8,
     angleDeg: 20,
     bullet: {
-      color: "#ffc993",
-      damage: 1,
+      color: 0xffc993,
       homing: {
         acquireRadius: 180,
         turnRateRadPerSec: 3.4,
@@ -27,7 +26,7 @@
       radius: 2,
       thickness: 2,
       trail: {
-        color: "#ffa46b",
+        color: 0xffa46b,
         count: 1,
         intervalMs: 80,
         sizeMax: 1.8,
@@ -44,5 +43,6 @@
       },
     ],
     speed: 300,
+    damage: 1,
   },
 }

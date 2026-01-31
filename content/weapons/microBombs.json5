@@ -22,8 +22,7 @@
         damage: 1,
         radius: 50,
       },
-      color: "#ff8ba0",
-      damage: 1,
+      color: 0xff8ba0,
       kind: "bomb",
       lifetimeMs: 1800,
       radius: 5,
@@ -38,5 +37,6 @@
       },
     ],
     speed: 200,
+    damage: 1,
   },
 }

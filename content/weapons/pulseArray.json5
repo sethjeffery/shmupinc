@@ -9,12 +9,11 @@
   stats: {
     fireRate: 3.8,
     bullet: {
-      color: "#6fe3ff",
-      damage: 1.2,
+      color: 0x6fe3ff,
       kind: "orb",
       radius: 3,
       trail: {
-        color: "#5ad3ff",
+        color: 0x5ad3ff,
         count: 1,
         intervalMs: 80,
         sizeMax: 2.2,
@@ -38,5 +37,6 @@
       },
     ],
     speed: 460,
+    damage: 1.2,
   },
 }

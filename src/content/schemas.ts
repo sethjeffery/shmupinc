@@ -200,26 +200,11 @@ const bulletTrailSchema = z.object({
   sizeMin: z.number().describe("Min trail size.").optional(),
 });
 
-const bulletSpecSchema = z.object({
-  aoe: bulletAoeSchema
-    .describe("Deprecated: set aoe on the weapon or fire step.")
-    .optional(),
+const bulletVisualsSchema = z.object({
   color: colorField("Bullet color.").optional(),
-  damage: z.number().describe("Damage per hit."),
-  homing: bulletHomingSchema
-    .describe("Deprecated: set homing on the weapon or fire step.")
-    .optional(),
   kind: z.enum(["bomb", "dart", "missile", "orb"]).describe("Bullet kind."),
   length: z.number().describe("Visual length (for darts).").optional(),
-  lifetimeMs: z
-    .number()
-    .describe("Deprecated: set lifetime on the weapon or fire step.")
-    .optional(),
   radius: z.number().describe("Collision radius in pixels."),
-  speed: z
-    .number()
-    .describe("Deprecated: set speed on the weapon or fire step.")
-    .optional(),
   thickness: z.number().describe("Stroke thickness in pixels.").optional(),
   trail: bulletTrailSchema.describe("Trail settings.").optional(),
 });
@@ -230,8 +215,9 @@ const fireStepSchema = z.union([
     aoe: bulletAoeSchema
       .describe("AoE settings (per burst bullet).")
       .optional(),
-    bullet: bulletSpecSchema.describe("Bullet visuals + base damage."),
+    bullet: bulletVisualsSchema.describe("Bullet visuals."),
     count: z.number().describe("Shots per burst."),
+    damage: z.number().describe("Damage per hit.").optional(),
     homing: bulletHomingSchema
       .describe("Homing settings (per burst bullet).")
       .optional(),
@@ -263,7 +249,8 @@ const fireStepSchema = z.union([
     aoe: bulletAoeSchema
       .describe("AoE settings (per spray bullet).")
       .optional(),
-    bullet: bulletSpecSchema.describe("Bullet visuals + base damage."),
+    bullet: bulletVisualsSchema.describe("Bullet visuals."),
+    damage: z.number().describe("Damage per hit.").optional(),
     durationMs: z.number().describe("Spray duration (ms)."),
     homing: bulletHomingSchema
       .describe("Homing settings (per spray bullet).")
@@ -482,14 +469,8 @@ const weaponStatsSchema = z.object({
   aoe: bulletAoeSchema
     .describe("AoE settings (applied to all bullets fired).")
     .optional(),
-  bullet: bulletSpecSchema
-    .extend({
-      speed: z
-        .number()
-        .describe("Deprecated for weapons; use stats.speed instead.")
-        .optional(),
-    })
-    .describe("Bullet visuals + base damage (speed/effects live on stats)."),
+  bullet: bulletVisualsSchema.describe("Bullet visuals."),
+  damage: z.number().describe("Damage per hit."),
   fireRate: z.number().describe("Shots per second."),
   homing: bulletHomingSchema
     .describe("Homing settings (applied to all bullets fired).")

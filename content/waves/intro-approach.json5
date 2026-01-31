@@ -90,7 +90,7 @@
                 kind: "atPlayer",
               },
               bullet: {
-                color: "#ff9f43",
+                color: 0xff9f43,
                 damage: 1,
                 kind: "orb",
                 radius: 30,
@@ -147,7 +147,7 @@
                 kind: "atPlayer",
               },
               bullet: {
-                color: "#ff9f43",
+                color: 0xff9f43,
                 damage: 1,
                 kind: "orb",
                 radius: 30,
@@ -204,7 +204,7 @@
                 kind: "atPlayer",
               },
               bullet: {
-                color: "#ff9f43",
+                color: 0xff9f43,
                 damage: 1,
                 kind: "orb",
                 radius: 30,
@@ -261,7 +261,7 @@
                 kind: "atPlayer",
               },
               bullet: {
-                color: "#ff9f43",
+                color: 0xff9f43,
                 damage: 1,
                 kind: "orb",
                 radius: 10,
@@ -318,7 +318,7 @@
                 kind: "atPlayer",
               },
               bullet: {
-                color: "#ff9f43",
+                color: 0xff9f43,
                 damage: 1,
                 kind: "orb",
                 radius: 3,
@@ -375,7 +375,7 @@
                 kind: "atPlayer",
               },
               bullet: {
-                color: "#ff9f43",
+                color: 0xff9f43,
                 damage: 1,
                 kind: "orb",
                 radius: 3,
@@ -551,71 +551,5 @@
         },
       },
     },
-    // {
-    //   "atMs": 6000,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 8300,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 8600,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 8900,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 9200,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 9500,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 9800,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 10100,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 10400,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 10700,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // },
-    // {
-    //   "atMs": 11000,
-    //   "enemyId": "sidesweeper",
-    //   "x": 0,
-    //   "y": 0
-    // }
   ],
 }

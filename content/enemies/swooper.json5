@@ -10,15 +10,15 @@
           kind: "atPlayer",
         },
         bullet: {
-          color: "#ff9f43",
-          damage: 1,
+          color: 0xff9f43,
           kind: "orb",
           radius: 3,
-          speed: 200,
         },
         count: 3,
         intervalMs: 180,
         kind: "burst",
+        damage: 1,
+        speed: 200,
       },
       {
         durationMs: 300,
@@ -29,15 +29,15 @@
           kind: "atPlayer",
         },
         bullet: {
-          color: "#ff9f43",
-          damage: 1,
+          color: 0xff9f43,
           kind: "orb",
           radius: 3,
-          speed: 200,
         },
         count: 3,
         intervalMs: 180,
         kind: "burst",
+        damage: 1,
+        speed: 200,
       },
       {
         durationMs: 1200,
@@ -105,8 +105,8 @@
   },
   radius: 14,
   style: {
-    fillColor: "#1b0f1c",
-    lineColor: "#ff8cda",
+    fillColor: 0x1b0f1c,
+    lineColor: 0xff8cda,
     shape: "swooper",
     vector: {
       lines: [

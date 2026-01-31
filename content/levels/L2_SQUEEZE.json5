@@ -10,6 +10,10 @@
   waveIds: ["squeeze-entry", "squeeze-lock"],
   hazardIds: ["squeeze-left", "squeeze-right"],
   shopId: "shop_squeeze",
-  winCondition: { kind: "clearWaves" },
-  endCondition: { kind: "clearWaves" },
+  winCondition: {
+    kind: "clearWaves",
+  },
+  endCondition: {
+    kind: "clearWaves",
+  },
 }

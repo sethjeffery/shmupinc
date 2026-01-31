@@ -1,5 +1,5 @@
 {
-  color: "#7df9ff",
+  color: 0x7df9ff,
   cost: 220,
   description: "Balanced ship with steady handling.",
   id: "interceptor",

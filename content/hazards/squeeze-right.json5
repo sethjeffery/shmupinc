@@ -1,7 +1,12 @@
 {
   id: "squeeze-right",
   type: "laneWall",
-  rect: { x: 0.92, y: 0.5, w: 0.18, h: 0.92 },
+  rect: {
+    x: 0.92,
+    y: 0.5,
+    w: 0.18,
+    h: 0.92,
+  },
   motion: {
     kind: "sine",
     axis: "x",
@@ -10,6 +15,6 @@
     phase: 3.141592653589793,
   },
   damageOnTouch: true,
-  fillColor: "#0b1220",
-  lineColor: "#1b3149",
+  fillColor: 0x0b1220,
+  lineColor: 0x1b3149,
 }

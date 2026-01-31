@@ -9,8 +9,7 @@
   stats: {
     fireRate: 4.2,
     bullet: {
-      color: "#7df9ff",
-      damage: 1,
+      color: 0x7df9ff,
       kind: "orb",
       radius: 3,
     },
@@ -24,5 +23,6 @@
       },
     ],
     speed: 420,
+    damage: 1,
   },
 }

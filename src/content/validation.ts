@@ -84,54 +84,68 @@ type BulletTrailInput = Omit<NonNullable<BulletSpec["trail"]>, "color"> & {
   color?: number;
 };
 
-type BulletSpecInput = Omit<BulletSpec, "color" | "trail"> & {
+interface BulletVisualsInput {
+  aoe?: BulletAoe;
   color?: number;
+  homing?: BulletHoming;
+  kind: BulletSpec["kind"];
+  length?: number;
+  lifetimeMs?: number;
+  radius: number;
+  thickness?: number;
   trail?: BulletTrailInput;
-};
+}
 
 type BulletEffectsInput = Partial<
   Pick<BulletSpec, "aoe" | "homing" | "lifetimeMs" | "speed">
 >;
 
 const coerceBulletSpec = (
-  spec: BulletSpecInput,
+  visuals: BulletVisualsInput,
+  damage: number,
   effects?: BulletEffectsInput,
 ): BulletSpec => {
-  const rawColor = (spec as { color?: number | string }).color;
-  const trail = spec.trail
+  const rawColor = (visuals as { color?: number | string }).color;
+  const trail = visuals.trail
     ? {
-        ...spec.trail,
+        ...visuals.trail,
         color:
-          resolveColor((spec.trail as { color?: number | string }).color) ??
+          resolveColor((visuals.trail as { color?: number | string }).color) ??
           0xffffff,
       }
     : undefined;
   return {
-    ...spec,
-    aoe: effects?.aoe ?? spec.aoe,
+    aoe: effects?.aoe ?? visuals.aoe,
     color: resolveColor(rawColor),
-    homing: effects?.homing ?? spec.homing,
-    lifetimeMs: effects?.lifetimeMs ?? spec.lifetimeMs,
-    speed: effects?.speed ?? spec.speed ?? 0,
+    damage,
+    homing: effects?.homing ?? visuals.homing,
+    kind: visuals.kind,
+    length: visuals.length,
+    lifetimeMs: effects?.lifetimeMs ?? visuals.lifetimeMs,
+    radius: visuals.radius,
+    speed: effects?.speed ?? 0,
+    thickness: visuals.thickness,
     trail,
   };
 };
 
 type FireStepInput = FireStep & {
-  speed?: number;
-  homing?: BulletHoming;
   aoe?: BulletAoe;
+  damage?: number;
+  homing?: BulletHoming;
   lifetimeMs?: number;
+  speed?: number;
 };
 
 type FireScriptInput = Omit<FireScript, "steps"> & { steps: FireStepInput[] };
 
 const coerceFireStep = (step: FireStepInput): FireStep => {
   if ("bullet" in step) {
-    const { aoe, homing, lifetimeMs, speed, ...rest } = step;
+    const { aoe, damage, homing, lifetimeMs, speed, ...rest } = step;
+    const bulletDamage = damage ?? step.bullet.damage ?? 1;
     return {
       ...rest,
-      bullet: coerceBulletSpec(step.bullet, {
+      bullet: coerceBulletSpec(step.bullet, bulletDamage, {
         aoe,
         homing,
         lifetimeMs,
@@ -376,23 +390,33 @@ export const buildContentRegistry = (
     }));
   };
 
-  const resolveWeaponStats = (stats: WeaponStats): WeaponStats => {
-    const legacyBullet = stats.bullet as BulletSpec | undefined;
+  const resolveWeaponStats = (
+    stats: Partial<WeaponStats> & { damage?: number },
+  ): WeaponStats => {
+    const legacyBullet = stats.bullet;
     const fallbackSpeed = stats.speed ?? legacyBullet?.speed ?? 0;
+    const fallbackDamage = stats.damage ?? legacyBullet?.damage ?? 1;
     const homing = stats.homing ?? legacyBullet?.homing;
     const aoe = stats.aoe ?? legacyBullet?.aoe;
     const lifetimeMs = stats.lifetimeMs ?? legacyBullet?.lifetimeMs;
-    const bullet = coerceBulletSpec(stats.bullet, {
-      aoe,
-      homing,
-      lifetimeMs,
-      speed: fallbackSpeed,
-    });
+    const bullet = coerceBulletSpec(
+      (stats.bullet ?? {
+        kind: "orb",
+        radius: 3,
+      }) as unknown as BulletVisualsInput,
+      fallbackDamage,
+      {
+        aoe,
+        homing,
+        lifetimeMs,
+        speed: fallbackSpeed,
+      },
+    );
     return {
-      ...stats,
       angleDeg: stats.angleDeg ?? 0,
       aoe,
       bullet,
+      fireRate: stats.fireRate ?? 1,
       homing,
       lifetimeMs,
       multiShotMode: stats.multiShotMode ?? "simultaneous",
@@ -408,19 +432,22 @@ export const buildContentRegistry = (
       {};
     for (const [zone, override] of Object.entries(zoneStats)) {
       if (!override) continue;
-      const { bullet, shots, ...rest } = override;
+      const { bullet, damage, shots, ...rest } =
+        override as Partial<WeaponStats> & { damage?: number };
       const resolvedOverride: Partial<WeaponStats> = {
         ...rest,
         shots: shots ? normalizeWeaponShots(shots) : undefined,
       };
       if (bullet) {
-        resolvedOverride.bullet = coerceBulletSpec(bullet);
+        resolvedOverride.bullet = coerceBulletSpec(bullet, damage ?? 1);
       }
       resolvedZoneStats[zone as WeaponZone] = resolvedOverride;
     }
     resolvedWeapons[id] = {
       ...weapon,
-      stats: resolveWeaponStats(weapon.stats as WeaponStats),
+      stats: resolveWeaponStats(
+        weapon.stats as WeaponStats & { damage?: number },
+      ),
       zoneStats: Object.keys(resolvedZoneStats).length
         ? resolvedZoneStats
         : undefined,

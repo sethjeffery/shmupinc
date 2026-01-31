@@ -11,15 +11,15 @@
           kind: "fixed",
         },
         bullet: {
-          color: "#ff784f",
-          damage: 2,
+          color: 0xff784f,
           kind: "orb",
           radius: 4,
-          speed: 180,
         },
         count: 4,
         intervalMs: 180,
         kind: "burst",
+        damage: 2,
+        speed: 180,
       },
     ],
   },
@@ -55,8 +55,8 @@
   },
   radius: 16,
   style: {
-    fillColor: "#2a140f",
-    lineColor: "#ffa07a",
+    fillColor: 0x2a140f,
+    lineColor: 0xffa07a,
     shape: "bomber",
     vector: {
       lines: [

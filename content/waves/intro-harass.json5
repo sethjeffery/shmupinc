@@ -38,14 +38,19 @@
       y: 0.1,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: 300, y: 0 },
+              to: {
+                x: 300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -56,10 +61,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: 200, y: 0 },
-                { x: 250, y: 100 },
-                { x: 300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: 200,
+                  y: 0,
+                },
+                {
+                  x: 250,
+                  y: 100,
+                },
+                {
+                  x: 300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -73,14 +90,19 @@
       y: 0.2,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: 300, y: 0 },
+              to: {
+                x: 300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -91,10 +113,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: 200, y: 0 },
-                { x: 250, y: 100 },
-                { x: 300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: 200,
+                  y: 0,
+                },
+                {
+                  x: 250,
+                  y: 100,
+                },
+                {
+                  x: 300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -108,14 +142,19 @@
       y: 0.3,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: 300, y: 0 },
+              to: {
+                x: 300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -126,10 +165,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: 200, y: 0 },
-                { x: 250, y: 100 },
-                { x: 300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: 200,
+                  y: 0,
+                },
+                {
+                  x: 250,
+                  y: 100,
+                },
+                {
+                  x: 300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -143,14 +194,19 @@
       y: 0.4,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: 300, y: 0 },
+              to: {
+                x: 300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -161,10 +217,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: 200, y: 0 },
-                { x: 250, y: 100 },
-                { x: 300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: 200,
+                  y: 0,
+                },
+                {
+                  x: 250,
+                  y: 100,
+                },
+                {
+                  x: 300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -178,14 +246,19 @@
       y: 0.5,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: 300, y: 0 },
+              to: {
+                x: 300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -196,10 +269,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: 200, y: 0 },
-                { x: 250, y: 100 },
-                { x: 300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: 200,
+                  y: 0,
+                },
+                {
+                  x: 250,
+                  y: 100,
+                },
+                {
+                  x: 300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -213,14 +298,19 @@
       y: 0.15,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: -300, y: 0 },
+              to: {
+                x: -300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -231,10 +321,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: -200, y: 0 },
-                { x: -250, y: 100 },
-                { x: -300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: -200,
+                  y: 0,
+                },
+                {
+                  x: -250,
+                  y: 100,
+                },
+                {
+                  x: -300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -248,14 +350,19 @@
       y: 0.25,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: -300, y: 0 },
+              to: {
+                x: -300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -266,10 +373,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: -200, y: 0 },
-                { x: -250, y: 100 },
-                { x: -300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: -200,
+                  y: 0,
+                },
+                {
+                  x: -250,
+                  y: 100,
+                },
+                {
+                  x: -300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -283,14 +402,19 @@
       y: 0.35,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: -300, y: 0 },
+              to: {
+                x: -300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -301,10 +425,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: -200, y: 0 },
-                { x: -250, y: 100 },
-                { x: -300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: -200,
+                  y: 0,
+                },
+                {
+                  x: -250,
+                  y: 100,
+                },
+                {
+                  x: -300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -318,14 +454,19 @@
       y: 0.45,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: -300, y: 0 },
+              to: {
+                x: -300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -336,10 +477,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: -200, y: 0 },
-                { x: -250, y: 100 },
-                { x: -300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: -200,
+                  y: 0,
+                },
+                {
+                  x: -250,
+                  y: 100,
+                },
+                {
+                  x: -300,
+                  y: 200,
+                },
               ],
             },
           ],
@@ -353,14 +506,19 @@
       y: 0.55,
       overrides: {
         radius: 18,
-        fire: { steps: [] },
+        fire: {
+          steps: [],
+        },
         move: {
           steps: [
             {
               kind: "dashTo",
               ease: "out",
               durationMs: 2500,
-              to: { x: -300, y: 0 },
+              to: {
+                x: -300,
+                y: 0,
+              },
             },
             {
               kind: "hover",
@@ -371,10 +529,22 @@
               ease: "in",
               durationMs: 2500,
               points: [
-                { x: 0, y: 0 },
-                { x: -200, y: 0 },
-                { x: -250, y: 100 },
-                { x: -300, y: 200 },
+                {
+                  x: 0,
+                  y: 0,
+                },
+                {
+                  x: -200,
+                  y: 0,
+                },
+                {
+                  x: -250,
+                  y: 100,
+                },
+                {
+                  x: -300,
+                  y: 200,
+                },
               ],
             },
           ],
