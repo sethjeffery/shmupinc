@@ -1,142 +1,136 @@
 {
-  fire: {
-    loop: true,
-    steps: [
+  "fire": {
+    "loop": true,
+    "steps": [
       {
-        durationMs: 700,
-        kind: "cooldown",
+        "durationMs": 700,
+        "kind": "cooldown"
       },
       {
-        aim: {
-          angleDeg: 90,
-          kind: "fixed",
+        "aim": {
+          "angleDeg": 90,
+          "kind": "fixed"
         },
-        bullet: {
-          color: 0xffb067,
-          kind: "dart",
-          length: 10,
-          radius: 2,
-          thickness: 2,
-        },
-        durationMs: 1200,
-        kind: "spray",
-        ratePerSec: 6,
-        damage: 1,
-        speed: 260,
+        "bulletId": "dart",
+        "durationMs": 1200,
+        "kind": "spray",
+        "ratePerSec": 6,
+        "damage": 1,
+        "speed": 260
       },
       {
-        durationMs: 800,
-        kind: "cooldown",
-      },
-    ],
+        "durationMs": 800,
+        "kind": "cooldown"
+      }
+    ]
   },
-  goldDrop: {
-    max: 6,
-    min: 4,
+  "goldDrop": {
+    "max": 6,
+    "min": 4
   },
-  hp: 5,
-  id: "sine",
-  move: {
-    steps: [
+  "hp": 5,
+  "id": "sine",
+  "move": {
+    "steps": [
       {
-        amp: 70,
-        durationMs: 4200,
-        freq: 1.1,
-        kind: "sineDown",
-        speed: 90,
+        "amp": 70,
+        "durationMs": 4200,
+        "freq": 1.1,
+        "kind": "sineDown",
+        "speed": 90
       },
       {
-        kind: "bezier",
-        durationMs: 2400,
-        points: [
+        "kind": "bezier",
+        "durationMs": 2400,
+        "points": [
           {
-            x: 0,
-            y: 0,
+            "x": 0,
+            "y": 0
           },
           {
-            x: -152.08,
-            y: 20,
+            "x": -152.08,
+            "y": 20
           },
           {
-            x: -152.08,
-            y: 100,
+            "x": -152.08,
+            "y": 100
           },
           {
-            x: 0,
-            y: 200,
+            "x": 0,
+            "y": 200
           },
           {
-            x: 0,
-            y: 300,
+            "x": 0,
+            "y": 300
           },
           {
-            x: 50,
-            y: 500,
-          },
-        ],
-      },
-    ],
+            "x": 50,
+            "y": 500
+          }
+        ]
+      }
+    ]
   },
-  radius: 13,
-  style: {
-    fillColor: 0x0f1a2b,
-    lineColor: 0x6cf2ff,
-    shape: "sine",
-    vector: {
-      lines: [
+  "radius": 13,
+  "style": {
+    "fillColor": 989739,
+    "lineColor": 7140095,
+    "shape": "sine",
+    "vector": {
+      "lines": [
         {
-          from: {
-            x: -0.25,
-            y: -0.15,
+          "from": {
+            "x": -0.25,
+            "y": -0.15
           },
-          to: {
-            x: 0.25,
-            y: -0.15,
-          },
-        },
+          "to": {
+            "x": 0.25,
+            "y": -0.15
+          }
+        }
       ],
-      outline: [
+      "outline": [
         {
-          x: 0,
-          y: -1,
+          "x": 0,
+          "y": -1
         },
         {
-          x: 0.7,
-          y: -0.55,
+          "x": 0.7,
+          "y": -0.55
         },
         {
-          x: 1.05,
-          y: -0.05,
+          "x": 1.05,
+          "y": -0.05
         },
         {
-          x: 0.8,
-          y: 0.35,
+          "x": 0.8,
+          "y": 0.35
         },
         {
-          x: 0.45,
-          y: 0.9,
+          "x": 0.45,
+          "y": 0.9
         },
         {
-          x: 0,
-          y: 0.65,
+          "x": 0,
+          "y": 0.65
         },
         {
-          x: -0.45,
-          y: 0.9,
+          "x": -0.45,
+          "y": 0.9
         },
         {
-          x: -0.8,
-          y: 0.35,
+          "x": -0.8,
+          "y": 0.35
         },
         {
-          x: -1.05,
-          y: -0.05,
+          "x": -1.05,
+          "y": -0.05
         },
         {
-          x: -0.7,
-          y: -0.55,
-        },
-      ],
-    },
-  },
+          "x": -0.7,
+          "y": -0.55
+        }
+      ]
+    }
+  }
 }

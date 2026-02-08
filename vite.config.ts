@@ -1,8 +1,6 @@
 import type { Connect } from "vite";
-
 import JSON5 from "json5";
 import { defineConfig } from "vite";
-
 import { buildContentRegistry } from "./src/content/validation";
 import {
   listContentTree,
@@ -10,6 +8,7 @@ import {
   readContentFile,
   writeContentFile,
 } from "./scripts/content/nodeLoader";
+import { ServerResponse } from "node:http";
 
 const parseBody = async (req: Connect.IncomingMessage): Promise<string> => {
   const chunks: Buffer[] = [];
@@ -20,7 +19,7 @@ const parseBody = async (req: Connect.IncomingMessage): Promise<string> => {
 };
 
 const sendJson = (
-  res: Connect.ServerResponse,
+  res: ServerResponse,
   status: number,
   payload: unknown,
 ): void => {

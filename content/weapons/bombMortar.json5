@@ -1,33 +1,24 @@
 {
-  id: "bombMortar",
-  name: "Bomb Mortar",
-  description: "Slow, heavy bombs with huge AoE.",
-  cost: 360,
-  gunId: "bomb",
-  size: "large",
-  zones: ["front"],
-  stats: {
-    fireRate: 1.2,
-    bullet: {
-      aoe: {
-        damage: 3,
-        radius: 90,
-      },
-      color: 0xff5c73,
-      kind: "bomb",
-      lifetimeMs: 2200,
-      radius: 7,
-    },
-    shots: [
+  "id": "bombMortar",
+  "name": "Bomb Mortar",
+  "description": "Slow, heavy bombs with huge AoE.",
+  "cost": 360,
+  "gunId": "bomb",
+  "size": "large",
+  "zones": ["front"],
+  "stats": {
+    "fireRate": 1.2,
+    "bulletId": "bomb",
+    "shots": [
       {
-        angleDeg: 0,
-        offset: {
-          x: 0,
-          y: -0.5,
-        },
-      },
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": -0.5
+        }
+      }
     ],
-    speed: 200,
-    damage: 3,
-  },
+    "speed": 200,
+    "damage": 3
+  }
 }

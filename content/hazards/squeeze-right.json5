@@ -1,20 +1,20 @@
 {
-  id: "squeeze-right",
-  type: "laneWall",
-  rect: {
-    x: 0.92,
-    y: 0.5,
-    w: 0.18,
-    h: 0.92,
+  "id": "squeeze-right",
+  "type": "laneWall",
+  "rect": {
+    "x": 0.92,
+    "y": 0.5,
+    "w": 0.18,
+    "h": 0.92
   },
-  motion: {
-    kind: "sine",
-    axis: "x",
-    amplitude: 0.12,
-    periodMs: 16000,
-    phase: 3.141592653589793,
+  "motion": {
+    "kind": "sine",
+    "axis": "x",
+    "amplitude": 0.12,
+    "periodMs": 16000,
+    "phase": 3.141592653589793
   },
-  damageOnTouch: true,
-  fillColor: 0x0b1220,
-  lineColor: 0x1b3149,
+  "damageOnTouch": true,
+  "fillColor": 725536,
+  "lineColor": 1782089
 }

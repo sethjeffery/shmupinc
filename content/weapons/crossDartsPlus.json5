@@ -1,65 +1,59 @@
 {
-  id: "crossDartsPlus",
-  name: "Cross Darts+",
-  description: "Super spreader!",
-  cost: 270,
-  gunId: "dart",
-  size: "small",
-  zones: ["side", "rear"],
-  stats: {
-    fireRate: 5,
-    bullet: {
-      color: 0xffb86c,
-      kind: "dart",
-      length: 12,
-      radius: 2,
-      thickness: 2,
-    },
-    shots: [
+  "id": "crossDartsPlus",
+  "name": "Cross Darts+",
+  "description": "Super spreader!",
+  "cost": 270,
+  "gunId": "dart",
+  "size": "small",
+  "zones": ["side", "rear"],
+  "stats": {
+    "fireRate": 5,
+    "bulletId": "dartHeavy",
+    "shots": [
       {
-        angleDeg: -60,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -60,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: -40,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -40,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: -20,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -20,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 20,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": 20,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 40,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": 40,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 60,
-        offset: {
-          x: 0,
-          y: 0,
-        },
-      },
+        "angleDeg": 60,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
     ],
-    speed: 520,
-    damage: 1,
-  },
+    "speed": 520,
+    "damage": 1
+  }
 }

@@ -1,0 +1,8 @@
+{
+  "id": "missile",
+  "kind": "missile",
+  "color": 16747628,
+  "length": 10,
+  "radius": 3,
+  "thickness": 3
+}

@@ -1,14 +1,14 @@
 {
-  id: "L1_INTRO",
-  title: "Intro",
-  pressureProfile: {
-    primary: "enemy",
-    secondary: ["focus"],
+  "id": "L1_INTRO",
+  "title": "Intro",
+  "pressureProfile": {
+    "primary": "enemy",
+    "secondary": ["focus"]
   },
-  preBeatId: "beat_s1_intro_pre",
-  waveIds: ["intro-intro", "intro-approach", "intro-cross", "intro-harass"],
-  shopId: "shop_intro",
-  winCondition: {
-    kind: "clearWaves",
-  },
+  "preBeatId": "beat_s1_intro_pre",
+  "waveIds": ["intro-intro", "intro-approach", "intro-cross", "intro-harass"],
+  "shopId": "shop_intro",
+  "winCondition": {
+    "kind": "clearWaves"
+  }
 }

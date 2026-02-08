@@ -1,28 +1,24 @@
 {
-  id: "orbBlaster",
-  name: "Orb Blaster",
-  description: "Balanced orb shots.",
-  cost: 100,
-  gunId: "orb",
-  size: "small",
-  zones: ["front"],
-  stats: {
-    fireRate: 4.2,
-    bullet: {
-      color: 0x7df9ff,
-      kind: "orb",
-      radius: 3,
-    },
-    shots: [
+  "id": "orbBlaster",
+  "name": "Orb Blaster",
+  "description": "Balanced orb shots.",
+  "cost": 100,
+  "gunId": "orb",
+  "size": "small",
+  "zones": ["front"],
+  "stats": {
+    "fireRate": 4.2,
+    "bulletId": "orb",
+    "shots": [
       {
-        angleDeg: 0,
-        offset: {
-          x: 0,
-          y: 0,
-        },
-      },
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
     ],
-    speed: 420,
-    damage: 1,
-  },
+    "speed": 420,
+    "damage": 1
+  }
 }

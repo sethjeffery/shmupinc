@@ -1,49 +1,45 @@
 {
-  id: "spreadOrbs",
-  name: "Spread Orbs",
-  description: "Four orb spread with soft arcs.",
-  cost: 190,
-  gunId: "orb",
-  size: "small",
-  zones: ["side", "rear"],
-  stats: {
-    fireRate: 2,
-    bullet: {
-      color: 0x6fe3ff,
-      kind: "orb",
-      radius: 3,
-    },
-    shots: [
+  "id": "spreadOrbs",
+  "name": "Spread Orbs",
+  "description": "Four orb spread with soft arcs.",
+  "cost": 190,
+  "gunId": "orb",
+  "size": "small",
+  "zones": ["side", "rear"],
+  "stats": {
+    "fireRate": 2,
+    "bulletId": "orb",
+    "shots": [
       {
-        angleDeg: -40,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -40,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: -20,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -20,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 20,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": 20,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 40,
-        offset: {
-          x: 0,
-          y: 0,
-        },
-      },
+        "angleDeg": 40,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
     ],
-    speed: 360,
-    damage: 1,
-  },
+    "speed": 360,
+    "damage": 1
+  }
 }

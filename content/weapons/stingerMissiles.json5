@@ -1,56 +1,38 @@
 {
-  id: "stingerMissiles",
-  name: "Stinger Missiles",
-  description: "Tri-missile pod with sharp tracking.",
-  cost: 250,
-  gunId: "missile",
-  size: "small",
-  zones: ["side", "rear"],
-  stats: {
-    fireRate: 1.4,
-    bullet: {
-      color: 0xffc993,
-      homing: {
-        acquireRadius: 180,
-        turnRateRadPerSec: 3.4,
-      },
-      kind: "missile",
-      length: 8,
-      lifetimeMs: 1800,
-      radius: 2,
-      thickness: 2,
-      trail: {
-        color: 0xffa46b,
-        count: 1,
-        intervalMs: 80,
-        sizeMax: 1.8,
-        sizeMin: 0.9,
-      },
-    },
-    shots: [
+  "id": "stingerMissiles",
+  "name": "Stinger Missiles",
+  "description": "Tri-missile pod with sharp tracking.",
+  "cost": 250,
+  "gunId": "missile",
+  "size": "small",
+  "zones": ["side", "rear"],
+  "stats": {
+    "fireRate": 1.4,
+    "bulletId": "missile",
+    "shots": [
       {
-        angleDeg: -25,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -25,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 0,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 25,
-        offset: {
-          x: 0,
-          y: 0,
-        },
-      },
+        "angleDeg": 25,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
     ],
-    speed: 300,
-    damage: 1,
-  },
+    "speed": 300,
+    "damage": 1
+  }
 }

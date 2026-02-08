@@ -1,183 +1,165 @@
 {
-  fire: {
-    loop: true,
-    steps: [
+  "fire": {
+    "loop": true,
+    "steps": [
       {
-        durationMs: 500,
-        kind: "cooldown",
+        "durationMs": 500,
+        "kind": "cooldown"
       },
       {
-        aim: {
-          angleDeg: 75,
-          kind: "fixed",
+        "aim": {
+          "angleDeg": 75,
+          "kind": "fixed"
         },
-        bullet: {
-          color: 0xffb067,
-          kind: "dart",
-          length: 10,
-          radius: 2,
-          thickness: 2,
-        },
-        count: 2,
-        intervalMs: 140,
-        kind: "burst",
-        damage: 1,
-        speed: 260,
+        "bulletId": "dart",
+        "count": 2,
+        "intervalMs": 140,
+        "kind": "burst",
+        "damage": 1,
+        "speed": 260
       },
       {
-        aim: {
-          angleDeg: 90,
-          kind: "fixed",
+        "aim": {
+          "angleDeg": 90,
+          "kind": "fixed"
         },
-        bullet: {
-          color: 0xffb067,
-          kind: "dart",
-          length: 10,
-          radius: 2,
-          thickness: 2,
-        },
-        count: 2,
-        intervalMs: 140,
-        kind: "burst",
-        damage: 1,
-        speed: 260,
+        "bulletId": "dart",
+        "count": 2,
+        "intervalMs": 140,
+        "kind": "burst",
+        "damage": 1,
+        "speed": 260
       },
       {
-        aim: {
-          angleDeg: 105,
-          kind: "fixed",
+        "aim": {
+          "angleDeg": 105,
+          "kind": "fixed"
         },
-        bullet: {
-          color: 0xffb067,
-          kind: "dart",
-          length: 10,
-          radius: 2,
-          thickness: 2,
-        },
-        count: 2,
-        intervalMs: 140,
-        kind: "burst",
-        damage: 1,
-        speed: 260,
+        "bulletId": "dart",
+        "count": 2,
+        "intervalMs": 140,
+        "kind": "burst",
+        "damage": 1,
+        "speed": 260
       },
       {
-        durationMs: 400,
-        kind: "cooldown",
-      },
-    ],
+        "durationMs": 400,
+        "kind": "cooldown"
+      }
+    ]
   },
-  goldDrop: {
-    max: 7,
-    min: 5,
+  "goldDrop": {
+    "max": 7,
+    "min": 5
   },
-  hp: 7,
-  id: "crossfire",
-  move: {
-    steps: [
+  "hp": 7,
+  "id": "crossfire",
+  "move": {
+    "steps": [
       {
-        durationMs: 750,
-        kind: "dashTo",
-        to: {
-          x: 0,
-          y: 160,
-        },
+        "durationMs": 750,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 160
+        }
       },
       {
-        durationMs: 1400,
-        kind: "hover",
+        "durationMs": 1400,
+        "kind": "hover"
       },
       {
-        durationMs: 900,
-        kind: "dashTo",
-        to: {
-          x: 0,
-          y: 600,
-        },
-      },
-    ],
+        "durationMs": 900,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 600
+        }
+      }
+    ]
   },
-  radius: 14,
-  style: {
-    fillColor: 0x14162e,
-    lineColor: 0x8ecbff,
-    shape: "crossfire",
-    vector: {
-      lines: [
+  "radius": 14,
+  "style": {
+    "fillColor": 1316398,
+    "lineColor": 9358335,
+    "shape": "crossfire",
+    "vector": {
+      "lines": [
         {
-          from: {
-            x: -0.75,
-            y: 0.2,
+          "from": {
+            "x": -0.75,
+            "y": 0.2
           },
-          to: {
-            x: -0.2,
-            y: 0.2,
-          },
+          "to": {
+            "x": -0.2,
+            "y": 0.2
+          }
         },
         {
-          from: {
-            x: 0.2,
-            y: 0.2,
+          "from": {
+            "x": 0.2,
+            "y": 0.2
           },
-          to: {
-            x: 0.75,
-            y: 0.2,
-          },
-        },
+          "to": {
+            "x": 0.75,
+            "y": 0.2
+          }
+        }
       ],
-      outline: [
+      "outline": [
         {
-          x: 0,
-          y: -1,
+          "x": 0,
+          "y": -1
         },
         {
-          x: 0.45,
-          y: -0.6,
+          "x": 0.45,
+          "y": -0.6
         },
         {
-          x: 1,
-          y: -0.45,
+          "x": 1,
+          "y": -0.45
         },
         {
-          x: 1.1,
-          y: 0.05,
+          "x": 1.1,
+          "y": 0.05
         },
         {
-          x: 0.7,
-          y: 0.35,
+          "x": 0.7,
+          "y": 0.35
         },
         {
-          x: 0.65,
-          y: 0.95,
+          "x": 0.65,
+          "y": 0.95
         },
         {
-          x: 0.2,
-          y: 0.6,
+          "x": 0.2,
+          "y": 0.6
         },
         {
-          x: -0.2,
-          y: 0.6,
+          "x": -0.2,
+          "y": 0.6
         },
         {
-          x: -0.65,
-          y: 0.95,
+          "x": -0.65,
+          "y": 0.95
         },
         {
-          x: -0.7,
-          y: 0.35,
+          "x": -0.7,
+          "y": 0.35
         },
         {
-          x: -1.1,
-          y: 0.05,
+          "x": -1.1,
+          "y": 0.05
         },
         {
-          x: -1,
-          y: -0.45,
+          "x": -1,
+          "y": -0.45
         },
         {
-          x: -0.45,
-          y: -0.6,
-        },
-      ],
-    },
-  },
+          "x": -0.45,
+          "y": -0.6
+        }
+      ]
+    }
+  }
 }

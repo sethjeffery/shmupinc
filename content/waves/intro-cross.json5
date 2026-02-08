@@ -1,77 +1,77 @@
 {
-  id: "intro-cross",
-  spawns: [
+  "id": "intro-cross",
+  "spawns": [
     {
-      atMs: 0,
-      enemyId: "sine",
-      overrides: {
-        fire: {
-          loop: false,
-          steps: [],
-        },
+      "atMs": 0,
+      "enemyId": "sine",
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
       },
-      x: -0.15,
-      y: 0,
+      "x": -0.15,
+      "y": 0
     },
     {
-      atMs: 600,
-      enemyId: "sine",
-      overrides: {
-        fire: {
-          loop: false,
-          steps: [],
-        },
+      "atMs": 600,
+      "enemyId": "sine",
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
       },
-      x: 0,
-      y: 0,
+      "x": 0,
+      "y": 0
     },
     {
-      atMs: 1200,
-      enemyId: "sine",
-      overrides: {
-        fire: {
-          loop: false,
-          steps: [],
-        },
+      "atMs": 1200,
+      "enemyId": "sine",
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
       },
-      x: 0.15,
-      y: 0,
+      "x": 0.15,
+      "y": 0
     },
     {
-      atMs: 1800,
-      enemyId: "sine",
-      overrides: {
-        fire: {
-          loop: false,
-          steps: [],
-        },
+      "atMs": 1800,
+      "enemyId": "sine",
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
       },
-      x: -0.15,
-      y: 0,
+      "x": -0.15,
+      "y": 0
     },
     {
-      atMs: 2400,
-      enemyId: "sine",
-      overrides: {
-        fire: {
-          loop: false,
-          steps: [],
-        },
+      "atMs": 2400,
+      "enemyId": "sine",
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
       },
-      x: 0,
-      y: 0,
+      "x": 0,
+      "y": 0
     },
     {
-      atMs: 3000,
-      enemyId: "sine",
-      overrides: {
-        fire: {
-          loop: false,
-          steps: [],
-        },
+      "atMs": 3000,
+      "enemyId": "sine",
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
       },
-      x: 0.15,
-      y: 0,
-    },
-  ],
+      "x": 0.15,
+      "y": 0
+    }
+  ]
 }

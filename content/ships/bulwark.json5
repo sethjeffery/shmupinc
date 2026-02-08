@@ -1,106 +1,106 @@
 {
-  color: 0xff6b6b,
-  cost: 260,
-  description: "High armor, slower handling.",
-  id: "bulwark",
-  magnetMultiplier: 1,
-  maxHp: 10,
-  moveSpeed: 5.5,
-  mounts: [
+  "color": 16739179,
+  "cost": 260,
+  "description": "High armor, slower handling.",
+  "id": "bulwark",
+  "magnetMultiplier": 1,
+  "maxHp": 10,
+  "moveSpeed": 5.5,
+  "mounts": [
     {
-      id: "front",
-      offset: {
-        x: 0,
-        y: -0.5,
+      "id": "front",
+      "offset": {
+        "x": 0,
+        "y": -0.5
       },
-      size: "large",
-      zone: "front",
+      "size": "large",
+      "zone": "front"
     },
     {
-      id: "side-left",
-      offset: {
-        x: -0.8,
-        y: -0.4,
+      "id": "side-left",
+      "offset": {
+        "x": -0.8,
+        "y": -0.4
       },
-      size: "small",
-      zone: "side",
+      "size": "small",
+      "zone": "side"
     },
     {
-      id: "side-right",
-      offset: {
-        x: 0.8,
-        y: -0.4,
+      "id": "side-right",
+      "offset": {
+        "x": 0.8,
+        "y": -0.4
       },
-      size: "small",
-      zone: "side",
+      "size": "small",
+      "zone": "side"
     },
     {
-      id: "rear",
-      offset: {
-        x: 0,
-        y: 0.7,
+      "id": "rear",
+      "offset": {
+        "x": 0,
+        "y": 0.7
       },
-      size: "small",
-      zone: "rear",
-    },
+      "size": "small",
+      "zone": "rear"
+    }
   ],
-  name: "Bulwark",
-  radiusMultiplier: 1.35,
-  shape: "bulwark",
-  vector: {
-    outline: [
+  "name": "Bulwark",
+  "radiusMultiplier": 1.35,
+  "shape": "bulwark",
+  "vector": {
+    "outline": [
       {
-        x: 0,
-        y: -0.7,
+        "x": 0,
+        "y": -0.7
       },
       {
-        x: 0.25,
-        y: -0.9,
+        "x": 0.25,
+        "y": -0.9
       },
       {
-        x: 0.8,
-        y: -0.7,
+        "x": 0.8,
+        "y": -0.7
       },
       {
-        x: 1,
-        y: -1,
+        "x": 1,
+        "y": -1
       },
       {
-        x: 1.15,
-        y: 0,
+        "x": 1.15,
+        "y": 0
       },
       {
-        x: 1,
-        y: 0.8,
+        "x": 1,
+        "y": 0.8
       },
       {
-        x: 0.35,
-        y: 1,
+        "x": 0.35,
+        "y": 1
       },
       {
-        x: -0.35,
-        y: 1,
+        "x": -0.35,
+        "y": 1
       },
       {
-        x: -1,
-        y: 0.8,
+        "x": -1,
+        "y": 0.8
       },
       {
-        x: -1.15,
-        y: 0,
+        "x": -1.15,
+        "y": 0
       },
       {
-        x: -1,
-        y: -1,
+        "x": -1,
+        "y": -1
       },
       {
-        x: -0.8,
-        y: -0.7,
+        "x": -0.8,
+        "y": -0.7
       },
       {
-        x: -0.25,
-        y: -0.9,
-      },
-    ],
-  },
+        "x": -0.25,
+        "y": -0.9
+      }
+    ]
+  }
 }

@@ -1,304 +1,274 @@
 {
-  id: "midboss",
-  hp: 28,
-  radius: 28,
-  goldDrop: {
-    min: 18,
-    max: 26,
+  "id": "midboss",
+  "hp": 28,
+  "radius": 28,
+  "goldDrop": {
+    "min": 18,
+    "max": 26
   },
-  rotation: "fixed",
-  rotationDeg: 180,
-  style: {
-    shape: "boss",
-    fillColor: 0x1a1b28,
-    lineColor: 0xff99eb,
-    vector: {
-      lines: [
+  "rotation": "fixed",
+  "rotationDeg": 180,
+  "style": {
+    "shape": "boss",
+    "fillColor": 1710888,
+    "lineColor": 16751083,
+    "vector": {
+      "lines": [
         {
-          from: {
-            x: -0.6,
-            y: -0.1,
+          "from": {
+            "x": -0.6,
+            "y": -0.1
           },
-          to: {
-            x: -0.3,
-            y: 0.25,
-          },
+          "to": {
+            "x": -0.3,
+            "y": 0.25
+          }
         },
         {
-          from: {
-            x: 0.6,
-            y: -0.1,
+          "from": {
+            "x": 0.6,
+            "y": -0.1
           },
-          to: {
-            x: 0.3,
-            y: 0.25,
-          },
+          "to": {
+            "x": 0.3,
+            "y": 0.25
+          }
         },
         {
-          from: {
-            x: -0.25,
-            y: -0.45,
+          "from": {
+            "x": -0.25,
+            "y": -0.45
           },
-          to: {
-            x: 0.25,
-            y: -0.45,
-          },
-        },
+          "to": {
+            "x": 0.25,
+            "y": -0.45
+          }
+        }
       ],
-      outline: [
+      "outline": [
         {
-          x: 0,
-          y: -1,
+          "x": 0,
+          "y": -1
         },
         {
-          x: 0.7,
-          y: -0.8,
+          "x": 0.7,
+          "y": -0.8
         },
         {
-          x: 1.1,
-          y: -0.35,
+          "x": 1.1,
+          "y": -0.35
         },
         {
-          x: 1.25,
-          y: 0.25,
+          "x": 1.25,
+          "y": 0.25
         },
         {
-          x: 0.95,
-          y: 0.85,
+          "x": 0.95,
+          "y": 0.85
         },
         {
-          x: 0.35,
-          y: 1.05,
+          "x": 0.35,
+          "y": 1.05
         },
         {
-          x: -0.35,
-          y: 1.05,
+          "x": -0.35,
+          "y": 1.05
         },
         {
-          x: -0.95,
-          y: 0.85,
+          "x": -0.95,
+          "y": 0.85
         },
         {
-          x: -1.25,
-          y: 0.25,
+          "x": -1.25,
+          "y": 0.25
         },
         {
-          x: -1.1,
-          y: -0.35,
+          "x": -1.1,
+          "y": -0.35
         },
         {
-          x: -0.7,
-          y: -0.8,
-        },
-      ],
-    },
+          "x": -0.7,
+          "y": -0.8
+        }
+      ]
+    }
   },
-  move: {
-    loop: true,
-    steps: [
+  "move": {
+    "loop": true,
+    "steps": [
       {
-        durationMs: 900,
-        ease: "out",
-        kind: "dashTo",
-        to: {
-          x: 0,
-          y: 160,
-        },
+        "durationMs": 900,
+        "ease": "out",
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 160
+        }
       },
       {
-        durationMs: 600,
-        kind: "hover",
+        "durationMs": 600,
+        "kind": "hover"
       },
       {
-        durationMs: 700,
-        ease: "inOut",
-        kind: "dashTo",
-        to: {
-          x: 90,
-          y: 30,
-        },
+        "durationMs": 700,
+        "ease": "inOut",
+        "kind": "dashTo",
+        "to": {
+          "x": 90,
+          "y": 30
+        }
       },
       {
-        durationMs: 500,
-        kind: "hover",
+        "durationMs": 500,
+        "kind": "hover"
       },
       {
-        durationMs: 700,
-        ease: "inOut",
-        kind: "dashTo",
-        to: {
-          x: -180,
-          y: 0,
-        },
+        "durationMs": 700,
+        "ease": "inOut",
+        "kind": "dashTo",
+        "to": {
+          "x": -180,
+          "y": 0
+        }
       },
       {
-        durationMs: 700,
-        kind: "hover",
-      },
-    ],
+        "durationMs": 700,
+        "kind": "hover"
+      }
+    ]
   },
-  fire: {
-    loop: true,
-    steps: [
+  "fire": {
+    "loop": true,
+    "steps": [
       {
-        durationMs: 500,
-        kind: "cooldown",
+        "durationMs": 500,
+        "kind": "cooldown"
       },
       {
-        aim: {
-          fromDeg: 70,
-          kind: "sweep",
-          periodMs: 1800,
-          toDeg: 110,
+        "aim": {
+          "fromDeg": 70,
+          "kind": "sweep",
+          "periodMs": 1800,
+          "toDeg": 110
         },
-        bullet: {
-          color: 0xff8c6c,
-          kind: "orb",
-          radius: 3,
-        },
-        durationMs: 1800,
-        kind: "spray",
-        ratePerSec: 5,
-        damage: 1,
-        speed: 200,
+        "bulletId": "orb",
+        "durationMs": 1800,
+        "kind": "spray",
+        "ratePerSec": 5,
+        "damage": 1,
+        "speed": 200
       },
       {
-        durationMs: 300,
-        kind: "cooldown",
+        "durationMs": 300,
+        "kind": "cooldown"
       },
       {
-        aim: {
-          kind: "atPlayer",
+        "aim": {
+          "kind": "atPlayer"
         },
-        bullet: {
-          color: 0xffb067,
-          kind: "dart",
-          length: 10,
-          radius: 2,
-          thickness: 2,
-        },
-        count: 3,
-        intervalMs: 180,
-        kind: "burst",
-        damage: 1,
-        speed: 280,
+        "bulletId": "dart",
+        "count": 3,
+        "intervalMs": 180,
+        "kind": "burst",
+        "damage": 1,
+        "speed": 280
       },
       {
-        durationMs: 500,
-        kind: "cooldown",
-      },
-    ],
+        "durationMs": 500,
+        "kind": "cooldown"
+      }
+    ]
   },
-  phases: [
+  "phases": [
     {
-      hpThreshold: 0.6,
-      fire: {
-        loop: true,
-        steps: [
+      "hpThreshold": 0.6,
+      "fire": {
+        "loop": true,
+        "steps": [
           {
-            durationMs: 400,
-            kind: "cooldown",
+            "durationMs": 400,
+            "kind": "cooldown"
           },
           {
-            aim: {
-              fromDeg: 60,
-              kind: "sweep",
-              periodMs: 1500,
-              toDeg: 120,
+            "aim": {
+              "fromDeg": 60,
+              "kind": "sweep",
+              "periodMs": 1500,
+              "toDeg": 120
             },
-            bullet: {
-              color: 0xff784f,
-              kind: "orb",
-              radius: 3,
-            },
-            durationMs: 1500,
-            kind: "spray",
-            ratePerSec: 6,
-            damage: 1,
-            speed: 210,
+            "bulletId": "orb",
+            "durationMs": 1500,
+            "kind": "spray",
+            "ratePerSec": 6,
+            "damage": 1,
+            "speed": 210
           },
           {
-            durationMs: 300,
-            kind: "cooldown",
+            "durationMs": 300,
+            "kind": "cooldown"
           },
           {
-            aim: {
-              kind: "atPlayer",
+            "aim": {
+              "kind": "atPlayer"
             },
-            bullet: {
-              color: 0xffb067,
-              kind: "dart",
-              length: 10,
-              radius: 2,
-              thickness: 2,
-            },
-            count: 4,
-            intervalMs: 140,
-            kind: "burst",
-            damage: 1,
-            speed: 300,
+            "bulletId": "dart",
+            "count": 4,
+            "intervalMs": 140,
+            "kind": "burst",
+            "damage": 1,
+            "speed": 300
           },
           {
-            durationMs: 500,
-            kind: "cooldown",
-          },
-        ],
-      },
+            "durationMs": 500,
+            "kind": "cooldown"
+          }
+        ]
+      }
     },
     {
-      hpThreshold: 0.3,
-      fire: {
-        loop: true,
-        steps: [
+      "hpThreshold": 0.3,
+      "fire": {
+        "loop": true,
+        "steps": [
           {
-            durationMs: 300,
-            kind: "cooldown",
+            "durationMs": 300,
+            "kind": "cooldown"
           },
           {
-            aim: {
-              fromDeg: 55,
-              kind: "sweep",
-              periodMs: 1200,
-              toDeg: 125,
+            "aim": {
+              "fromDeg": 55,
+              "kind": "sweep",
+              "periodMs": 1200,
+              "toDeg": 125
             },
-            bullet: {
-              color: 0xffb067,
-              kind: "orb",
-              radius: 4,
-            },
-            durationMs: 1400,
-            kind: "spray",
-            ratePerSec: 7,
-            damage: 2,
-            speed: 210,
+            "bulletId": "orbHeavy",
+            "durationMs": 1400,
+            "kind": "spray",
+            "ratePerSec": 7,
+            "damage": 2,
+            "speed": 210
           },
           {
-            durationMs: 200,
-            kind: "cooldown",
+            "durationMs": 200,
+            "kind": "cooldown"
           },
           {
-            aim: {
-              kind: "atPlayer",
+            "aim": {
+              "kind": "atPlayer"
             },
-            bullet: {
-              color: 0xffb067,
-              kind: "dart",
-              length: 12,
-              radius: 2,
-              thickness: 2,
-            },
-            count: 5,
-            intervalMs: 120,
-            kind: "burst",
-            damage: 2,
-            speed: 340,
+            "bulletId": "dartHeavy",
+            "count": 5,
+            "intervalMs": 120,
+            "kind": "burst",
+            "damage": 2,
+            "speed": 340
           },
           {
-            durationMs: 400,
-            kind: "cooldown",
-          },
-        ],
-      },
-    },
-  ],
+            "durationMs": 400,
+            "kind": "cooldown"
+          }
+        ]
+      }
+    }
+  ]
 }

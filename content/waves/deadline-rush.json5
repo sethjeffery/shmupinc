@@ -1,65 +1,65 @@
 {
-  id: "deadline-rush",
-  spawns: [
+  "id": "deadline-rush",
+  "spawns": [
     {
-      atMs: 0,
-      enemyId: "crossfire",
-      x: 0,
-      y: -0.1,
+      "atMs": 0,
+      "enemyId": "crossfire",
+      "x": 0,
+      "y": -0.1
     },
     {
-      atMs: 4000,
-      enemyId: "sniper",
-      x: -0.25,
-      y: -0.1,
+      "atMs": 4000,
+      "enemyId": "sniper",
+      "x": -0.25,
+      "y": -0.1
     },
     {
-      atMs: 6500,
-      enemyId: "sniper",
-      x: 0.25,
-      y: -0.1,
+      "atMs": 6500,
+      "enemyId": "sniper",
+      "x": 0.25,
+      "y": -0.1
     },
     {
-      atMs: 10000,
-      enemyId: "skitter",
-      x: 0,
-      y: -0.1,
+      "atMs": 10000,
+      "enemyId": "skitter",
+      "x": 0,
+      "y": -0.1
     },
     {
-      atMs: 14500,
-      enemyId: "bomber",
-      x: 0,
-      y: -0.1,
+      "atMs": 14500,
+      "enemyId": "bomber",
+      "x": 0,
+      "y": -0.1
     },
     {
-      atMs: 19000,
-      enemyId: "crossfire",
-      x: -0.2,
-      y: -0.1,
+      "atMs": 19000,
+      "enemyId": "crossfire",
+      "x": -0.2,
+      "y": -0.1
     },
     {
-      atMs: 22000,
-      enemyId: "crossfire",
-      x: 0.2,
-      y: -0.1,
+      "atMs": 22000,
+      "enemyId": "crossfire",
+      "x": 0.2,
+      "y": -0.1
     },
     {
-      atMs: 27000,
-      enemyId: "sniper",
-      x: 0,
-      y: -0.1,
+      "atMs": 27000,
+      "enemyId": "sniper",
+      "x": 0,
+      "y": -0.1
     },
     {
-      atMs: 32000,
-      enemyId: "spinner",
-      x: 0,
-      y: -0.1,
+      "atMs": 32000,
+      "enemyId": "spinner",
+      "x": 0,
+      "y": -0.1
     },
     {
-      atMs: 36500,
-      enemyId: "bomber",
-      x: 0,
-      y: -0.1,
-    },
-  ],
+      "atMs": 36500,
+      "enemyId": "bomber",
+      "x": 0,
+      "y": -0.1
+    }
+  ]
 }

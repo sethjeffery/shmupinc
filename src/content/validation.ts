@@ -23,6 +23,7 @@ import type {
 } from "../game/data/weaponTypes";
 import type {
   BeatContent,
+  BulletContent,
   ContentKind,
   EnemyContent,
   GunContent,
@@ -52,6 +53,7 @@ export interface ContentEntry {
 }
 
 export interface ContentRegistry {
+  bulletsById: Record<string, BulletContent>;
   beatsById: Record<string, StoryBeat>;
   enemiesById: Record<string, EnemyDef>;
   gunsById: Record<string, GunDefinition>;
@@ -100,6 +102,26 @@ type BulletEffectsInput = Partial<
   Pick<BulletSpec, "aoe" | "homing" | "lifetimeMs" | "speed">
 >;
 
+const resolveBulletFromId = (
+  bulletId: string | undefined,
+  bulletsById: Record<string, BulletContent>,
+  errors: ContentError[],
+  context: string,
+): BulletVisualsInput | null => {
+  if (!bulletId) return null;
+  const bullet = bulletsById[bulletId];
+  if (!bullet) {
+    addReferenceError(errors, context, `Missing bullet "${bulletId}".`);
+    return null;
+  }
+  // Convert BulletContent to BulletVisualsInput by omitting id
+  const { _id, ...visuals } = bullet as {
+    _id?: string;
+    [key: string]: unknown;
+  };
+  return visuals as unknown as BulletVisualsInput;
+};
+
 const coerceBulletSpec = (
   visuals: BulletVisualsInput,
   damage: number,
@@ -129,8 +151,13 @@ const coerceBulletSpec = (
   };
 };
 
-type FireStepInput = FireStep & {
+type FireStepInput = (
+  | { kind: "charge" | "cooldown"; durationMs: number }
+  | FireStep
+) & {
   aoe?: BulletAoe;
+  bulletId?: string;
+  bullet?: BulletVisualsInput;
   damage?: number;
   homing?: BulletHoming;
   lifetimeMs?: number;
@@ -139,26 +166,75 @@ type FireStepInput = FireStep & {
 
 type FireScriptInput = Omit<FireScript, "steps"> & { steps: FireStepInput[] };
 
-const coerceFireStep = (step: FireStepInput): FireStep => {
-  if ("bullet" in step) {
-    const { aoe, damage, homing, lifetimeMs, speed, ...rest } = step;
-    const bulletDamage = damage ?? step.bullet.damage ?? 1;
-    return {
-      ...rest,
-      bullet: coerceBulletSpec(step.bullet, bulletDamage, {
-        aoe,
-        homing,
-        lifetimeMs,
-        speed,
-      }),
-    };
+const coerceFireStep = (
+  step: FireStepInput,
+  bulletsById?: Record<string, BulletContent>,
+  errors?: ContentError[],
+  context?: string,
+): FireStep => {
+  if (step.kind === "charge" || step.kind === "cooldown") {
+    return step as FireStep;
   }
-  return step;
+
+  // Handle burst and spray steps
+  let bulletVisuals: BulletVisualsInput | null = null;
+
+  if ("bulletId" in step && step.bulletId) {
+    if (!bulletsById) {
+      throw new Error("bulletsById required for bulletId resolution");
+    }
+    const resolved = resolveBulletFromId(
+      step.bulletId,
+      bulletsById,
+      errors ?? [],
+      context ?? "",
+    );
+    if (resolved) {
+      bulletVisuals = resolved;
+    } else {
+      throw new Error(`Failed to resolve bullet: ${step.bulletId}`);
+    }
+  } else if ("bullet" in step && step.bullet) {
+    bulletVisuals = step.bullet;
+  }
+
+  if (!bulletVisuals) {
+    throw new Error("Fire step must have either bullet or bulletId");
+  }
+
+  const { _bulletId, aoe, damage, homing, lifetimeMs, speed, ...rest } =
+    step as unknown as {
+      _bulletId?: string;
+      aoe?: BulletAoe;
+      damage?: number;
+      homing?: BulletHoming;
+      lifetimeMs?: number;
+      speed?: number;
+      [key: string]: unknown;
+    };
+  const bulletDamage = damage ?? 1;
+
+  return {
+    ...rest,
+    bullet: coerceBulletSpec(bulletVisuals, bulletDamage, {
+      aoe,
+      homing,
+      lifetimeMs,
+      speed,
+    }),
+  } as FireStep;
 };
 
-const coerceFireScript = (script: FireScriptInput): FireScript => ({
+const coerceFireScript = (
+  script: FireScriptInput,
+  bulletsById?: Record<string, BulletContent>,
+  errors?: ContentError[],
+  context?: string,
+): FireScript => ({
   ...script,
-  steps: script.steps.map((step) => coerceFireStep(step)),
+  steps: script.steps.map((step) =>
+    coerceFireStep(step, bulletsById, errors, context),
+  ),
 });
 
 const addDuplicateError = (
@@ -229,6 +305,7 @@ export const buildContentRegistry = (
   const errors: ContentError[] = [];
 
   const beatsById: Record<string, StoryBeat> = {};
+  const bulletsById: Record<string, BulletContent> = {};
   const enemiesById: Record<string, EnemyContent> = {};
   const gunsById: Record<string, GunContent> = {};
   const hazardsById: Record<string, HazardContent> = {};
@@ -266,6 +343,16 @@ export const buildContentRegistry = (
             lines: beat.lines,
             title: beat.title,
           };
+        }
+        break;
+      case "bullets":
+        if (bulletsById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        {
+          const bullet = value as BulletContent;
+          bulletsById[id] = bullet;
         }
         break;
       case "enemies":
@@ -348,11 +435,21 @@ export const buildContentRegistry = (
   for (const [id, enemy] of Object.entries(enemiesById)) {
     resolvedEnemies[id] = {
       ...enemy,
-      fire: coerceFireScript(enemy.fire as FireScriptInput),
+      fire: coerceFireScript(
+        enemy.fire as FireScriptInput,
+        bulletsById,
+        errors,
+        `enemies/${id}`,
+      ),
       phases: enemy.phases?.map((phase) => ({
         ...phase,
         fire: phase.fire
-          ? coerceFireScript(phase.fire as FireScriptInput)
+          ? coerceFireScript(
+              phase.fire as FireScriptInput,
+              bulletsById,
+              errors,
+              `enemies/${id}`,
+            )
           : undefined,
       })),
       style: enemy.style
@@ -391,27 +488,42 @@ export const buildContentRegistry = (
   };
 
   const resolveWeaponStats = (
-    stats: Partial<WeaponStats> & { damage?: number },
+    stats: Partial<WeaponStats> & { damage?: number; bulletId?: string },
+    weaponId?: string,
   ): WeaponStats => {
-    const legacyBullet = stats.bullet;
-    const fallbackSpeed = stats.speed ?? legacyBullet?.speed ?? 0;
-    const fallbackDamage = stats.damage ?? legacyBullet?.damage ?? 1;
-    const homing = stats.homing ?? legacyBullet?.homing;
-    const aoe = stats.aoe ?? legacyBullet?.aoe;
-    const lifetimeMs = stats.lifetimeMs ?? legacyBullet?.lifetimeMs;
-    const bullet = coerceBulletSpec(
-      (stats.bullet ?? {
-        kind: "orb",
-        radius: 3,
-      }) as unknown as BulletVisualsInput,
-      fallbackDamage,
-      {
-        aoe,
-        homing,
-        lifetimeMs,
-        speed: fallbackSpeed,
-      },
-    );
+    let bulletVisuals: BulletVisualsInput | undefined = stats.bullet;
+
+    // Resolve bullet from ID if provided
+    if (stats.bulletId) {
+      const resolved = resolveBulletFromId(
+        stats.bulletId,
+        bulletsById,
+        errors,
+        weaponId ? `weapons/${weaponId}` : "",
+      );
+      if (resolved) {
+        bulletVisuals ??= resolved;
+      }
+    }
+
+    // Fallback to default if no bullet provided
+    bulletVisuals ??= {
+      kind: "orb",
+      radius: 3,
+    };
+
+    // BulletVisualsInput doesn't have damage, so we use 1 as default
+    const fallbackSpeed = stats.speed ?? 0;
+    const fallbackDamage = stats.damage ?? 1;
+    const homing = stats.homing ?? bulletVisuals.homing;
+    const aoe = stats.aoe ?? bulletVisuals.aoe;
+    const lifetimeMs = stats.lifetimeMs ?? bulletVisuals.lifetimeMs;
+    const bullet = coerceBulletSpec(bulletVisuals, fallbackDamage, {
+      aoe,
+      homing,
+      lifetimeMs,
+      speed: fallbackSpeed,
+    });
     return {
       angleDeg: stats.angleDeg ?? 0,
       aoe,
@@ -432,21 +544,39 @@ export const buildContentRegistry = (
       {};
     for (const [zone, override] of Object.entries(zoneStats)) {
       if (!override) continue;
-      const { bullet, damage, shots, ...rest } =
-        override as Partial<WeaponStats> & { damage?: number };
+      const { bullet, bulletId, damage, shots, ...rest } =
+        override as Partial<WeaponStats> & {
+          damage?: number;
+          bulletId?: string;
+        };
       const resolvedOverride: Partial<WeaponStats> = {
         ...rest,
         shots: shots ? normalizeWeaponShots(shots) : undefined,
       };
-      if (bullet) {
-        resolvedOverride.bullet = coerceBulletSpec(bullet, damage ?? 1);
+
+      let bulletToUse: BulletVisualsInput | undefined = bullet;
+      if (bulletId && !bullet) {
+        const resolved = resolveBulletFromId(
+          bulletId,
+          bulletsById,
+          errors,
+          `weapons/${id}/zoneStats/${zone}`,
+        );
+        if (resolved) {
+          bulletToUse = resolved;
+        }
+      }
+
+      if (bulletToUse) {
+        resolvedOverride.bullet = coerceBulletSpec(bulletToUse, damage ?? 1);
       }
       resolvedZoneStats[zone as WeaponZone] = resolvedOverride;
     }
     resolvedWeapons[id] = {
       ...weapon,
       stats: resolveWeaponStats(
-        weapon.stats as WeaponStats & { damage?: number },
+        weapon.stats as WeaponStats & { damage?: number; bulletId?: string },
+        id,
       ),
       zoneStats: Object.keys(resolvedZoneStats).length
         ? resolvedZoneStats
@@ -462,13 +592,23 @@ export const buildContentRegistry = (
         if (!spawn.overrides) return spawn as WaveDefinition["spawns"][number];
         const overrides = { ...spawn.overrides };
         if (overrides.fire) {
-          overrides.fire = coerceFireScript(overrides.fire as FireScriptInput);
+          overrides.fire = coerceFireScript(
+            overrides.fire as FireScriptInput,
+            bulletsById,
+            errors,
+            `waves/${id}`,
+          );
         }
         if (overrides.phases) {
           overrides.phases = overrides.phases.map((phase) => ({
             ...phase,
             fire: phase.fire
-              ? coerceFireScript(phase.fire as FireScriptInput)
+              ? coerceFireScript(
+                  phase.fire as FireScriptInput,
+                  bulletsById,
+                  errors,
+                  `waves/${id}`,
+                )
               : undefined,
           }));
         }
@@ -609,6 +749,7 @@ export const buildContentRegistry = (
     errors,
     registry: {
       beatsById,
+      bulletsById,
       enemiesById: resolvedEnemies,
       gunsById: resolvedGuns,
       hazardsById: resolvedHazards,

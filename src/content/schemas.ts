@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const CONTENT_KINDS = [
   "beats",
+  "bullets",
   "enemies",
   "guns",
   "hazards",
@@ -200,8 +201,9 @@ const bulletTrailSchema = z.object({
   sizeMin: z.number().describe("Min trail size.").optional(),
 });
 
-const bulletVisualsSchema = z.object({
+export const bulletSchema = z.object({
   color: colorField("Bullet color.").optional(),
+  id: idField("Unique bullet id."),
   kind: z.enum(["bomb", "dart", "missile", "orb"]).describe("Bullet kind."),
   length: z.number().describe("Visual length (for darts).").optional(),
   radius: z.number().describe("Collision radius in pixels."),
@@ -215,7 +217,7 @@ const fireStepSchema = z.union([
     aoe: bulletAoeSchema
       .describe("AoE settings (per burst bullet).")
       .optional(),
-    bullet: bulletVisualsSchema.describe("Bullet visuals."),
+    bulletId: idField("Reference to a bullet definition.").optional(),
     count: z.number().describe("Shots per burst."),
     damage: z.number().describe("Damage per hit.").optional(),
     homing: bulletHomingSchema
@@ -249,7 +251,7 @@ const fireStepSchema = z.union([
     aoe: bulletAoeSchema
       .describe("AoE settings (per spray bullet).")
       .optional(),
-    bullet: bulletVisualsSchema.describe("Bullet visuals."),
+    bulletId: idField("Reference to a bullet definition.").optional(),
     damage: z.number().describe("Damage per hit.").optional(),
     durationMs: z.number().describe("Spray duration (ms)."),
     homing: bulletHomingSchema
@@ -469,7 +471,7 @@ const weaponStatsSchema = z.object({
   aoe: bulletAoeSchema
     .describe("AoE settings (applied to all bullets fired).")
     .optional(),
-  bullet: bulletVisualsSchema.describe("Bullet visuals."),
+  bulletId: idField("Reference to a bullet definition.").optional(),
   damage: z.number().describe("Damage per hit."),
   fireRate: z.number().describe("Shots per second."),
   homing: bulletHomingSchema
@@ -566,6 +568,7 @@ const shipSchema = z.object({
 
 export const contentSchemas = {
   beats: beatSchema,
+  bullets: bulletSchema,
   enemies: enemySchema,
   guns: gunSchema,
   hazards: laneWallSchema,
@@ -577,6 +580,7 @@ export const contentSchemas = {
 } satisfies Record<ContentKind, z.ZodSchema>;
 
 export type BeatContent = z.infer<typeof beatSchema>;
+export type BulletContent = z.infer<typeof bulletSchema>;
 export type EnemyContent = z.infer<typeof enemySchema>;
 export type GunContent = z.infer<typeof gunSchema>;
 export type HazardContent = z.infer<typeof laneWallSchema>;

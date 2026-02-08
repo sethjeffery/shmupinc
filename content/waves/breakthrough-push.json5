@@ -1,47 +1,47 @@
 {
-  id: "breakthrough-push",
-  spawns: [
+  "id": "breakthrough-push",
+  "spawns": [
     {
-      atMs: 0,
-      enemyId: "bomber",
-      x: 0,
-      y: -0.1,
+      "atMs": 0,
+      "enemyId": "bomber",
+      "x": 0,
+      "y": -0.1
     },
     {
-      atMs: 400,
-      enemyId: "asteroid",
-      x: -0.3,
-      y: -0.1,
+      "atMs": 400,
+      "enemyId": "asteroid",
+      "x": -0.3,
+      "y": -0.1
     },
     {
-      atMs: 600,
-      enemyId: "asteroid",
-      x: -0.1,
-      y: -0.1,
+      "atMs": 600,
+      "enemyId": "asteroid",
+      "x": -0.1,
+      "y": -0.1
     },
     {
-      atMs: 800,
-      enemyId: "asteroid",
-      x: 0.1,
-      y: -0.1,
+      "atMs": 800,
+      "enemyId": "asteroid",
+      "x": 0.1,
+      "y": -0.1
     },
     {
-      atMs: 1000,
-      enemyId: "asteroid",
-      x: 0.3,
-      y: -0.1,
+      "atMs": 1000,
+      "enemyId": "asteroid",
+      "x": 0.3,
+      "y": -0.1
     },
     {
-      atMs: 1400,
-      enemyId: "swooper",
-      x: -0.2,
-      y: -0.1,
+      "atMs": 1400,
+      "enemyId": "swooper",
+      "x": -0.2,
+      "y": -0.1
     },
     {
-      atMs: 1800,
-      enemyId: "swooper",
-      x: 0.2,
-      y: -0.1,
-    },
-  ],
+      "atMs": 1800,
+      "enemyId": "swooper",
+      "x": 0.2,
+      "y": -0.1
+    }
+  ]
 }

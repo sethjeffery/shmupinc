@@ -1,42 +1,24 @@
 {
-  id: "heavyMissile",
-  name: "Heavy Missile",
-  description: "Heavy homing missiles with high turn.",
-  cost: 320,
-  gunId: "missile2",
-  size: "large",
-  zones: ["front"],
-  stats: {
-    fireRate: 1,
-    bullet: {
-      color: 0xff8a6b,
-      homing: {
-        acquireRadius: 240,
-        turnRateRadPerSec: 4.2,
-      },
-      kind: "missile",
-      length: 14,
-      lifetimeMs: 3000,
-      radius: 3,
-      thickness: 5,
-      trail: {
-        color: 0xff6b3d,
-        count: 2,
-        intervalMs: 45,
-        sizeMax: 2.6,
-        sizeMin: 1.4,
-      },
-    },
-    shots: [
+  "id": "heavyMissile",
+  "name": "Heavy Missile",
+  "description": "Heavy homing missiles with high turn.",
+  "cost": 320,
+  "gunId": "missile2",
+  "size": "large",
+  "zones": ["front"],
+  "stats": {
+    "fireRate": 1,
+    "bulletId": "missile",
+    "shots": [
       {
-        angleDeg: 0,
-        offset: {
-          x: 0,
-          y: -0.8,
-        },
-      },
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": -0.8
+        }
+      }
     ],
-    speed: 250,
-    damage: 4,
-  },
+    "speed": 250,
+    "damage": 4
+  }
 }

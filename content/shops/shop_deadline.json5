@@ -1,17 +1,17 @@
 {
-  id: "shop_deadline",
-  allowedWeapons: [
+  "id": "shop_deadline",
+  "allowedWeapons": [
     "orbBlaster",
     "dartGun",
     "railDart",
     "gatlingGun",
     "needleDarts",
     "rapidDarts",
-    "stingerMissiles",
+    "stingerMissiles"
   ],
-  allowedShips: ["starter", "interceptor", "scout"],
-  caps: {
-    weaponCost: 280,
-    shipCost: 240,
-  },
+  "allowedShips": ["starter", "interceptor", "scout"],
+  "caps": {
+    "weaponCost": 280,
+    "shipCost": 240
+  }
 }

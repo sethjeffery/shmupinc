@@ -1,175 +1,175 @@
 {
-  id: "intro-intro",
-  spawns: [
+  "id": "intro-intro",
+  "spawns": [
     {
-      atMs: 2000,
-      enemyId: "sine_silent",
-      x: -0.3,
-      y: 0,
-      overrides: {
-        move: {
-          steps: [
+      "atMs": 2000,
+      "enemyId": "sine_silent",
+      "x": -0.3,
+      "y": 0,
+      "overrides": {
+        "move": {
+          "steps": [
             {
-              kind: "dashTo",
-              ease: "out",
-              durationMs: 800,
-              to: {
-                x: 0,
-                y: 200,
-              },
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 800,
+              "to": {
+                "x": 0,
+                "y": 200
+              }
             },
             {
-              kind: "hover",
-              durationMs: 2000,
+              "kind": "hover",
+              "durationMs": 2000
             },
             {
-              kind: "dashTo",
-              ease: "in",
-              durationMs: 2000,
-              to: {
-                x: 0,
-                y: 700,
-              },
-            },
-          ],
-        },
-      },
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 2000,
+              "to": {
+                "x": 0,
+                "y": 700
+              }
+            }
+          ]
+        }
+      }
     },
     {
-      atMs: 2000,
-      enemyId: "sine_silent",
-      x: -0.15,
-      y: 0,
-      overrides: {
-        move: {
-          steps: [
+      "atMs": 2000,
+      "enemyId": "sine_silent",
+      "x": -0.15,
+      "y": 0,
+      "overrides": {
+        "move": {
+          "steps": [
             {
-              kind: "dashTo",
-              ease: "out",
-              durationMs: 1000,
-              to: {
-                x: 0,
-                y: 200,
-              },
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1000,
+              "to": {
+                "x": 0,
+                "y": 200
+              }
             },
             {
-              kind: "hover",
-              durationMs: 2000,
+              "kind": "hover",
+              "durationMs": 2000
             },
             {
-              kind: "dashTo",
-              ease: "in",
-              durationMs: 2000,
-              to: {
-                x: 0,
-                y: 700,
-              },
-            },
-          ],
-        },
-      },
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 2000,
+              "to": {
+                "x": 0,
+                "y": 700
+              }
+            }
+          ]
+        }
+      }
     },
     {
-      atMs: 2000,
-      enemyId: "sine_silent",
-      x: 0,
-      y: 0,
-      overrides: {
-        move: {
-          steps: [
+      "atMs": 2000,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": 0,
+      "overrides": {
+        "move": {
+          "steps": [
             {
-              kind: "dashTo",
-              ease: "out",
-              durationMs: 1200,
-              to: {
-                x: 0,
-                y: 200,
-              },
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1200,
+              "to": {
+                "x": 0,
+                "y": 200
+              }
             },
             {
-              kind: "hover",
-              durationMs: 2000,
+              "kind": "hover",
+              "durationMs": 2000
             },
             {
-              kind: "dashTo",
-              ease: "in",
-              durationMs: 2000,
-              to: {
-                x: 0,
-                y: 700,
-              },
-            },
-          ],
-        },
-      },
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 2000,
+              "to": {
+                "x": 0,
+                "y": 700
+              }
+            }
+          ]
+        }
+      }
     },
     {
-      atMs: 2000,
-      enemyId: "sine_silent",
-      x: 0.15,
-      y: 0,
-      overrides: {
-        move: {
-          steps: [
+      "atMs": 2000,
+      "enemyId": "sine_silent",
+      "x": 0.15,
+      "y": 0,
+      "overrides": {
+        "move": {
+          "steps": [
             {
-              kind: "dashTo",
-              ease: "out",
-              durationMs: 1400,
-              to: {
-                x: 0,
-                y: 200,
-              },
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1400,
+              "to": {
+                "x": 0,
+                "y": 200
+              }
             },
             {
-              kind: "hover",
-              durationMs: 2000,
+              "kind": "hover",
+              "durationMs": 2000
             },
             {
-              kind: "dashTo",
-              ease: "in",
-              durationMs: 2000,
-              to: {
-                x: 0,
-                y: 700,
-              },
-            },
-          ],
-        },
-      },
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 2000,
+              "to": {
+                "x": 0,
+                "y": 700
+              }
+            }
+          ]
+        }
+      }
     },
     {
-      atMs: 2000,
-      enemyId: "sine_silent",
-      x: 0.3,
-      y: 0,
-      overrides: {
-        move: {
-          steps: [
+      "atMs": 2000,
+      "enemyId": "sine_silent",
+      "x": 0.3,
+      "y": 0,
+      "overrides": {
+        "move": {
+          "steps": [
             {
-              kind: "dashTo",
-              ease: "out",
-              durationMs: 1600,
-              to: {
-                x: 0,
-                y: 200,
-              },
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1600,
+              "to": {
+                "x": 0,
+                "y": 200
+              }
             },
             {
-              kind: "hover",
-              durationMs: 2000,
+              "kind": "hover",
+              "durationMs": 2000
             },
             {
-              kind: "dashTo",
-              ease: "in",
-              durationMs: 2000,
-              to: {
-                x: 0,
-                y: 700,
-              },
-            },
-          ],
-        },
-      },
-    },
-  ],
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 2000,
+              "to": {
+                "x": 0,
+                "y": 700
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
 }

@@ -1,17 +1,17 @@
 {
-  id: "shop_boss",
-  allowedWeapons: [
+  "id": "shop_boss",
+  "allowedWeapons": [
     "orbBlasterPlusPlus",
     "missileSpread",
     "heavyMissilePlus",
     "railDart",
     "guidedMicroBombs",
     "stingerMissiles",
-    "crossDartsPlus",
+    "crossDartsPlus"
   ],
-  allowedShips: ["starter", "bulwark", "interceptor", "scout"],
-  caps: {
-    weaponCost: 420,
-    shipCost: 360,
-  },
+  "allowedShips": ["starter", "bulwark", "interceptor", "scout"],
+  "caps": {
+    "weaponCost": 420,
+    "shipCost": 360
+  }
 }

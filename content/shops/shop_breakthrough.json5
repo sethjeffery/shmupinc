@@ -1,17 +1,17 @@
 {
-  id: "shop_breakthrough",
-  allowedWeapons: [
+  "id": "shop_breakthrough",
+  "allowedWeapons": [
     "orbBlaster",
     "pulseArray",
     "bombMortar",
     "missileSpread",
     "microBombs",
     "flareOrbs",
-    "spreadOrbs",
+    "spreadOrbs"
   ],
-  allowedShips: ["starter", "bulwark", "scout"],
-  caps: {
-    weaponCost: 260,
-    shipCost: 260,
-  },
+  "allowedShips": ["starter", "bulwark", "scout"],
+  "caps": {
+    "weaponCost": 260,
+    "shipCost": 260
+  }
 }

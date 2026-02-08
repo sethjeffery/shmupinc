@@ -1,158 +1,152 @@
 {
-  fire: {
-    loop: true,
-    steps: [
+  "fire": {
+    "loop": true,
+    "steps": [
       {
-        durationMs: 420,
-        kind: "cooldown",
+        "durationMs": 420,
+        "kind": "cooldown"
       },
       {
-        aim: {
-          kind: "atPlayer",
+        "aim": {
+          "kind": "atPlayer"
         },
-        bullet: {
-          color: 0xffb067,
-          kind: "dart",
-          length: 10,
-          radius: 2,
-          thickness: 2,
-        },
-        count: 2,
-        intervalMs: 120,
-        kind: "burst",
-        damage: 1,
-        speed: 260,
+        "bulletId": "dart",
+        "count": 2,
+        "intervalMs": 120,
+        "kind": "burst",
+        "damage": 1,
+        "speed": 260
       },
       {
-        durationMs: 520,
-        kind: "cooldown",
-      },
-    ],
+        "durationMs": 520,
+        "kind": "cooldown"
+      }
+    ]
   },
-  goldDrop: {
-    max: 7,
-    min: 5,
+  "goldDrop": {
+    "max": 7,
+    "min": 5
   },
-  hp: 6,
-  id: "skitter",
-  move: {
-    steps: [
+  "hp": 6,
+  "id": "skitter",
+  "move": {
+    "steps": [
       {
-        durationMs: 240,
-        kind: "dashTo",
-        to: {
-          x: 0,
-          y: 140,
-        },
+        "durationMs": 240,
+        "kind": "dashTo",
+        "to": {
+          "x": 0,
+          "y": 140
+        }
       },
       {
-        durationMs: 520,
-        kind: "hover",
+        "durationMs": 520,
+        "kind": "hover"
       },
       {
-        durationMs: 240,
-        kind: "dashTo",
-        to: {
-          x: 120,
-          y: -60,
-        },
+        "durationMs": 240,
+        "kind": "dashTo",
+        "to": {
+          "x": 120,
+          "y": -60
+        }
       },
       {
-        durationMs: 520,
-        kind: "hover",
+        "durationMs": 520,
+        "kind": "hover"
       },
       {
-        durationMs: 240,
-        kind: "dashTo",
-        to: {
-          x: -260,
-          y: 130,
-        },
+        "durationMs": 240,
+        "kind": "dashTo",
+        "to": {
+          "x": -260,
+          "y": 130
+        }
       },
       {
-        durationMs: 520,
-        kind: "hover",
+        "durationMs": 520,
+        "kind": "hover"
       },
       {
-        durationMs: 600,
-        kind: "dashTo",
-        to: {
-          x: 140,
-          y: 570,
-        },
-      },
-    ],
+        "durationMs": 600,
+        "kind": "dashTo",
+        "to": {
+          "x": 140,
+          "y": 570
+        }
+      }
+    ]
   },
-  radius: 13,
-  style: {
-    fillColor: 0x10192b,
-    lineColor: 0x7ff0ff,
-    shape: "skitter",
-    vector: {
-      lines: [
+  "radius": 13,
+  "style": {
+    "fillColor": 1055019,
+    "lineColor": 8384767,
+    "shape": "skitter",
+    "vector": {
+      "lines": [
         {
-          from: {
-            x: -0.3,
-            y: -0.1,
+          "from": {
+            "x": -0.3,
+            "y": -0.1
           },
-          to: {
-            x: 0.3,
-            y: -0.1,
-          },
+          "to": {
+            "x": 0.3,
+            "y": -0.1
+          }
         },
         {
-          from: {
-            x: -0.15,
-            y: 0.2,
+          "from": {
+            "x": -0.15,
+            "y": 0.2
           },
-          to: {
-            x: 0.15,
-            y: 0.2,
-          },
-        },
+          "to": {
+            "x": 0.15,
+            "y": 0.2
+          }
+        }
       ],
-      outline: [
+      "outline": [
         {
-          x: 0,
-          y: -1,
+          "x": 0,
+          "y": -1
         },
         {
-          x: 0.5,
-          y: -0.65,
+          "x": 0.5,
+          "y": -0.65
         },
         {
-          x: 0.9,
-          y: -0.2,
+          "x": 0.9,
+          "y": -0.2
         },
         {
-          x: 0.7,
-          y: 0.3,
+          "x": 0.7,
+          "y": 0.3
         },
         {
-          x: 0.35,
-          y: 0.85,
+          "x": 0.35,
+          "y": 0.85
         },
         {
-          x: 0,
-          y: 0.65,
+          "x": 0,
+          "y": 0.65
         },
         {
-          x: -0.35,
-          y: 0.85,
+          "x": -0.35,
+          "y": 0.85
         },
         {
-          x: -0.7,
-          y: 0.3,
+          "x": -0.7,
+          "y": 0.3
         },
         {
-          x: -0.9,
-          y: -0.2,
+          "x": -0.9,
+          "y": -0.2
         },
         {
-          x: -0.5,
-          y: -0.65,
-        },
-      ],
-    },
-  },
+          "x": -0.5,
+          "y": -0.65
+        }
+      ]
+    }
+  }
 }

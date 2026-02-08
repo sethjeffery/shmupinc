@@ -1,15 +1,15 @@
 {
-  id: "shop_intro",
-  allowedWeapons: [
+  "id": "shop_intro",
+  "allowedWeapons": [
     "orbBlaster",
     "dartGun",
     "pulseArray",
     "rapidDarts",
-    "haloOrbs",
+    "haloOrbs"
   ],
-  allowedShips: ["starter", "scout"],
-  caps: {
-    weaponCost: 200,
-    shipCost: 180,
-  },
+  "allowedShips": ["starter", "scout"],
+  "caps": {
+    "weaponCost": 200,
+    "shipCost": 180
+  }
 }

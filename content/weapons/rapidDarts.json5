@@ -1,51 +1,45 @@
 {
-  id: "rapidDarts",
-  name: "Rapid Darts",
-  description: "Fast twin darts, straight ahead.",
-  cost: 210,
-  gunId: "dart",
-  size: "small",
-  zones: ["side", "rear"],
-  zoneStats: {
-    rear: {
-      angleDeg: 180,
-      shots: [
+  "id": "rapidDarts",
+  "name": "Rapid Darts",
+  "description": "Fast twin darts, straight ahead.",
+  "cost": 210,
+  "gunId": "dart",
+  "size": "small",
+  "zones": ["side", "rear"],
+  "zoneStats": {
+    "rear": {
+      "angleDeg": 180,
+      "shots": [
         {
-          angleDeg: 0,
-          offset: {
-            x: 0,
-            y: 0,
-          },
-        },
-      ],
-    },
+          "angleDeg": 0,
+          "offset": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    }
   },
-  stats: {
-    fireRate: 5.6,
-    bullet: {
-      color: 0xffc07a,
-      kind: "dart",
-      length: 12,
-      radius: 2,
-      thickness: 2,
-    },
-    shots: [
+  "stats": {
+    "fireRate": 5.6,
+    "bulletId": "dartHeavy",
+    "shots": [
       {
-        angleDeg: 0,
-        offset: {
-          x: -0.2,
-          y: 0,
-        },
+        "angleDeg": 0,
+        "offset": {
+          "x": -0.2,
+          "y": 0
+        }
       },
       {
-        angleDeg: 0,
-        offset: {
-          x: 0.2,
-          y: 0,
-        },
-      },
+        "angleDeg": 0,
+        "offset": {
+          "x": 0.2,
+          "y": 0
+        }
+      }
     ],
-    speed: 640,
-    damage: 1,
-  },
+    "speed": 640,
+    "damage": 1
+  }
 }

@@ -43,6 +43,7 @@ let cachedErrors: ContentError[] = [];
 
 const EMPTY_REGISTRY: ContentRegistry = {
   beatsById: {},
+  bulletsById: {},
   enemiesById: {},
   gunsById: {},
   hazardsById: {},

@@ -1,51 +1,45 @@
 {
-  id: "crossDarts",
-  name: "Cross Darts",
-  description: "Crossing dart fan for crowd control.",
-  cost: 210,
-  gunId: "dart",
-  size: "small",
-  zones: ["side", "rear"],
-  stats: {
-    fireRate: 2.1,
-    bullet: {
-      color: 0xffb86c,
-      kind: "dart",
-      length: 12,
-      radius: 2,
-      thickness: 2,
-    },
-    shots: [
+  "id": "crossDarts",
+  "name": "Cross Darts",
+  "description": "Crossing dart fan for crowd control.",
+  "cost": 210,
+  "gunId": "dart",
+  "size": "small",
+  "zones": ["side", "rear"],
+  "stats": {
+    "fireRate": 2.1,
+    "bulletId": "dartHeavy",
+    "shots": [
       {
-        angleDeg: -45,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -45,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: -15,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": -15,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 15,
-        offset: {
-          x: 0,
-          y: 0,
-        },
+        "angleDeg": 15,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
       },
       {
-        angleDeg: 45,
-        offset: {
-          x: 0,
-          y: 0,
-        },
-      },
+        "angleDeg": 45,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
     ],
-    speed: 520,
-    damage: 1,
-  },
+    "speed": 520,
+    "damage": 1
+  }
 }

@@ -1,59 +1,59 @@
 {
-  id: "squeeze-entry",
-  spawns: [
+  "id": "squeeze-entry",
+  "spawns": [
     {
-      atMs: 0,
-      enemyId: "crossfire",
-      x: -0.3,
-      y: -0.14,
+      "atMs": 0,
+      "enemyId": "crossfire",
+      "x": -0.3,
+      "y": -0.14
     },
     {
-      atMs: 700,
-      enemyId: "crossfire",
-      x: 0.3,
-      y: -0.14,
+      "atMs": 700,
+      "enemyId": "crossfire",
+      "x": 0.3,
+      "y": -0.14
     },
     {
-      atMs: 2500,
-      enemyId: "swooper",
-      x: 0,
-      y: -0.18,
+      "atMs": 2500,
+      "enemyId": "swooper",
+      "x": 0,
+      "y": -0.18
     },
     {
-      atMs: 5200,
-      enemyId: "crossfire",
-      x: 0,
-      y: -0.14,
+      "atMs": 5200,
+      "enemyId": "crossfire",
+      "x": 0,
+      "y": -0.14
     },
     {
-      atMs: 8200,
-      enemyId: "swooper",
-      x: -0.25,
-      y: -0.18,
+      "atMs": 8200,
+      "enemyId": "swooper",
+      "x": -0.25,
+      "y": -0.18
     },
     {
-      atMs: 10000,
-      enemyId: "swooper",
-      x: 0.25,
-      y: -0.18,
+      "atMs": 10000,
+      "enemyId": "swooper",
+      "x": 0.25,
+      "y": -0.18
     },
     {
-      atMs: 13500,
-      enemyId: "crossfire",
-      x: -0.3,
-      y: -0.14,
+      "atMs": 13500,
+      "enemyId": "crossfire",
+      "x": -0.3,
+      "y": -0.14
     },
     {
-      atMs: 15000,
-      enemyId: "crossfire",
-      x: 0.3,
-      y: -0.14,
+      "atMs": 15000,
+      "enemyId": "crossfire",
+      "x": 0.3,
+      "y": -0.14
     },
     {
-      atMs: 19000,
-      enemyId: "swooper",
-      x: 0,
-      y: -0.18,
-    },
-  ],
+      "atMs": 19000,
+      "enemyId": "swooper",
+      "x": 0,
+      "y": -0.18
+    }
+  ]
 }
