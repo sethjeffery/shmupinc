@@ -50,6 +50,10 @@ export interface PlayerCollisionContext {
   ship: Ship;
 }
 
+export interface ApplyPushOptions {
+  allowBottomEject?: boolean;
+}
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
@@ -78,6 +82,7 @@ export class PlayerCollisionResolver {
     fxColor?: number,
     fxX?: number,
     fxY?: number,
+    options?: ApplyPushOptions,
   ): void {
     if (!this.context.canDamage()) return;
     const bounds = this.context.getBounds();
@@ -85,11 +90,19 @@ export class PlayerCollisionResolver {
     const maxX = bounds.x + bounds.width * (1 - this.config.padding);
     const minY = bounds.y + bounds.height * this.config.padding;
     const maxY = bounds.y + bounds.height * (1 - this.config.padding);
+    const bottom = bounds.y + bounds.height;
     const ship = this.context.ship;
     const nextX = clamp(ship.x + offsetX, minX, maxX);
-    const nextY = clamp(ship.y + offsetY, minY, maxY);
+    const targetY = ship.y + offsetY;
+    const nextY = options?.allowBottomEject
+      ? Math.max(targetY, minY)
+      : clamp(targetY, minY, maxY);
     ship.setPosition(nextX, nextY);
     this.emitBumpFx(fxColor, fxX, fxY);
+    if (options?.allowBottomEject && ship.y >= bottom) {
+      ship.hp = 0;
+      this.context.onDeath();
+    }
   }
 
   applyContactDamage(amount: number, fxX?: number, fxY?: number): void {

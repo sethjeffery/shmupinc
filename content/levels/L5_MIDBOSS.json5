@@ -1,6 +1,6 @@
 {
   "id": "L5_MIDBOSS",
-  "title": "Command Intercept",
+  "title": "Escort Breaker",
   "pressureProfile": {
     "primary": "focus",
     "secondary": ["enemy", "space"]
@@ -8,7 +8,7 @@
   "objectiveSetId": "obj_s1_l5",
   "preBeatId": "beat_s1_l5_pre",
   "postBeatId": "beat_s1_l5_post",
-  "waveIds": ["midboss-screen", "midboss-fight"],
+  "waveIds": ["midboss-approach", "midboss-screen", "midboss-fight"],
   "shopId": "shop_midboss",
   "winCondition": {
     "kind": "defeatBoss",

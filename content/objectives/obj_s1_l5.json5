@@ -13,8 +13,8 @@
     {
       "id": "pace",
       "kind": "finishUnderMs",
-      "label": "Clear in under 80s",
-      "maxMs": 80000,
+      "label": "Clear in under 122s",
+      "maxMs": 122000,
       "stars": 1,
       "reward": {
         "unlocks": ["bp_siege"]

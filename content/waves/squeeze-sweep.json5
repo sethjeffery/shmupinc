@@ -1,0 +1,223 @@
+{
+  "id": "squeeze-sweep",
+  "spawns": [
+    { "atMs": 0, "enemyId": "sine_silent", "x": -0.3, "y": -0.08, "overrides": { "hp": 1 } },
+    { "atMs": 350, "enemyId": "sine_silent", "x": -0.1, "y": -0.08, "overrides": { "hp": 1 } },
+    { "atMs": 700, "enemyId": "sine_silent", "x": 0.1, "y": -0.08, "overrides": { "hp": 1 } },
+    { "atMs": 1050, "enemyId": "sine_silent", "x": 0.3, "y": -0.08, "overrides": { "hp": 1 } },
+
+    {
+      "atMs": 2200,
+      "enemyId": "sidesweeper",
+      "x": -0.4,
+      "y": -0.08,
+      "overrides": {
+        "hp": 2,
+        "fire": { "steps": [] },
+        "move": {
+          "steps": [
+            {
+              "kind": "bezier",
+              "durationMs": 3600,
+              "ease": "inOut",
+              "points": [
+                { "x": 0, "y": 0 },
+                { "x": 0.24, "y": 0.18 },
+                { "x": 0.64, "y": 0.12 },
+                { "x": 0.9, "y": 0.54 }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 2800,
+      "enemyId": "sidesweeper",
+      "x": 0.4,
+      "y": -0.08,
+      "overrides": {
+        "hp": 2,
+        "fire": { "steps": [] },
+        "move": {
+          "steps": [
+            {
+              "kind": "bezier",
+              "durationMs": 3600,
+              "ease": "inOut",
+              "points": [
+                { "x": 0, "y": 0 },
+                { "x": -0.24, "y": 0.18 },
+                { "x": -0.64, "y": 0.12 },
+                { "x": -0.9, "y": 0.54 }
+              ]
+            }
+          ]
+        }
+      }
+    },
+
+    { "atMs": 4600, "enemyId": "crossfire", "x": 0, "y": -0.12, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+
+    { "atMs": 6200, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
+    { "atMs": 6450, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
+    { "atMs": 6700, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
+    { "atMs": 6950, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
+
+    {
+      "atMs": 8400,
+      "enemyId": "swooper",
+      "x": -0.44,
+      "y": 1.1,
+      "overrides": {
+        "hp": 2,
+        "fire": { "steps": [] },
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "durationMs": 900,
+              "ease": "out",
+              "to": { "x": 0.22, "y": -0.46 }
+            },
+            {
+              "kind": "bezier",
+              "durationMs": 1800,
+              "ease": "inOut",
+              "points": [
+                { "x": 0, "y": 0 },
+                { "x": 0.16, "y": -0.16 },
+                { "x": 0.24, "y": -0.02 },
+                { "x": 0.28, "y": 0.54 }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 9000,
+      "enemyId": "swooper",
+      "x": 0.44,
+      "y": 1.1,
+      "overrides": {
+        "hp": 2,
+        "fire": { "steps": [] },
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "durationMs": 900,
+              "ease": "out",
+              "to": { "x": -0.22, "y": -0.46 }
+            },
+            {
+              "kind": "bezier",
+              "durationMs": 1800,
+              "ease": "inOut",
+              "points": [
+                { "x": 0, "y": 0 },
+                { "x": -0.16, "y": -0.16 },
+                { "x": -0.24, "y": -0.02 },
+                { "x": -0.28, "y": 0.54 }
+              ]
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "atMs": 10800,
+      "enemyId": "sniper",
+      "x": -0.2,
+      "y": -0.1,
+      "overrides": {
+        "hp": 2,
+        "fire": {
+          "loop": false,
+          "steps": [
+            { "kind": "cooldown", "durationMs": 1100 },
+            {
+              "kind": "burst",
+              "aim": { "kind": "atPlayer" },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "speed": 225
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 11450,
+      "enemyId": "sniper",
+      "x": 0.2,
+      "y": -0.1,
+      "overrides": {
+        "hp": 2,
+        "fire": {
+          "loop": false,
+          "steps": [
+            { "kind": "cooldown", "durationMs": 1100 },
+            {
+              "kind": "burst",
+              "aim": { "kind": "atPlayer" },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "speed": 225
+            }
+          ]
+        }
+      }
+    },
+
+    { "atMs": 12900, "enemyId": "sine", "x": -0.26, "y": -0.08, "overrides": { "hp": 1, "fire": { "steps": [] } } },
+    { "atMs": 13300, "enemyId": "sine", "x": -0.08, "y": -0.08, "overrides": { "hp": 1, "fire": { "steps": [] } } },
+    { "atMs": 13700, "enemyId": "sine", "x": 0.08, "y": -0.08, "overrides": { "hp": 1, "fire": { "steps": [] } } },
+    { "atMs": 14100, "enemyId": "sine", "x": 0.26, "y": -0.08, "overrides": { "hp": 1, "fire": { "steps": [] } } },
+
+    {
+      "atMs": 15600,
+      "enemyId": "spinner",
+      "x": 0,
+      "y": -0.12,
+      "overrides": {
+        "hp": 2,
+        "fire": {
+          "loop": false,
+          "steps": [
+            { "kind": "cooldown", "durationMs": 850 },
+            {
+              "kind": "spray",
+              "durationMs": 900,
+              "ratePerSec": 3.5,
+              "aim": { "kind": "fixed", "angleDeg": 90 },
+              "bulletId": "orb",
+              "speed": 190
+            }
+          ]
+        }
+      }
+    },
+
+    { "atMs": 17400, "enemyId": "swooper", "x": -0.24, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    { "atMs": 17800, "enemyId": "swooper", "x": 0.24, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 18600,
+      "enemyId": "crossfire",
+      "x": 0,
+      "y": -0.12,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 20000,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    }
+  ]
+}

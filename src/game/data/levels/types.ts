@@ -29,7 +29,25 @@ export interface HazardMotionLerp {
   yoyo?: boolean;
 }
 
-export type HazardMotion = HazardMotionLerp | HazardMotionSine;
+export interface HazardMotionSweep {
+  kind: "sweep";
+  from: {
+    x: number; // normalized offset from base position
+    y: number; // normalized offset from base position
+  };
+  to: {
+    x: number; // normalized offset from base position
+    y: number; // normalized offset from base position
+  };
+  durationMs: number;
+  loop?: boolean;
+  yoyo?: boolean;
+}
+
+export type HazardMotion =
+  | HazardMotionLerp
+  | HazardMotionSine
+  | HazardMotionSweep;
 
 export interface LaneWallScript {
   type: "laneWall";
@@ -37,8 +55,11 @@ export interface LaneWallScript {
   y: number; // normalized center y (0..1)
   w: number; // normalized width (0..1)
   h: number; // normalized height (0..1)
+  startMs?: number;
+  endMs?: number;
   motion?: HazardMotion;
   damageOnTouch?: boolean;
+  deathOnBottomEject?: boolean;
   fillColor?: number;
   lineColor?: number;
 }

@@ -13,8 +13,8 @@
     {
       "id": "pace",
       "kind": "finishUnderMs",
-      "label": "Clear in under 105s",
-      "maxMs": 105000,
+      "label": "Clear in under 170s",
+      "maxMs": 170000,
       "stars": 1,
       "reward": {
         "resources": { "gold": 80 }

@@ -492,12 +492,22 @@ export const buildContentRegistry = (
 
   const resolvedHazards: Record<string, HazardScript> = {};
   for (const [id, hazard] of Object.entries(hazardsById)) {
+    if (hazard.endMs !== undefined && hazard.endMs <= hazard.startMs) {
+      addReferenceError(
+        errors,
+        `hazards/${id}`,
+        "endMs must be greater than startMs.",
+      );
+    }
     resolvedHazards[id] = {
       damageOnTouch: hazard.damageOnTouch,
+      deathOnBottomEject: hazard.deathOnBottomEject,
+      endMs: hazard.endMs,
       fillColor: parseColor(hazard.fillColor),
       h: hazard.rect.h,
       lineColor: parseColor(hazard.lineColor),
       motion: hazard.motion,
+      startMs: hazard.startMs,
       type: "laneWall",
       w: hazard.rect.w,
       x: hazard.rect.x,

@@ -1,6 +1,6 @@
 {
   "id": "L4_DEADLINE",
-  "title": "Crosswind Countdown",
+  "title": "Countdown Drift",
   "pressureProfile": {
     "primary": "time",
     "secondary": ["space", "enemy"]
@@ -8,11 +8,11 @@
   "objectiveSetId": "obj_s1_l4",
   "preBeatId": "beat_s1_l4_pre",
   "postBeatId": "beat_s1_l4_post",
-  "waveIds": ["deadline-rush"],
+  "waveIds": ["deadline-rush", "deadline-pincer", "deadline-break"],
   "hazardIds": ["deadline-left", "deadline-right"],
   "shopId": "shop_deadline",
   "winCondition": {
     "kind": "survive",
-    "durationMs": 56000
+    "durationMs": 76000
   }
 }

@@ -322,8 +322,15 @@ export class PlayScene extends Phaser.Scene {
             (enemy) => enemy.active && enemy.def.id === enemyId,
           ),
         onVictory: () => this.handleLevelVictory(),
-        pushPlayer: (offsetX, offsetY, fxColor, fxX, fxY) =>
-          this.applyPlayerPush(offsetX, offsetY, fxColor, fxX, fxY),
+        pushPlayer: (offsetX, offsetY, fxColor, fxX, fxY, allowBottomEject) =>
+          this.applyPlayerPush(
+            offsetX,
+            offsetY,
+            fxColor,
+            fxX,
+            fxY,
+            allowBottomEject,
+          ),
         scene: this,
         spawnEnemy: (enemyId, x, y, hpMultiplier, overrides) =>
           this.spawnEnemy(enemyId, x, y, hpMultiplier, overrides),
@@ -529,8 +536,11 @@ export class PlayScene extends Phaser.Scene {
     fxColor?: number,
     fxX?: number,
     fxY?: number,
+    allowBottomEject?: boolean,
   ): void {
-    this.collisionResolver?.applyPush(offsetX, offsetY, fxColor, fxX, fxY);
+    this.collisionResolver?.applyPush(offsetX, offsetY, fxColor, fxX, fxY, {
+      allowBottomEject,
+    });
   }
 
   private applyContactDamage(amount: number, fxX?: number, fxY?: number): void {

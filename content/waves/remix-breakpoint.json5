@@ -1,250 +1,63 @@
 {
   "id": "remix-breakpoint",
   "spawns": [
+    { "atMs": 0, "enemyId": "crossfire", "x": 0, "y": -0.12, "overrides": { "hp": 5 } },
+
+    { "atMs": 1400, "enemyId": "swooper", "x": -0.3, "y": -0.14, "overrides": { "hp": 3 } },
+    { "atMs": 1850, "enemyId": "swooper", "x": 0.3, "y": -0.14, "overrides": { "hp": 3 } },
+
+    { "atMs": 3200, "enemyId": "snake", "x": -0.3, "y": -0.1, "overrides": { "hp": 3 } },
+    { "atMs": 3700, "enemyId": "snake", "x": -0.1, "y": -0.1, "overrides": { "hp": 3 } },
+    { "atMs": 4200, "enemyId": "snake", "x": 0.1, "y": -0.1, "overrides": { "hp": 3 } },
+    { "atMs": 4700, "enemyId": "snake", "x": 0.3, "y": -0.1, "overrides": { "hp": 3 } },
+
+    { "atMs": 6200, "enemyId": "spinner", "x": 0, "y": -0.12, "overrides": { "hp": 5 } },
+
+    { "atMs": 8200, "enemyId": "sniper", "x": -0.22, "y": -0.1, "overrides": { "hp": 3 } },
+    { "atMs": 8900, "enemyId": "sniper", "x": 0.22, "y": -0.1, "overrides": { "hp": 3 } },
+
+    { "atMs": 10500, "enemyId": "bomber", "x": -0.2, "y": -0.12, "overrides": { "hp": 7 } },
+    { "atMs": 11200, "enemyId": "bomber", "x": 0.2, "y": -0.12, "overrides": { "hp": 7 } },
+
     {
-      "atMs": 0,
-      "enemyId": "crossfire",
+      "atMs": 12800,
+      "enemyId": "blimp",
       "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 900,
-      "enemyId": "skitter",
-      "x": -0.2,
-      "y": -0.1
-    },
-    {
-      "atMs": 1300,
-      "enemyId": "skitter",
-      "x": 0.2,
-      "y": -0.1
-    },
-    {
-      "atMs": 2400,
-      "enemyId": "spinner",
-      "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 4200,
-      "enemyId": "bomber",
-      "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 6000,
-      "enemyId": "swooper",
-      "x": -0.24,
-      "y": -0.1
-    },
-    {
-      "atMs": 6600,
-      "enemyId": "swooper",
-      "x": 0.24,
-      "y": -0.1
-    },
-    {
-      "atMs": 7600,
-      "enemyId": "crossfire",
-      "x": -0.26,
-      "y": -0.1
-    },
-    {
-      "atMs": 8400,
-      "enemyId": "crossfire",
-      "x": 0.26,
-      "y": -0.1
-    },
-    {
-      "atMs": 9400,
-      "enemyId": "sine",
-      "x": -0.24,
-      "y": -0.08,
+      "y": -0.12,
       "overrides": {
+        "hp": 30,
         "fire": {
-          "loop": false,
+          "loop": true,
           "steps": [
+            { "kind": "cooldown", "durationMs": 1400 },
             {
-              "durationMs": 850,
-              "kind": "cooldown"
-            },
-            {
-              "aim": {
-                "kind": "atPlayer"
-              },
-              "bulletId": "dart",
-              "count": 1,
-              "intervalMs": 1,
               "kind": "burst",
-              "speed": 250
+              "aim": { "kind": "fixed", "angleDeg": 90 },
+              "bulletId": "orbHeavy",
+              "count": 2,
+              "intervalMs": 220,
+              "speed": 165
             }
           ]
         }
       }
     },
-    {
-      "atMs": 10000,
-      "enemyId": "sine",
-      "x": 0,
-      "y": -0.08,
-      "overrides": {
-        "fire": {
-          "loop": false,
-          "steps": [
-            {
-              "durationMs": 850,
-              "kind": "cooldown"
-            },
-            {
-              "aim": {
-                "kind": "atPlayer"
-              },
-              "bulletId": "dart",
-              "count": 1,
-              "intervalMs": 1,
-              "kind": "burst",
-              "speed": 250
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 10600,
-      "enemyId": "sine",
-      "x": 0.24,
-      "y": -0.08,
-      "overrides": {
-        "fire": {
-          "loop": false,
-          "steps": [
-            {
-              "durationMs": 850,
-              "kind": "cooldown"
-            },
-            {
-              "aim": {
-                "kind": "atPlayer"
-              },
-              "bulletId": "dart",
-              "count": 1,
-              "intervalMs": 1,
-              "kind": "burst",
-              "speed": 250
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 12000,
-      "enemyId": "sniper",
-      "x": -0.18,
-      "y": -0.1,
-      "overrides": {
-        "fire": {
-          "loop": false,
-          "steps": [
-            {
-              "durationMs": 850,
-              "kind": "cooldown"
-            },
-            {
-              "aim": {
-                "kind": "atPlayer"
-              },
-              "bulletId": "dart",
-              "count": 1,
-              "intervalMs": 1,
-              "kind": "burst",
-              "damage": 1,
-              "speed": 305
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 12600,
-      "enemyId": "sniper",
-      "x": 0.18,
-      "y": -0.1,
-      "overrides": {
-        "fire": {
-          "loop": false,
-          "steps": [
-            {
-              "durationMs": 850,
-              "kind": "cooldown"
-            },
-            {
-              "aim": {
-                "kind": "atPlayer"
-              },
-              "bulletId": "dart",
-              "count": 1,
-              "intervalMs": 1,
-              "kind": "burst",
-              "damage": 1,
-              "speed": 305
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 14400,
-      "enemyId": "bomber",
-      "x": -0.22,
-      "y": -0.1
-    },
-    {
-      "atMs": 15200,
-      "enemyId": "bomber",
-      "x": 0.22,
-      "y": -0.1
-    },
-    {
-      "atMs": 17200,
-      "enemyId": "spinner",
-      "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 19200,
-      "enemyId": "crossfire",
-      "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 21000,
-      "enemyId": "skitter",
-      "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 22600,
-      "enemyId": "swooper",
-      "x": -0.26,
-      "y": -0.1
-    },
-    {
-      "atMs": 23200,
-      "enemyId": "swooper",
-      "x": 0.26,
-      "y": -0.1
-    },
-    {
-      "atMs": 24800,
-      "enemyId": "crossfire",
-      "x": 0,
-      "y": -0.1
-    },
-    {
-      "atMs": 26600,
-      "enemyId": "bomber",
-      "x": 0,
-      "y": -0.1
-    }
+
+    { "atMs": 14800, "enemyId": "crossfire", "x": -0.24, "y": -0.12, "overrides": { "hp": 5 } },
+    { "atMs": 15500, "enemyId": "crossfire", "x": 0.24, "y": -0.12, "overrides": { "hp": 5 } },
+
+    { "atMs": 17200, "enemyId": "sidesweeper", "x": -0.4, "y": -0.1, "overrides": { "hp": 3, "fire": { "steps": [] } } },
+    { "atMs": 17900, "enemyId": "sidesweeper", "x": 0.4, "y": -0.1, "overrides": { "hp": 3, "fire": { "steps": [] } } },
+
+    { "atMs": 19600, "enemyId": "asteroid", "x": -0.36, "y": -0.1 },
+    { "atMs": 19820, "enemyId": "asteroid", "x": -0.18, "y": -0.1 },
+    { "atMs": 20040, "enemyId": "asteroid", "x": 0, "y": -0.1 },
+    { "atMs": 20260, "enemyId": "asteroid", "x": 0.18, "y": -0.1 },
+    { "atMs": 20480, "enemyId": "asteroid", "x": 0.36, "y": -0.1 },
+
+    { "atMs": 22000, "enemyId": "spinner", "x": 0, "y": -0.12, "overrides": { "hp": 5 } },
+    { "atMs": 23800, "enemyId": "crossfire", "x": 0, "y": -0.12, "overrides": { "hp": 5 } },
+    { "atMs": 25800, "enemyId": "swooper", "x": -0.24, "y": -0.14, "overrides": { "hp": 3 } },
+    { "atMs": 26300, "enemyId": "swooper", "x": 0.24, "y": -0.14, "overrides": { "hp": 3 } }
   ]
 }

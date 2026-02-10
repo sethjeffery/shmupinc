@@ -14,8 +14,8 @@
     {
       "id": "pace",
       "kind": "finishUnderMs",
-      "label": "Clear in under 90s",
-      "maxMs": 90000,
+      "label": "Clear in under 138s",
+      "maxMs": 138000,
       "stars": 1,
       "reward": {
         "unlocks": ["bp_guided_micro"]

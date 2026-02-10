@@ -14,8 +14,8 @@
     {
       "id": "pace",
       "kind": "finishUnderMs",
-      "label": "Clear in under 76s",
-      "maxMs": 76000,
+      "label": "Clear in under 104s",
+      "maxMs": 104000,
       "stars": 1,
       "reward": {
         "unlocks": ["bp_orb_mk3"]

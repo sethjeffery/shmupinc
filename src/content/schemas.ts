@@ -99,10 +99,46 @@ const hazardMotionSchema = z.union([
       .describe("Reverse back to from when done.")
       .default(false),
   }),
+  z.object({
+    durationMs: z
+      .number()
+      .positive()
+      .describe("Time to move from start -> end (ms)."),
+    from: z
+      .object({
+        x: z.number().describe("Start X offset (normalized)."),
+        y: z.number().describe("Start Y offset (normalized)."),
+      })
+      .describe("Start offset from base center."),
+    kind: z.literal("sweep").describe("Linear sweep in 2D."),
+    loop: z
+      .boolean()
+      .describe("Restart from the beginning after reaching the end.")
+      .default(false),
+    to: z
+      .object({
+        x: z.number().describe("End X offset (normalized)."),
+        y: z.number().describe("End Y offset (normalized)."),
+      })
+      .describe("End offset from base center."),
+    yoyo: z
+      .boolean()
+      .describe("Reverse direction at the end.")
+      .default(false),
+  }),
 ]);
 
 const laneWallSchema = z.object({
   damageOnTouch: z.boolean().describe("Deal damage on contact.").default(false),
+  deathOnBottomEject: z
+    .boolean()
+    .describe("Instantly defeat the player if this hazard ejects them below the playfield.")
+    .default(false),
+  endMs: z
+    .number()
+    .nonnegative()
+    .describe("Optional time when this hazard deactivates.")
+    .optional(),
   fillColor: colorField("Fill color (kept subtle).").default("#0b1220"),
   id: idField("Unique hazard id."),
   lineColor: colorField("Outline color.").default("#1b3149"),
@@ -115,6 +151,11 @@ const laneWallSchema = z.object({
     x: z.number().describe("Normalized center X (0..1)."),
     y: z.number().describe("Normalized center Y (0..1)."),
   }),
+  startMs: z
+    .number()
+    .nonnegative()
+    .describe("Time when this hazard becomes active.")
+    .default(0),
   type: z.literal("laneWall").describe("Hazard type (lane wall)."),
 });
 

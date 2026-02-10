@@ -33,6 +33,7 @@ interface LevelRunnerContext {
     fxColor?: number,
     fxX?: number,
     fxY?: number,
+    allowBottomEject?: boolean,
   ) => void;
   onVictory: () => void;
 }
@@ -134,6 +135,7 @@ export class LevelRunner {
           impact.fxColor,
           impact.contactX,
           impact.contactY,
+          impact.deathOnBottomEject,
         );
         if (impact.damageOnTouch) {
           this.context.applyContactDamage(

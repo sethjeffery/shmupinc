@@ -13,8 +13,8 @@
     {
       "id": "pace",
       "kind": "finishUnderMs",
-      "label": "Clear in under 62s",
-      "maxMs": 62000,
+      "label": "Clear in under 86s",
+      "maxMs": 86000,
       "stars": 1,
       "reward": {
         "unlocks": ["bp_heavy_plus"]

@@ -1,6 +1,6 @@
 {
   "id": "L2_SQUEEZE",
-  "title": "Formation Test",
+  "title": "Pattern Lock",
   "pressureProfile": {
     "primary": "enemy",
     "secondary": ["focus", "throughput"]
@@ -8,7 +8,7 @@
   "objectiveSetId": "obj_s1_l2",
   "preBeatId": "beat_s1_l2_pre",
   "postBeatId": "beat_s1_l2_post",
-  "waveIds": ["squeeze-entry", "squeeze-lock"],
+  "waveIds": ["squeeze-entry", "squeeze-lock", "squeeze-sweep"],
   "hazardIds": [],
   "shopId": "shop_squeeze",
   "winCondition": {
