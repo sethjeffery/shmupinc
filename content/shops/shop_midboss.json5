@@ -1,15 +1,28 @@
 {
   "id": "shop_midboss",
   "allowedWeapons": [
-    "orbBlaster",
-    "dartGun",
+    "orbPulse",
+    "orbTwin",
+    "orbFan",
+    "dartNeedler",
     "railDart",
-    "crossDarts",
-    "miniMissiles"
+    "gatlingArray",
+    "missileRack",
+    "siegeMissile",
+    "bombMortar",
+    "bombSalvo"
   ],
-  "allowedShips": ["starter", "interceptor", "scout"],
+  "allowedMods": [
+    "powerCore",
+    "multiLens",
+    "homingUnit",
+    "aoeWarhead",
+    "bounceMatrix"
+  ],
+  "allowedShips": ["starter", "scout", "interceptor", "vanguard", "bulwark"],
   "caps": {
-    "weaponCost": 260,
-    "shipCost": 220
+    "weaponCost": 390,
+    "modCost": 300,
+    "shipCost": 340
   }
 }

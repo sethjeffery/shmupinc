@@ -1,0 +1,33 @@
+{
+  "id": "obj_s1_l5",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 80 }
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 80s",
+      "maxMs": 80000,
+      "stars": 1,
+      "reward": {
+        "unlocks": ["bp_siege"]
+      }
+    },
+    {
+      "id": "cleanSweep",
+      "kind": "clearAllEnemies",
+      "label": "Defeat every enemy contact",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 50 }
+      }
+    }
+  ]
+}

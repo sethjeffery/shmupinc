@@ -1,0 +1,10 @@
+{
+  "id": "powerCore",
+  "name": "Power Core",
+  "description": "Amplifies weapon output.",
+  "cost": 160,
+  "iconKind": "power",
+  "effects": {
+    "damageMultiplier": 1.5
+  }
+}

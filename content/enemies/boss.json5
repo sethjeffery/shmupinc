@@ -82,7 +82,7 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 160
+          "y": 0.2
         }
       },
       {
@@ -94,8 +94,8 @@
         "ease": "inOut",
         "kind": "dashTo",
         "to": {
-          "x": 110,
-          "y": 30
+          "x": 0.2444,
+          "y": 0.0375
         }
       },
       {
@@ -107,7 +107,7 @@
         "ease": "inOut",
         "kind": "dashTo",
         "to": {
-          "x": -220,
+          "x": -0.4889,
           "y": 0
         }
       },
@@ -1270,11 +1270,15 @@
     }
   ],
   "radius": 44,
+  "hitbox": {
+    "kind": "circle",
+    "radius": 44
+  },
   "rotation": "fixed",
   "rotationDeg": 180,
   "style": {
-    "fillColor": 1445912,
-    "lineColor": 16739179,
+    "fillColor": "#161018",
+    "lineColor": "#ff6b6b",
     "shape": "boss",
     "vector": {
       "lines": [

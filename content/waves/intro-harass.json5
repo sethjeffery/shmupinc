@@ -5,41 +5,91 @@
       "atMs": 900,
       "enemyId": "sine_silent",
       "x": -0.2,
-      "y": -0.04
+      "y": -0.04,
+      "overrides": {
+        "hp": 1
+      }
     },
     {
       "atMs": 900,
       "enemyId": "sine_silent",
       "x": 0.2,
-      "y": -0.04
+      "y": -0.04,
+      "overrides": {
+        "hp": 1
+      }
     },
     {
       "atMs": 1000,
       "enemyId": "sine_silent",
       "x": -0.4,
-      "y": -0.1
+      "y": -0.1,
+      "overrides": {
+        "hp": 1
+      }
     },
     {
       "atMs": 1000,
       "enemyId": "sine_silent",
       "x": 0.4,
-      "y": -0.1
+      "y": -0.1,
+      "overrides": {
+        "hp": 1
+      }
     },
     {
       "atMs": 1200,
       "enemyId": "sine_silent",
       "x": 0,
-      "y": 0
+      "y": 0,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 850,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 220
+            }
+          ]
+        },
+        "hp": 1
+      }
     },
     {
-      "atMs": 8000,
+      "atMs": 3200,
       "enemyId": "swooper",
       "x": -0.6,
-      "y": 0.1,
+      "y": 0.12,
       "overrides": {
         "radius": 18,
         "fire": {
-          "steps": []
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 950,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
         },
         "move": {
           "steps": [
@@ -48,7 +98,7 @@
               "ease": "out",
               "durationMs": 2500,
               "to": {
-                "x": 300,
+                "x": 0.6667,
                 "y": 0
               }
             },
@@ -66,28 +116,98 @@
                   "y": 0
                 },
                 {
-                  "x": 200,
+                  "x": 0.4444,
                   "y": 0
                 },
                 {
-                  "x": 250,
-                  "y": 100
+                  "x": 0.5556,
+                  "y": 0.125
                 },
                 {
-                  "x": 300,
-                  "y": 200
+                  "x": 0.6667,
+                  "y": 0.25
                 }
               ]
             }
           ]
-        }
+        },
+        "hp": 1
       }
     },
     {
-      "atMs": 8200,
+      "atMs": 3300,
+      "enemyId": "swooper",
+      "x": 0.6,
+      "y": 0.17,
+      "overrides": {
+        "radius": 18,
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 950,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
+        },
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 2500,
+              "to": {
+                "x": -0.6667,
+                "y": 0
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 1000
+            },
+            {
+              "kind": "bezier",
+              "ease": "in",
+              "durationMs": 2500,
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": -0.4444,
+                  "y": 0
+                },
+                {
+                  "x": -0.5556,
+                  "y": 0.125
+                },
+                {
+                  "x": -0.6667,
+                  "y": 0.25
+                }
+              ]
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 3400,
       "enemyId": "swooper",
       "x": -0.6,
-      "y": 0.2,
+      "y": 0.24,
       "overrides": {
         "radius": 18,
         "fire": {
@@ -100,7 +220,7 @@
               "ease": "out",
               "durationMs": 2500,
               "to": {
-                "x": 300,
+                "x": 0.6667,
                 "y": 0
               }
             },
@@ -118,32 +238,102 @@
                   "y": 0
                 },
                 {
-                  "x": 200,
+                  "x": 0.4444,
                   "y": 0
                 },
                 {
-                  "x": 250,
-                  "y": 100
+                  "x": 0.5556,
+                  "y": 0.125
                 },
                 {
-                  "x": 300,
-                  "y": 200
+                  "x": 0.6667,
+                  "y": 0.25
                 }
               ]
             }
           ]
-        }
+        },
+        "hp": 1
       }
     },
     {
-      "atMs": 8400,
+      "atMs": 3500,
+      "enemyId": "swooper",
+      "x": 0.6,
+      "y": 0.29,
+      "overrides": {
+        "radius": 18,
+        "fire": {
+          "steps": []
+        },
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 2500,
+              "to": {
+                "x": -0.6667,
+                "y": 0
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 1000
+            },
+            {
+              "kind": "bezier",
+              "ease": "in",
+              "durationMs": 2500,
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": -0.4444,
+                  "y": 0
+                },
+                {
+                  "x": -0.5556,
+                  "y": 0.125
+                },
+                {
+                  "x": -0.6667,
+                  "y": 0.25
+                }
+              ]
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 3600,
       "enemyId": "swooper",
       "x": -0.6,
-      "y": 0.3,
+      "y": 0.36,
       "overrides": {
         "radius": 18,
         "fire": {
-          "steps": []
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1000,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
         },
         "move": {
           "steps": [
@@ -152,7 +342,7 @@
               "ease": "out",
               "durationMs": 2500,
               "to": {
-                "x": 300,
+                "x": 0.6667,
                 "y": 0
               }
             },
@@ -170,28 +360,98 @@
                   "y": 0
                 },
                 {
-                  "x": 200,
+                  "x": 0.4444,
                   "y": 0
                 },
                 {
-                  "x": 250,
-                  "y": 100
+                  "x": 0.5556,
+                  "y": 0.125
                 },
                 {
-                  "x": 300,
-                  "y": 200
+                  "x": 0.6667,
+                  "y": 0.25
                 }
               ]
             }
           ]
-        }
+        },
+        "hp": 1
       }
     },
     {
-      "atMs": 8600,
+      "atMs": 3700,
+      "enemyId": "swooper",
+      "x": 0.6,
+      "y": 0.41,
+      "overrides": {
+        "radius": 18,
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1000,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
+        },
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 2500,
+              "to": {
+                "x": -0.6667,
+                "y": 0
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 1000
+            },
+            {
+              "kind": "bezier",
+              "ease": "in",
+              "durationMs": 2500,
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": -0.4444,
+                  "y": 0
+                },
+                {
+                  "x": -0.5556,
+                  "y": 0.125
+                },
+                {
+                  "x": -0.6667,
+                  "y": 0.25
+                }
+              ]
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 6200,
       "enemyId": "swooper",
       "x": -0.6,
-      "y": 0.4,
+      "y": 0.48,
       "overrides": {
         "radius": 18,
         "fire": {
@@ -204,7 +464,7 @@
               "ease": "out",
               "durationMs": 2500,
               "to": {
-                "x": 300,
+                "x": 0.6667,
                 "y": 0
               }
             },
@@ -222,32 +482,102 @@
                   "y": 0
                 },
                 {
-                  "x": 200,
+                  "x": 0.4444,
                   "y": 0
                 },
                 {
-                  "x": 250,
-                  "y": 100
+                  "x": 0.5556,
+                  "y": 0.125
                 },
                 {
-                  "x": 300,
-                  "y": 200
+                  "x": 0.6667,
+                  "y": 0.25
                 }
               ]
             }
           ]
-        }
+        },
+        "hp": 1
       }
     },
     {
-      "atMs": 8800,
+      "atMs": 6300,
+      "enemyId": "swooper",
+      "x": 0.6,
+      "y": 0.53,
+      "overrides": {
+        "radius": 18,
+        "fire": {
+          "steps": []
+        },
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 2500,
+              "to": {
+                "x": -0.6667,
+                "y": 0
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 1000
+            },
+            {
+              "kind": "bezier",
+              "ease": "in",
+              "durationMs": 2500,
+              "points": [
+                {
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "x": -0.4444,
+                  "y": 0
+                },
+                {
+                  "x": -0.5556,
+                  "y": 0.125
+                },
+                {
+                  "x": -0.6667,
+                  "y": 0.25
+                }
+              ]
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 6400,
       "enemyId": "swooper",
       "x": -0.6,
-      "y": 0.5,
+      "y": 0.58,
       "overrides": {
         "radius": 18,
         "fire": {
-          "steps": []
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1000,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
         },
         "move": {
           "steps": [
@@ -256,7 +586,7 @@
               "ease": "out",
               "durationMs": 2500,
               "to": {
-                "x": 300,
+                "x": 0.6667,
                 "y": 0
               }
             },
@@ -274,32 +604,49 @@
                   "y": 0
                 },
                 {
-                  "x": 200,
+                  "x": 0.4444,
                   "y": 0
                 },
                 {
-                  "x": 250,
-                  "y": 100
+                  "x": 0.5556,
+                  "y": 0.125
                 },
                 {
-                  "x": 300,
-                  "y": 200
+                  "x": 0.6667,
+                  "y": 0.25
                 }
               ]
             }
           ]
-        }
+        },
+        "hp": 2
       }
     },
     {
-      "atMs": 8000,
+      "atMs": 6500,
       "enemyId": "swooper",
       "x": 0.6,
-      "y": 0.15,
+      "y": 0.63,
       "overrides": {
         "radius": 18,
         "fire": {
-          "steps": []
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1000,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
         },
         "move": {
           "steps": [
@@ -308,7 +655,7 @@
               "ease": "out",
               "durationMs": 2500,
               "to": {
-                "x": -300,
+                "x": -0.6667,
                 "y": 0
               }
             },
@@ -326,229 +673,22 @@
                   "y": 0
                 },
                 {
-                  "x": -200,
+                  "x": -0.4444,
                   "y": 0
                 },
                 {
-                  "x": -250,
-                  "y": 100
+                  "x": -0.5556,
+                  "y": 0.125
                 },
                 {
-                  "x": -300,
-                  "y": 200
+                  "x": -0.6667,
+                  "y": 0.25
                 }
               ]
             }
           ]
-        }
-      }
-    },
-    {
-      "atMs": 8200,
-      "enemyId": "swooper",
-      "x": 0.6,
-      "y": 0.25,
-      "overrides": {
-        "radius": 18,
-        "fire": {
-          "steps": []
         },
-        "move": {
-          "steps": [
-            {
-              "kind": "dashTo",
-              "ease": "out",
-              "durationMs": 2500,
-              "to": {
-                "x": -300,
-                "y": 0
-              }
-            },
-            {
-              "kind": "hover",
-              "durationMs": 1000
-            },
-            {
-              "kind": "bezier",
-              "ease": "in",
-              "durationMs": 2500,
-              "points": [
-                {
-                  "x": 0,
-                  "y": 0
-                },
-                {
-                  "x": -200,
-                  "y": 0
-                },
-                {
-                  "x": -250,
-                  "y": 100
-                },
-                {
-                  "x": -300,
-                  "y": 200
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 8400,
-      "enemyId": "swooper",
-      "x": 0.6,
-      "y": 0.35,
-      "overrides": {
-        "radius": 18,
-        "fire": {
-          "steps": []
-        },
-        "move": {
-          "steps": [
-            {
-              "kind": "dashTo",
-              "ease": "out",
-              "durationMs": 2500,
-              "to": {
-                "x": -300,
-                "y": 0
-              }
-            },
-            {
-              "kind": "hover",
-              "durationMs": 1000
-            },
-            {
-              "kind": "bezier",
-              "ease": "in",
-              "durationMs": 2500,
-              "points": [
-                {
-                  "x": 0,
-                  "y": 0
-                },
-                {
-                  "x": -200,
-                  "y": 0
-                },
-                {
-                  "x": -250,
-                  "y": 100
-                },
-                {
-                  "x": -300,
-                  "y": 200
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 8600,
-      "enemyId": "swooper",
-      "x": 0.6,
-      "y": 0.45,
-      "overrides": {
-        "radius": 18,
-        "fire": {
-          "steps": []
-        },
-        "move": {
-          "steps": [
-            {
-              "kind": "dashTo",
-              "ease": "out",
-              "durationMs": 2500,
-              "to": {
-                "x": -300,
-                "y": 0
-              }
-            },
-            {
-              "kind": "hover",
-              "durationMs": 1000
-            },
-            {
-              "kind": "bezier",
-              "ease": "in",
-              "durationMs": 2500,
-              "points": [
-                {
-                  "x": 0,
-                  "y": 0
-                },
-                {
-                  "x": -200,
-                  "y": 0
-                },
-                {
-                  "x": -250,
-                  "y": 100
-                },
-                {
-                  "x": -300,
-                  "y": 200
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 8800,
-      "enemyId": "swooper",
-      "x": 0.6,
-      "y": 0.55,
-      "overrides": {
-        "radius": 18,
-        "fire": {
-          "steps": []
-        },
-        "move": {
-          "steps": [
-            {
-              "kind": "dashTo",
-              "ease": "out",
-              "durationMs": 2500,
-              "to": {
-                "x": -300,
-                "y": 0
-              }
-            },
-            {
-              "kind": "hover",
-              "durationMs": 1000
-            },
-            {
-              "kind": "bezier",
-              "ease": "in",
-              "durationMs": 2500,
-              "points": [
-                {
-                  "x": 0,
-                  "y": 0
-                },
-                {
-                  "x": -200,
-                  "y": 0
-                },
-                {
-                  "x": -250,
-                  "y": 100
-                },
-                {
-                  "x": -300,
-                  "y": 200
-                }
-              ]
-            }
-          ]
-        }
+        "hp": 2
       }
     }
   ]

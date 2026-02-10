@@ -1,52 +1,33 @@
 {
-  "color": 16765286,
-  "cost": 120,
-  "description": "Bomber ZX24",
+  "color": "#ffd166",
+  "cost": 320,
+  "requiresUnlocks": ["bp_ship_bomber"],
+  "description": "Equipped with two large mounts, the bomber provides adequate space for heavy duty weaponry.",
   "id": "bomber",
   "magnetMultiplier": 1.25,
   "maxHp": 5,
   "moveSpeed": 8.2,
   "mounts": [
     {
-      "id": "front",
+      "id": "fore",
       "offset": {
         "x": 0,
-        "y": -0.7
+        "y": -0.75
+      },
+      "size": "large"
+    },
+    {
+      "id": "aft",
+      "offset": {
+        "x": 0,
+        "y": -0.2
       },
       "size": "large",
-      "zone": "front"
-    },
-    {
-      "id": "side-left",
-      "offset": {
-        "x": -0.65,
-        "y": 0.18
-      },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "side-right",
-      "offset": {
-        "x": 0.65,
-        "y": 0.18
-      },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "rear",
-      "offset": {
-        "x": 0,
-        "y": 0.7
-      },
-      "size": "small",
-      "zone": "rear"
+      "modSlots": 1
     }
   ],
-  "name": "Scout",
+  "name": "Bomber",
   "radiusMultiplier": 1.4,
-  "shape": "scout",
   "vector": {
     "outline": [
       {

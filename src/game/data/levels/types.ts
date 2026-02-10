@@ -1,4 +1,6 @@
 import type { EnemyId } from "../enemyTypes";
+import type { ModId } from "../modTypes";
+import type { ObjectiveSetDefinition } from "../objectiveTypes";
 import type { ShipId } from "../shipTypes";
 import type { WaveDefinition } from "../waves";
 import type { WeaponId } from "../weaponTypes";
@@ -45,9 +47,11 @@ export type HazardScript = LaneWallScript;
 
 export interface ShopRules {
   allowedWeapons?: WeaponId[];
+  allowedMods?: ModId[];
   allowedShips?: ShipId[];
   caps?: {
     weaponCost?: number;
+    modCost?: number;
     shipCost?: number;
   };
 }
@@ -65,6 +69,7 @@ export interface LevelDefinition {
   postBeatId?: string;
   waves: WaveDefinition[];
   hazards?: HazardScript[];
+  objectiveSet?: ObjectiveSetDefinition;
   shopRules?: ShopRules;
   winCondition: LevelEndCondition;
   endCondition?: LevelEndCondition;

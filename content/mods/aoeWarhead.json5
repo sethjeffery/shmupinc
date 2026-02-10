@@ -1,0 +1,17 @@
+{
+  "id": "aoeWarhead",
+  "name": "AoE Warhead",
+  "description": "Adds or expands explosive impact.",
+  "cost": 240,
+  "requiresUnlocks": ["bp_siege"],
+  "iconKind": "aoe",
+  "effects": {
+    "aoe": {
+      "radiusMultiplier": 1.25,
+      "radiusAdd": 20,
+      "damageMultiplier": 1.2,
+      "defaultRadius": 52,
+      "defaultDamageFactor": 0.85
+    }
+  }
+}

@@ -1,6 +1,15 @@
 import type Phaser from "phaser";
 
+import {
+  getFirstUnlockedLevelId,
+  getLevelStarCap,
+  getLevelStars,
+  getStoryLevelOrder,
+  isLevelUnlocked,
+} from "../game/data/levelProgress";
+import { getLevels } from "../game/data/levels";
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
+import { loadSave } from "../game/data/save";
 import { STORY_BEATS } from "../game/data/storyBeats";
 
 export type UiRoute =
@@ -11,11 +20,17 @@ export type UiRoute =
   | "play"
   | "story";
 
-const DEFAULT_LEVEL_ID = "L1_INTRO";
-
 export interface GameOverStats {
   gold: number;
   wave: number;
+}
+
+interface PanelAction {
+  action: string;
+  disabled?: boolean;
+  label: string;
+  levelId?: string;
+  primary: boolean;
 }
 
 const isTextTarget = (target: EventTarget | null): boolean =>
@@ -38,6 +53,9 @@ export class UiRouter {
   private storyClearLevelOnExit = false;
   private gameOverStatsText: HTMLDivElement;
   private lastGameOver: GameOverStats = { gold: 0, wave: 0 };
+  private menuStartButton?: HTMLButtonElement;
+  private storyLevelButtons = new Map<string, HTMLButtonElement>();
+  private transitionToken = 0;
 
   constructor(game: Phaser.Game) {
     this.game = game;
@@ -86,6 +104,7 @@ export class UiRouter {
     options?: { restart?: boolean; force?: boolean },
   ): void {
     if (this.route === route && !options?.force) return;
+    const token = ++this.transitionToken;
     const previous = this.route;
     this.route = route;
 
@@ -111,7 +130,7 @@ export class UiRouter {
     }
 
     if (route === "play") {
-      this.startOrResume(previous, options?.restart ?? false);
+      void this.startOrResume(previous, options?.restart ?? false, token);
       return;
     }
 
@@ -122,23 +141,32 @@ export class UiRouter {
 
     if (route === "story") {
       this.stopPlayScene();
-      this.game.scene.stop("ShopScene");
+      this.stopShopScene();
       return;
     }
 
     if (route === "hangar") {
       this.stopPlayScene();
-      this.game.scene.start("ShopScene");
+      void this.openHangar(token);
       return;
     }
 
     if (route === "menu") {
       this.stopPlayScene();
+      this.stopShopScene();
       clearActiveLevel();
+      this.refreshStoryLevelButtons();
     }
   }
 
-  private startOrResume(previous: UiRoute, restart: boolean): void {
+  private async startOrResume(
+    previous: UiRoute,
+    restart: boolean,
+    token: number,
+  ): Promise<void> {
+    await this.ensureSceneLoaded("PlayScene");
+    await this.ensureSceneLoaded("ShopScene");
+    if (token !== this.transitionToken || this.route !== "play") return;
     this.game.scene.stop("ShopScene");
     if (this.game.scene.isActive("BootScene")) {
       this.game.scene.stop("BootScene");
@@ -156,6 +184,37 @@ export class UiRouter {
     this.setPlayInputEnabled(true);
   }
 
+  private async openHangar(token: number): Promise<void> {
+    await this.ensureSceneLoaded("ShopScene");
+    if (token !== this.transitionToken || this.route !== "hangar") return;
+    this.stopPlayScene();
+    this.game.scene.start("ShopScene");
+  }
+
+  private async ensureSceneLoaded(
+    sceneKey: "PlayScene" | "ShopScene",
+  ): Promise<void> {
+    if (this.sceneExists(sceneKey)) return;
+    if (sceneKey === "PlayScene") {
+      const { PlayScene } = await import("../game/scenes/PlayScene");
+      if (!this.sceneExists(sceneKey)) {
+        this.game.scene.add(sceneKey, PlayScene, false);
+      }
+      return;
+    }
+    const { ShopScene } = await import("../game/scenes/ShopScene");
+    if (!this.sceneExists(sceneKey)) {
+      this.game.scene.add(sceneKey, ShopScene, false);
+    }
+  }
+
+  private sceneExists(sceneKey: string): boolean {
+    const manager = this.game.scene as Phaser.Scenes.SceneManager & {
+      keys?: Record<string, Phaser.Scene | undefined>;
+    };
+    return Boolean(manager.keys?.[sceneKey]);
+  }
+
   private pausePlayScene(): void {
     if (this.game.scene.isActive("PlayScene")) {
       this.game.scene.pause("PlayScene");
@@ -164,12 +223,25 @@ export class UiRouter {
   }
 
   private stopPlayScene(): void {
-    if (this.game.scene.isActive("PlayScene")) {
+    if (
+      this.sceneExists("PlayScene") &&
+      this.game.scene.isActive("PlayScene")
+    ) {
       this.game.scene.stop("PlayScene");
     }
   }
 
+  private stopShopScene(): void {
+    if (
+      this.sceneExists("ShopScene") &&
+      this.game.scene.isActive("ShopScene")
+    ) {
+      this.game.scene.stop("ShopScene");
+    }
+  }
+
   private setPlayInputEnabled(enabled: boolean): void {
+    if (!this.sceneExists("PlayScene")) return;
     const input = this.game.scene.getScene("PlayScene")?.input;
     if (input) input.enabled = enabled;
   }
@@ -198,9 +270,11 @@ export class UiRouter {
     const action = target.closest<HTMLElement>("[data-action]");
     if (!action) return;
     switch (action.dataset.action) {
-      case "start":
-        this.startStoryLevel(DEFAULT_LEVEL_ID);
+      case "start": {
+        const firstUnlocked = getFirstUnlockedLevelId();
+        if (firstUnlocked) this.startStoryLevel(firstUnlocked);
         break;
+      }
       case "hangar":
         clearActiveLevel();
         this.setRoute("hangar");
@@ -223,6 +297,7 @@ export class UiRouter {
       case "story-level": {
         const levelId = action.dataset.level;
         if (!levelId) break;
+        if (!isLevelUnlocked(levelId)) break;
         this.startStoryLevel(levelId);
         break;
       }
@@ -248,67 +323,51 @@ export class UiRouter {
       }
     }
     if (event.key === "Enter" && this.route === "menu") {
-      this.startStoryLevel(DEFAULT_LEVEL_ID);
+      const firstUnlocked = getFirstUnlockedLevelId();
+      if (firstUnlocked) this.startStoryLevel(firstUnlocked);
     }
   }
 
   private tryAutoStartLevel(): void {
     const params = new URLSearchParams(window.location.search);
     const levelId = params.get("level");
-    if (!levelId) return;
-    this.startStoryLevel(levelId);
+    if (levelId && isLevelUnlocked(levelId)) {
+      this.startStoryLevel(levelId);
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+    const firstUnlocked = getFirstUnlockedLevelId();
+    if (levelId && firstUnlocked) {
+      this.startStoryLevel(firstUnlocked);
+    }
     window.history.replaceState({}, "", window.location.pathname);
   }
 
   private buildMenuOverlay(): HTMLDivElement {
+    const levels = getLevels();
+    const save = loadSave();
+    const storyActions = getStoryLevelOrder().map((levelId) => {
+      const title = levels[levelId]?.title ?? levelId;
+      const unlocked = isLevelUnlocked(levelId, save);
+      const stars = getLevelStars(levelId, save);
+      const starCap = getLevelStarCap(levelId);
+      return {
+        action: "story-level",
+        disabled: !unlocked,
+        label: unlocked
+          ? `Story: ${title} (★${stars}/${starCap})`
+          : `Story: ${title} (★${stars}/${starCap}) (Locked · Need 1★ prev)`,
+        levelId,
+        primary: false,
+      } satisfies PanelAction;
+    });
     const overlay = document.createElement("div");
     overlay.className = "ui-overlay ui-overlay--menu";
     overlay.appendChild(
       this.buildPanel({
         actions: [
           { action: "start", label: "Start Mission", primary: true },
-          {
-            action: "story-level",
-            label: "Story: L1 Intro",
-            levelId: "L1_INTRO",
-            primary: false,
-          },
-          {
-            action: "story-level",
-            label: "Story: L2 The Squeeze",
-            levelId: "L2_SQUEEZE",
-            primary: false,
-          },
-          {
-            action: "story-level",
-            label: "Story: L3 Breakthrough",
-            levelId: "L3_BREAKTHROUGH",
-            primary: false,
-          },
-          {
-            action: "story-level",
-            label: "Story: L4 Deadline",
-            levelId: "L4_DEADLINE",
-            primary: false,
-          },
-          {
-            action: "story-level",
-            label: "Story: L5 Midboss",
-            levelId: "L5_MIDBOSS",
-            primary: false,
-          },
-          {
-            action: "story-level",
-            label: "Story: L6 Remix",
-            levelId: "L6_REMIX",
-            primary: false,
-          },
-          {
-            action: "story-level",
-            label: "Story: L7 Boss",
-            levelId: "L7_BOSS",
-            primary: false,
-          },
+          ...storyActions,
           { action: "hangar", label: "Hangar", primary: false },
         ],
         hint: "How to play: Drag to move, auto-fire.",
@@ -394,12 +453,7 @@ export class UiRouter {
   private buildPanel(config: {
     title: string;
     hint?: string;
-    actions: {
-      action: string;
-      label: string;
-      levelId?: string;
-      primary: boolean;
-    }[];
+    actions: PanelAction[];
   }): HTMLDivElement {
     const panel = document.createElement("div");
     panel.className = "ui-panel";
@@ -413,11 +467,16 @@ export class UiRouter {
 
     for (const item of config.actions) {
       const button = document.createElement("button");
-      button.className = `ui-button${item.primary ? " ui-button--primary" : ""}`;
+      button.className = `ui-button${item.primary ? " ui-button--primary" : ""}${
+        item.disabled ? " ui-button--locked" : ""
+      }`;
       button.type = "button";
       button.dataset.action = item.action;
       if (item.levelId) button.dataset.level = item.levelId;
+      button.disabled = Boolean(item.disabled);
       button.textContent = item.label;
+      if (item.action === "start") this.menuStartButton = button;
+      if (item.levelId) this.storyLevelButtons.set(item.levelId, button);
       actions.appendChild(button);
     }
 
@@ -463,5 +522,28 @@ export class UiRouter {
       clearActiveLevel();
     }
     this.setRoute(this.storyNextRoute, { force: true });
+  }
+
+  private refreshStoryLevelButtons(): void {
+    const levels = getLevels();
+    const save = loadSave();
+    for (const levelId of getStoryLevelOrder()) {
+      const button = this.storyLevelButtons.get(levelId);
+      if (!button) continue;
+      const unlocked = isLevelUnlocked(levelId, save);
+      const title = levels[levelId]?.title ?? levelId;
+      const stars = getLevelStars(levelId, save);
+      const starCap = getLevelStarCap(levelId);
+      button.disabled = !unlocked;
+      button.classList.toggle("ui-button--locked", !unlocked);
+      button.textContent = unlocked
+        ? `Story: ${title} (★${stars}/${starCap})`
+        : `Story: ${title} (★${stars}/${starCap}) (Locked · Need 1★ prev)`;
+    }
+
+    const firstUnlocked = getFirstUnlockedLevelId(save);
+    if (!this.menuStartButton) return;
+    this.menuStartButton.disabled = !firstUnlocked;
+    this.menuStartButton.classList.toggle("ui-button--locked", !firstUnlocked);
   }
 }

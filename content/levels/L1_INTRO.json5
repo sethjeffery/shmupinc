@@ -1,11 +1,13 @@
 {
   "id": "L1_INTRO",
-  "title": "Intro",
+  "title": "Cadet Sortie",
   "pressureProfile": {
     "primary": "enemy",
     "secondary": ["focus"]
   },
-  "preBeatId": "beat_s1_intro_pre",
+  "objectiveSetId": "obj_s1_l1",
+  "preBeatId": "beat_s1_l1_pre",
+  "postBeatId": "beat_s1_l1_post",
   "waveIds": ["intro-intro", "intro-approach", "intro-cross", "intro-harass"],
   "shopId": "shop_intro",
   "winCondition": {

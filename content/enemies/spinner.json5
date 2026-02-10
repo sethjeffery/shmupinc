@@ -43,16 +43,16 @@
             "y": 0
           },
           {
-            "x": -120,
-            "y": 110
+            "x": -0.2667,
+            "y": 0.1375
           },
           {
-            "x": 120,
-            "y": 220
+            "x": 0.2667,
+            "y": 0.275
           },
           {
             "x": 0,
-            "y": 320
+            "y": 0.4
           }
         ]
       },
@@ -65,15 +65,19 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 460
+          "y": 0.575
         }
       }
     ]
   },
   "radius": 15,
+  "hitbox": {
+    "kind": "circle",
+    "radius": 15
+  },
   "style": {
-    "fillColor": 1707810,
-    "lineColor": 16758892,
+    "fillColor": "#1a0f22",
+    "lineColor": "#ffb86c",
     "shape": "spinner",
     "vector": {
       "lines": [

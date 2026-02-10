@@ -1,0 +1,23 @@
+{
+  "id": "dartNeedler",
+  "name": "Dart Needler",
+  "description": "Fast precision darts with steady cadence.",
+  "cost": 170,
+  "gunId": "dart",
+  "size": "small",
+  "stats": {
+    "fireRate": 6.5,
+    "bulletId": "dartHeavy",
+    "speed": 620,
+    "damage": 0.85,
+    "shots": [
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    ]
+  }
+}

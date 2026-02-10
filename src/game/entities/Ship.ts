@@ -1,5 +1,5 @@
 import type { MountedWeapon } from "../data/save";
-import type { ShipShape, ShipVector } from "../data/shipTypes";
+import type { ShipVector } from "../data/shipTypes";
 
 import Phaser from "phaser";
 
@@ -21,7 +21,7 @@ export interface ShipConfig {
   maxHp: number;
   moveSpeed: number;
   color: number;
-  shape: ShipShape | ShipVector;
+  vector: ShipVector;
 }
 
 export class Ship {
@@ -34,7 +34,7 @@ export class Ship {
   moveSpeed: number;
   graphics: Phaser.GameObjects.Graphics;
   color: number;
-  shape: ShipShape | ShipVector;
+  vector: ShipVector;
   private flashTimer = 0;
   private gunAttachments: GunAttachment[] = [];
 
@@ -45,7 +45,7 @@ export class Ship {
     this.hp = config.maxHp;
     this.moveSpeed = config.moveSpeed;
     this.color = config.color;
-    this.shape = config.shape;
+    this.vector = config.vector;
 
     this.x = scene.scale.width * 0.5;
     this.y = scene.scale.height * 0.8;
@@ -88,9 +88,9 @@ export class Ship {
     this.maxHp = maxHp;
   }
 
-  setAppearance(color: number, shape: ShipShape | ShipVector): void {
+  setAppearance(color: number, vector: ShipVector): void {
     this.color = color;
-    this.shape = shape;
+    this.vector = vector;
     this.redraw(this.flashTimer);
   }
 
@@ -151,7 +151,7 @@ export class Ship {
 
     this.graphics.lineStyle(2, this.color, 1);
     this.graphics.fillStyle(fill, 1);
-    drawShipToGraphics(this.graphics, this.shape, this.radius);
+    drawShipToGraphics(this.graphics, this.vector, this.radius);
     this.drawGuns();
   }
 

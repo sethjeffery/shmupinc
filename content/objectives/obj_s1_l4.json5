@@ -1,0 +1,34 @@
+{
+  "id": "obj_s1_l4",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 70 }
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 62s",
+      "maxMs": 62000,
+      "stars": 1,
+      "reward": {
+        "unlocks": ["bp_heavy_plus"]
+      }
+    },
+    {
+      "id": "control",
+      "kind": "takeDamageUnder",
+      "label": "Take at most 6 damage",
+      "maxDamage": 6,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 45 }
+      }
+    }
+  ]
+}

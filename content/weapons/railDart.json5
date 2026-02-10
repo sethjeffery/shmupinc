@@ -1,24 +1,23 @@
 {
   "id": "railDart",
   "name": "Rail Dart",
-  "description": "Slow, high-damage dart lance.",
-  "cost": 260,
+  "description": "Heavy puncture darts for large mounts.",
+  "cost": 340,
   "gunId": "dart",
   "size": "large",
-  "zones": ["front"],
   "stats": {
-    "fireRate": 2,
+    "fireRate": 1.9,
     "bulletId": "dart",
+    "speed": 700,
+    "damage": 2.4,
     "shots": [
       {
         "angleDeg": 0,
         "offset": {
           "x": 0,
-          "y": 0
+          "y": -0.2
         }
       }
-    ],
-    "speed": 680,
-    "damage": 2.4
+    ]
   }
 }

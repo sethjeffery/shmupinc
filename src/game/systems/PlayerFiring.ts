@@ -7,12 +7,12 @@ import { DEFAULT_WEAPON_SHOTS } from "../data/weaponTypes";
 
 export class PlayerFiring {
   private timers: Record<string, number> = {};
-  private activeIds: string[] = [];
+  private activeIds = new Set<string>();
   private burstIndices: Record<string, number> = {};
 
   reset(): void {
     this.timers = {};
-    this.activeIds.length = 0;
+    this.activeIds.clear();
     this.burstIndices = {};
   }
 
@@ -26,10 +26,10 @@ export class PlayerFiring {
     debugBulletSpec?: BulletSpec,
   ): void {
     if (mountedWeapons.length === 0) return;
-    this.activeIds.length = 0;
+    this.activeIds.clear();
     for (const mounted of mountedWeapons) {
       const weaponId = mounted.instanceId;
-      this.activeIds.push(weaponId);
+      this.activeIds.add(weaponId);
       const rate = Math.max(0.05, mounted.stats.fireRate);
       const interval = 1 / rate;
       const timer = (this.timers[weaponId] ?? 0) + delta;
@@ -54,7 +54,7 @@ export class PlayerFiring {
     }
 
     for (const id in this.timers) {
-      if (!this.activeIds.includes(id)) {
+      if (!this.activeIds.has(id)) {
         delete this.timers[id];
         delete this.burstIndices[id];
       }

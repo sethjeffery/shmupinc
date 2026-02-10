@@ -1,52 +1,23 @@
 {
-  "color": 10467327,
+  "color": "#9fb7ff",
   "cost": 0,
-  "description": "Your trusty starter craft.",
+  "description": "Not very powerful, but it's small and affordable because it looks like something out of a classic movie.",
   "id": "starter",
   "magnetMultiplier": 1,
   "maxHp": 6,
   "moveSpeed": 7,
   "mounts": [
     {
-      "id": "front",
+      "id": "nose",
       "offset": {
         "x": 0,
-        "y": -0.6
+        "y": -0.65
       },
-      "size": "large",
-      "zone": "front"
-    },
-    {
-      "id": "side-left",
-      "offset": {
-        "x": -0.7,
-        "y": 0.1
-      },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "side-right",
-      "offset": {
-        "x": 0.7,
-        "y": 0.1
-      },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "rear",
-      "offset": {
-        "x": 0,
-        "y": 0.65
-      },
-      "size": "small",
-      "zone": "rear"
+      "size": "small"
     }
   ],
   "name": "Starling",
-  "radiusMultiplier": 1,
-  "shape": "starling",
+  "radiusMultiplier": 1.1,
   "vector": {
     "outline": [
       {
@@ -54,12 +25,16 @@
         "y": -1
       },
       {
-        "x": 0.5,
+        "x": 0.2,
+        "y": -0.8
+      },
+      {
+        "x": 0.4,
         "y": 0.3
       },
       {
-        "x": 0.8,
-        "y": -0.1
+        "x": 0.7,
+        "y": 0.3
       },
       {
         "x": 0.95,
@@ -67,27 +42,39 @@
       },
       {
         "x": 0.8,
-        "y": 1
+        "y": 0.8
+      },
+      {
+        "x": 0.3,
+        "y": 0.8
       },
       {
         "x": 0,
+        "y": 1
+      },
+      {
+        "x": -0.3,
         "y": 0.8
       },
       {
         "x": -0.8,
-        "y": 1
+        "y": 0.8
       },
       {
         "x": -0.95,
         "y": 0
       },
       {
-        "x": -0.8,
-        "y": -0.1
+        "x": -0.7,
+        "y": 0.3
       },
       {
-        "x": -0.5,
+        "x": -0.4,
         "y": 0.3
+      },
+      {
+        "x": -0.2,
+        "y": -0.8
       }
     ]
   }

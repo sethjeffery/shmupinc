@@ -61,7 +61,7 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 160
+          "y": 0.2
         }
       },
       {
@@ -73,15 +73,19 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 600
+          "y": 0.75
         }
       }
     ]
   },
   "radius": 14,
+  "hitbox": {
+    "kind": "circle",
+    "radius": 14
+  },
   "style": {
-    "fillColor": 1316398,
-    "lineColor": 9358335,
+    "fillColor": "#14162e",
+    "lineColor": "#8ecbff",
     "shape": "crossfire",
     "vector": {
       "lines": [

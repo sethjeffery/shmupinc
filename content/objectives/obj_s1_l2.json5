@@ -1,0 +1,35 @@
+{
+  "id": "obj_s1_l2",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 50 },
+        "unlocks": ["bp_snaplock"]
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 68s",
+      "maxMs": 68000,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 35 }
+      }
+    },
+    {
+      "id": "control",
+      "kind": "takeDamageUnder",
+      "label": "Take at most 5 damage",
+      "maxDamage": 5,
+      "stars": 1,
+      "reward": {
+        "unlocks": ["bp_stinger"]
+      }
+    }
+  ]
+}

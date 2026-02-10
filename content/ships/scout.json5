@@ -1,43 +1,24 @@
 {
-  "color": 16765286,
+  "color": "#ffd166",
   "cost": 120,
-  "description": "Fast, light, low HP.",
+  "description": "A classic fighter jet. Scout ships are nimble and swift, perfect when you're in a tight scrape.",
   "id": "scout",
   "magnetMultiplier": 1.25,
   "maxHp": 5,
   "moveSpeed": 8.2,
   "mounts": [
     {
-      "id": "front",
+      "id": "nose",
       "offset": {
         "x": 0,
         "y": -0.7
       },
-      "size": "large",
-      "zone": "front"
-    },
-    {
-      "id": "side-left",
-      "offset": {
-        "x": -0.65,
-        "y": 0.15
-      },
       "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "side-right",
-      "offset": {
-        "x": 0.65,
-        "y": 0.15
-      },
-      "size": "small",
-      "zone": "side"
+      "modSlots": 1
     }
   ],
   "name": "Scout",
-  "radiusMultiplier": 1.4,
-  "shape": "scout",
+  "radiusMultiplier": 1.2,
   "vector": {
     "outline": [
       {

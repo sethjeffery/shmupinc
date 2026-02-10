@@ -1,0 +1,38 @@
+{
+  "id": "gatlingArray",
+  "name": "Gatling Array",
+  "description": "High-rate array cycling across barrels.",
+  "cost": 295,
+  "gunId": "gatling",
+  "size": "small",
+  "stats": {
+    "fireRate": 10,
+    "bulletId": "dart",
+    "speed": 760,
+    "damage": 0.45,
+    "multiShotMode": "roundRobin",
+    "shots": [
+      {
+        "angleDeg": -1.5,
+        "offset": {
+          "x": -0.15,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 1.5,
+        "offset": {
+          "x": 0.15,
+          "y": 0
+        }
+      }
+    ]
+  }
+}

@@ -7,4 +7,4 @@ export const SHIPS: Record<string, ShipDefinition> =
 
 export const STARTER_SHIP_ID: ShipId = "starter";
 
-export type { ShipDefinition, ShipId, ShipShape } from "./shipTypes";
+export type { ShipDefinition, ShipId } from "./shipTypes";

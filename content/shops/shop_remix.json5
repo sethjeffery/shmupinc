@@ -1,16 +1,35 @@
 {
   "id": "shop_remix",
   "allowedWeapons": [
-    "orbBlasterPlus",
-    "missilePod",
-    "pulseArray",
-    "heavyMissile",
-    "miniMissiles",
-    "haloOrbs"
+    "orbPulse",
+    "orbTwin",
+    "orbFan",
+    "dartNeedler",
+    "railDart",
+    "gatlingArray",
+    "missileRack",
+    "siegeMissile",
+    "bombMortar",
+    "bombSalvo"
   ],
-  "allowedShips": ["starter", "bulwark", "interceptor"],
+  "allowedMods": [
+    "powerCore",
+    "multiLens",
+    "homingUnit",
+    "aoeWarhead",
+    "bounceMatrix"
+  ],
+  "allowedShips": [
+    "starter",
+    "scout",
+    "interceptor",
+    "vanguard",
+    "bulwark",
+    "bomber"
+  ],
   "caps": {
-    "weaponCost": 320,
-    "shipCost": 300
+    "weaponCost": 430,
+    "modCost": 330,
+    "shipCost": 360
   }
 }

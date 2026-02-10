@@ -1,0 +1,35 @@
+{
+  "id": "obj_s1_l3",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 60 },
+        "unlocks": ["bp_ship_bulwark"]
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 76s",
+      "maxMs": 76000,
+      "stars": 1,
+      "reward": {
+        "unlocks": ["bp_orb_mk3"]
+      }
+    },
+    {
+      "id": "control",
+      "kind": "takeDamageUnder",
+      "label": "Take at most 5.5 damage",
+      "maxDamage": 5.5,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 40 }
+      }
+    }
+  ]
+}

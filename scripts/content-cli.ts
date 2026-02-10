@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+import { cac } from "cac";
 import JSON5 from "json5";
 
 import { loadContentEntries } from "./content/nodeLoader";
@@ -19,13 +20,6 @@ const toTitle = (id: string): string => {
 
 const toBeatSlug = (id: string): string =>
   `beat_${id.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
-
-const requireArg = (value: string | undefined, name: string): string => {
-  if (!value) {
-    throw new Error(`Missing ${name}.`);
-  }
-  return value;
-};
 
 const readJsonFile = async (filePath: string): Promise<unknown> => {
   const raw = await fs.readFile(filePath, "utf-8");
@@ -55,11 +49,10 @@ const runValidate = async (): Promise<number> => {
   return 1;
 };
 
-const runScaffoldLevel = async (args: string[]): Promise<number> => {
-  const id = requireArg(args[0], "level id");
-  const fromIndex = args.findIndex((arg) => arg === "--from" || arg === "-f");
-  const fromId = fromIndex >= 0 ? args[fromIndex + 1] : undefined;
-
+const runScaffoldLevel = async (
+  id: string,
+  fromId?: string,
+): Promise<number> => {
   const targetPath = path.join(CONTENT_ROOT, "levels", `${id}.json5`);
   try {
     await fs.access(targetPath);
@@ -71,8 +64,8 @@ const runScaffoldLevel = async (args: string[]): Promise<number> => {
 
   let base: Record<string, unknown> = {
     id,
-    title: toTitle(id) || id,
     pressureProfile: { primary: "enemy" },
+    title: toTitle(id) || id,
     waveIds: [],
     winCondition: { kind: "clearWaves" },
   };
@@ -98,17 +91,16 @@ const runScaffoldLevel = async (args: string[]): Promise<number> => {
 
   const beatSlug = toBeatSlug(id);
   base.id = id;
-  base.title = toTitle(id) || id;
-  base.preBeatId = `${beatSlug}_pre`;
   base.postBeatId = `${beatSlug}_post`;
+  base.preBeatId = `${beatSlug}_pre`;
+  base.title = toTitle(id) || id;
 
   await writeJsonFile(targetPath, base);
   console.log(`Scaffolded level: ${targetPath}`);
   return 0;
 };
 
-const runPrintLevel = async (args: string[]): Promise<number> => {
-  const id = requireArg(args[0], "level id");
+const runPrintLevel = async (id: string): Promise<number> => {
   const { entries, errors: parseErrors } = await loadContentEntries();
   const result = buildContentRegistry(entries);
   const errors = [...parseErrors, ...result.errors];
@@ -130,8 +122,8 @@ const runPrintLevel = async (args: string[]): Promise<number> => {
   const hazardTypes = level.hazards?.map((hazard) => hazard.type) ?? [];
   const shopSummary = level.shopRules
     ? {
-        weapons: level.shopRules.allowedWeapons?.length ?? 0,
         ships: level.shopRules.allowedShips?.length ?? 0,
+        weapons: level.shopRules.allowedWeapons?.length ?? 0,
       }
     : null;
 
@@ -153,35 +145,57 @@ const runPrintLevel = async (args: string[]): Promise<number> => {
   return 0;
 };
 
-const run = async (): Promise<number> => {
-  const [command, subcommand, ...rest] = process.argv.slice(2);
-
-  switch (command) {
-    case "validate":
-      return runValidate();
-    case "scaffold":
-      if (subcommand === "level") {
-        return runScaffoldLevel(rest);
-      }
-      console.error("Usage: scaffold level <ID> [--from <EXISTING_ID>]");
-      return 1;
-    case "print":
-      if (subcommand === "level") {
-        return runPrintLevel(rest);
-      }
-      console.error("Usage: print level <ID>");
-      return 1;
-    default:
-      console.error("Commands: validate | scaffold level | print level");
-      return 1;
-  }
+const runCommand = (command: () => Promise<number>): void => {
+  void command()
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((error: unknown) => {
+      console.error(error instanceof Error ? error.message : error);
+      process.exitCode = 1;
+    });
 };
 
-run()
-  .then((code) => {
-    process.exitCode = code;
-  })
-  .catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : error);
-    process.exitCode = 1;
+const cli = cac("content-cli");
+
+cli
+  .command("validate", "Validate all content")
+  .action(() => runCommand(() => runValidate()));
+
+cli
+  .command("scaffold <kind> <id>", "Scaffold content")
+  .option("-f, --from <existingId>", "Clone fields from an existing level")
+  .action((kind: string, id: string, options: { from?: string }) => {
+    if (kind !== "level") {
+      console.error("Usage: scaffold level <ID> [--from <EXISTING_ID>]");
+      process.exitCode = 1;
+      return;
+    }
+    runCommand(() => runScaffoldLevel(id, options.from));
   });
+
+cli
+  .command("print <kind> <id>", "Print content summary")
+  .action((kind: string, id: string) => {
+    if (kind !== "level") {
+      console.error("Usage: print level <ID>");
+      process.exitCode = 1;
+      return;
+    }
+    runCommand(() => runPrintLevel(id));
+  });
+
+cli.help();
+
+cli.on("command:*", () => {
+  console.error(`Unknown command: ${cli.args.join(" ")}`);
+  cli.outputHelp();
+  process.exitCode = 1;
+});
+
+if (process.argv.slice(2).length === 0) {
+  cli.outputHelp();
+  process.exitCode = 1;
+} else {
+  cli.parse();
+}

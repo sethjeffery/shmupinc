@@ -5,7 +5,141 @@
       "atMs": 0,
       "enemyId": "boss",
       "x": 0,
+      "y": -0.1,
+      "overrides": {
+        "hp": 74
+      }
+    },
+    {
+      "atMs": 5200,
+      "enemyId": "swooper",
+      "x": -0.26,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "steps": []
+        }
+      }
+    },
+    {
+      "atMs": 5800,
+      "enemyId": "swooper",
+      "x": 0.26,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "steps": []
+        }
+      }
+    },
+    {
+      "atMs": 9300,
+      "enemyId": "crossfire",
+      "x": 0,
       "y": -0.1
+    },
+    {
+      "atMs": 13000,
+      "enemyId": "sniper",
+      "x": -0.2,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 850,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "damage": 1,
+              "speed": 320
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 13600,
+      "enemyId": "sniper",
+      "x": 0.2,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 850,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "damage": 1,
+              "speed": 320
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 17500,
+      "enemyId": "skitter",
+      "x": 0,
+      "y": -0.1
+    },
+    {
+      "atMs": 21800,
+      "enemyId": "crossfire",
+      "x": -0.26,
+      "y": -0.1
+    },
+    {
+      "atMs": 22600,
+      "enemyId": "crossfire",
+      "x": 0.26,
+      "y": -0.1
+    },
+    {
+      "atMs": 27000,
+      "enemyId": "bomber",
+      "x": 0,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 700,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "angleDeg": 90,
+                "kind": "fixed"
+              },
+              "bulletId": "orbHeavy",
+              "count": 3,
+              "intervalMs": 180,
+              "kind": "burst",
+              "damage": 2,
+              "speed": 180
+            }
+          ]
+        }
+      }
     }
   ]
 }

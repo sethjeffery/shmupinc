@@ -27,7 +27,11 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
+    "cac": "^6.7.14",
+    "fast-glob": "^3.3.3",
+    "json-schema-traverse": "^1.0.0",
     "json5": "^2.2.3",
+    "ky": "^1.14.3",
     "phaser": "^3.90.0",
     "prettier": "^3.8.1",
     "zod": "^4.1.11"

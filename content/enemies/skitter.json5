@@ -36,7 +36,7 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 140
+          "y": 0.175
         }
       },
       {
@@ -47,8 +47,8 @@
         "durationMs": 240,
         "kind": "dashTo",
         "to": {
-          "x": 120,
-          "y": -60
+          "x": 0.2667,
+          "y": -0.075
         }
       },
       {
@@ -59,8 +59,8 @@
         "durationMs": 240,
         "kind": "dashTo",
         "to": {
-          "x": -260,
-          "y": 130
+          "x": -0.5778,
+          "y": 0.1625
         }
       },
       {
@@ -71,16 +71,20 @@
         "durationMs": 600,
         "kind": "dashTo",
         "to": {
-          "x": 140,
-          "y": 570
+          "x": 0.3111,
+          "y": 0.7125
         }
       }
     ]
   },
   "radius": 13,
+  "hitbox": {
+    "kind": "circle",
+    "radius": 13
+  },
   "style": {
-    "fillColor": 1055019,
-    "lineColor": 8384767,
+    "fillColor": "#10192b",
+    "lineColor": "#7ff0ff",
     "shape": "skitter",
     "vector": {
       "lines": [

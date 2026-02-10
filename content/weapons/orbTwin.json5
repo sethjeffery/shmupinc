@@ -1,0 +1,30 @@
+{
+  "id": "orbTwin",
+  "name": "Orb Twin",
+  "description": "Dual orb lanes with light per-shot damage.",
+  "cost": 150,
+  "gunId": "orb2",
+  "size": "small",
+  "stats": {
+    "fireRate": 5.2,
+    "bulletId": "orb",
+    "speed": 400,
+    "damage": 0.78,
+    "shots": [
+      {
+        "angleDeg": -1,
+        "offset": {
+          "x": -0.16,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 1,
+        "offset": {
+          "x": 0.16,
+          "y": 0
+        }
+      }
+    ]
+  }
+}

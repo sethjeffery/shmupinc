@@ -1,0 +1,15 @@
+{
+  "id": "multiLens",
+  "name": "Multi Lens",
+  "description": "Splits each shot into a 3-way spread.",
+  "cost": 190,
+  "requiresUnlocks": ["bp_cross_plus"],
+  "iconKind": "multi",
+  "effects": {
+    "multi": {
+      "count": 3,
+      "spreadDeg": 14,
+      "projectileDamageMultiplier": 0.8
+    }
+  }
+}

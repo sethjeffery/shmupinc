@@ -1,0 +1,120 @@
+{
+  "color": "#9ac7ff",
+  "cost": 240,
+  "description": "Often used as an escort ship, the vanguard is a defensive craft with room for both a large weapon and a smaller support gun.",
+  "id": "vanguard",
+  "magnetMultiplier": 1.4,
+  "maxHp": 8,
+  "moveSpeed": 6.3,
+  "mounts": [
+    {
+      "id": "nose",
+      "offset": {
+        "x": 0,
+        "y": -0.7
+      },
+      "size": "small"
+    },
+    {
+      "id": "spine",
+      "offset": {
+        "x": 0,
+        "y": -0.2
+      },
+      "size": "large",
+      "modSlots": 1
+    }
+  ],
+  "name": "Vanguard",
+  "radiusMultiplier": 1.15,
+  "vector": {
+    "lines": [
+      {
+        "from": {
+          "x": -0.18,
+          "y": 0.12
+        },
+        "to": {
+          "x": 0.18,
+          "y": 0.12
+        }
+      },
+      {
+        "from": {
+          "x": 0,
+          "y": -0.62
+        },
+        "to": {
+          "x": 0,
+          "y": 0.52
+        }
+      }
+    ],
+    "outline": [
+      {
+        "x": 0,
+        "y": -1
+      },
+      {
+        "x": 0.22,
+        "y": -0.78
+      },
+      {
+        "x": 0.46,
+        "y": -0.68
+      },
+      {
+        "x": 0.84,
+        "y": -0.08
+      },
+      {
+        "x": 0.98,
+        "y": 0
+      },
+      {
+        "x": 0.86,
+        "y": 0.48
+      },
+      {
+        "x": 0.46,
+        "y": 0.94
+      },
+      {
+        "x": 0.22,
+        "y": 0.86
+      },
+      {
+        "x": 0,
+        "y": 0.98
+      },
+      {
+        "x": -0.22,
+        "y": 0.86
+      },
+      {
+        "x": -0.46,
+        "y": 0.94
+      },
+      {
+        "x": -0.86,
+        "y": 0.48
+      },
+      {
+        "x": -0.98,
+        "y": 0
+      },
+      {
+        "x": -0.84,
+        "y": -0.08
+      },
+      {
+        "x": -0.46,
+        "y": -0.68
+      },
+      {
+        "x": -0.22,
+        "y": -0.78
+      }
+    ]
+  }
+}

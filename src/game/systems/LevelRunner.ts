@@ -3,6 +3,7 @@ import type { LevelDefinition } from "../data/levels";
 import type { EnemyOverride } from "../data/waves";
 import type Phaser from "phaser";
 
+import { CONTACT_DAMAGE_PER_SEC } from "./combatConstants";
 import { getDebugFlags } from "./DebugFlags";
 import { createHazard, type Hazard, type PlayerSnapshot } from "./hazards";
 import { WaveScheduler } from "./WaveScheduler";
@@ -120,8 +121,7 @@ export class LevelRunner {
 
   private updateHazards(deltaMs: number): void {
     if (this.hazards.length === 0) return;
-    const damagePerSec = 1.4;
-    const damage = (damagePerSec * deltaMs) / 1000;
+    const damage = (CONTACT_DAMAGE_PER_SEC * deltaMs) / 1000;
     const player: PlayerSnapshot = this.context.getPlayerState();
     for (const hazard of this.hazards) {
       hazard.update(this.elapsedMs);

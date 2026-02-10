@@ -1,24 +1,27 @@
 {
   "id": "bombMortar",
   "name": "Bomb Mortar",
-  "description": "Slow, heavy bombs with huge AoE.",
-  "cost": 360,
+  "description": "Heavy bombard with large detonation radius.",
+  "cost": 350,
   "gunId": "bomb",
   "size": "large",
-  "zones": ["front"],
   "stats": {
-    "fireRate": 1.2,
+    "fireRate": 1.15,
     "bulletId": "bomb",
+    "speed": 190,
+    "damage": 2.4,
+    "aoe": {
+      "radius": 82,
+      "damage": 2.8
+    },
     "shots": [
       {
         "angleDeg": 0,
         "offset": {
           "x": 0,
-          "y": -0.5
+          "y": -0.35
         }
       }
-    ],
-    "speed": 200,
-    "damage": 3
+    ]
   }
 }

@@ -7,8 +7,14 @@ import Phaser from "phaser";
 
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { Ship } from "../entities/Ship";
+import { DEFAULT_SHIP_VECTOR } from "../render/shipShapes";
 import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
+import {
+  getBulletExplosionInfo,
+  spawnBulletExplosionFx,
+  spawnBulletTrail,
+} from "../systems/play/BulletVisualFx";
 import { PlayerFiring } from "../systems/PlayerFiring";
 import { ObjectPool } from "../util/pool";
 
@@ -41,16 +47,7 @@ export class PreviewScene extends Phaser.Scene {
     _angleRad: number,
     spec: BulletSpec,
   ): void => {
-    const trail = spec.trail;
-    if (!trail) return;
-    this.particles.spawnTrail(
-      x,
-      y,
-      trail.color ?? spec.color ?? 0x7df9ff,
-      trail.sizeMin,
-      trail.sizeMax,
-      trail.count,
-    );
+    spawnBulletTrail(this.particles, x, y, spec);
   };
 
   private handleBulletExplosion = (
@@ -59,11 +56,8 @@ export class PreviewScene extends Phaser.Scene {
     spec: BulletSpec,
     owner: "enemy" | "player",
   ): void => {
-    const aoe = spec.aoe;
-    const radius = aoe?.radius ?? spec.radius * 3;
-    const color = spec.color ?? (owner === "player" ? 0x7df9ff : 0xff9f43);
-    this.particles.spawnBurst(x, y, 18, color);
-    this.particles.spawnRing(x, y, radius, color);
+    const explosion = getBulletExplosionInfo(spec, owner);
+    spawnBulletExplosionFx(this.particles, x, y, explosion, 18);
   };
 
   private emitPlayerBullet: EmitBullet = (x, y, angleRad, bullet) => {
@@ -85,7 +79,7 @@ export class PreviewScene extends Phaser.Scene {
       maxHp: 6,
       moveSpeed: 0,
       radius: this.baseRadius,
-      shape: "starling",
+      vector: DEFAULT_SHIP_VECTOR,
     });
     this.ship.setPosition(this.scale.width * 0.5, this.scale.height * 0.72);
     this.bullets = new ObjectPool(
@@ -123,7 +117,7 @@ export class PreviewScene extends Phaser.Scene {
     }
     this.mountedWeapons = mountedWeapons;
     this.currentShip = ship;
-    this.ship.setAppearance(ship.color, ship.vector ?? ship.shape);
+    this.ship.setAppearance(ship.color, ship.vector);
     this.ship.setRadius(this.baseRadius * (ship.radiusMultiplier ?? 1));
     this.ship.setMountedWeapons(this.mountedWeapons);
     this.playerFiring.reset();

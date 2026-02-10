@@ -10,6 +10,7 @@ export type EnemyId = string;
 
 export type EnemyShape =
   | "asteroid"
+  | "blimp"
   | "bomber"
   | "boss"
   | "crossfire"
@@ -31,10 +32,22 @@ export interface EnemyVector {
   lines?: EnemyVectorLine[];
 }
 
+export type EnemyHitbox =
+  | {
+      kind: "circle";
+      radius: number;
+    }
+  | {
+      kind: "ellipse";
+      radiusX: number;
+      radiusY: number;
+    };
+
 export interface EnemyDef {
   id: EnemyId;
   hp: number;
   radius: number;
+  hitbox: EnemyHitbox;
   goldDrop: { min: number; max: number };
   move: MoveScript;
   fire: FireScript;

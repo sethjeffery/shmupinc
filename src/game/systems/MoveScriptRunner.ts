@@ -12,6 +12,8 @@ export class MoveScriptRunner {
   private currentLocalY = 0;
   private currentWorldX = 0;
   private currentWorldY = 0;
+  private playfieldWidth = 1;
+  private playfieldHeight = 1;
   private finished = false;
   private tempX: number[] = [];
   private tempY: number[] = [];
@@ -44,6 +46,11 @@ export class MoveScriptRunner {
   setScript(script: MoveScript): void {
     this.script = script;
     this.prepareBuffers();
+  }
+
+  setPlayfieldSize(width: number, height: number): void {
+    this.playfieldWidth = Math.max(1, width);
+    this.playfieldHeight = Math.max(1, height);
   }
 
   reset(anchorX: number, anchorY: number): void {
@@ -140,16 +147,18 @@ export class MoveScriptRunner {
         this.currentLocalY = this.stepStartLocalY;
         break;
       case "dashTo": {
+        const targetLocalX = step.to.x * this.playfieldWidth;
+        const targetLocalY = step.to.y * this.playfieldHeight;
         if (step.position === "absolute") {
-          const targetX = step.to.x;
-          const targetY = step.to.y;
           this.currentLocalX =
-            this.stepStartLocalX + (targetX - this.stepStartLocalX) * easedT;
+            this.stepStartLocalX +
+            (targetLocalX - this.stepStartLocalX) * easedT;
           this.currentLocalY =
-            this.stepStartLocalY + (targetY - this.stepStartLocalY) * easedT;
+            this.stepStartLocalY +
+            (targetLocalY - this.stepStartLocalY) * easedT;
         } else {
-          this.currentLocalX = this.stepStartLocalX + step.to.x * easedT;
-          this.currentLocalY = this.stepStartLocalY + step.to.y * easedT;
+          this.currentLocalX = this.stepStartLocalX + targetLocalX * easedT;
+          this.currentLocalY = this.stepStartLocalY + targetLocalY * easedT;
         }
         break;
       }
@@ -164,8 +173,8 @@ export class MoveScriptRunner {
     const count = points.length;
     if (count === 0) return;
     for (let i = 0; i < count; i += 1) {
-      this.tempX[i] = points[i].x;
-      this.tempY[i] = points[i].y;
+      this.tempX[i] = points[i].x * this.playfieldWidth;
+      this.tempY[i] = points[i].y * this.playfieldHeight;
     }
     for (let level = count - 1; level > 0; level -= 1) {
       for (let i = 0; i < level; i += 1) {

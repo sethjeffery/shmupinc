@@ -3,57 +3,472 @@
   "spawns": [
     {
       "atMs": 0,
-      "enemyId": "crossfire",
-      "x": -0.3,
-      "y": -0.14
+      "enemyId": "sine_silent",
+      "x": -0.28,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
     },
     {
       "atMs": 700,
-      "enemyId": "crossfire",
-      "x": 0.3,
-      "y": -0.14
+      "enemyId": "sine_silent",
+      "x": 0.28,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
     },
     {
-      "atMs": 2500,
+      "atMs": 1100,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 2200,
+      "enemyId": "swooper",
+      "x": -0.22,
+      "y": -0.18,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        },
+        "hp": 2,
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1100,
+              "to": {
+                "x": 0,
+                "y": 0.5
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 900
+            },
+            {
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 1200,
+              "to": {
+                "x": 0,
+                "y": 0.45
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 3200,
+      "enemyId": "swooper",
+      "x": 0.22,
+      "y": -0.18,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1100,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
+        },
+        "hp": 2,
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1100,
+              "to": {
+                "x": 0,
+                "y": 0.5
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 900
+            },
+            {
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 1200,
+              "to": {
+                "x": 0,
+                "y": 0.45
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 4000,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1,
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1000,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 175
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 4700,
+      "enemyId": "sine",
+      "x": -0.18,
+      "y": -0.08,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 900,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 185
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 5600,
+      "enemyId": "sine",
+      "x": 0.18,
+      "y": -0.08,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 7300,
+      "enemyId": "crossfire",
+      "x": 0,
+      "y": -0.14,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 900,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 200
+            }
+          ]
+        },
+        "hp": 2
+      }
+    },
+    {
+      "atMs": 8400,
+      "enemyId": "sine_silent",
+      "x": -0.32,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 9000,
+      "enemyId": "sine_silent",
+      "x": 0.32,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 9600,
+      "enemyId": "swooper",
+      "x": -0.24,
+      "y": -0.18,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        },
+        "hp": 2,
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1100,
+              "to": {
+                "x": 0,
+                "y": 0.5
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 900
+            },
+            {
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 1200,
+              "to": {
+                "x": 0,
+                "y": 0.45
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 10600,
+      "enemyId": "swooper",
+      "x": 0.24,
+      "y": -0.18,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        },
+        "hp": 2,
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1100,
+              "to": {
+                "x": 0,
+                "y": 0.5
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 900
+            },
+            {
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 1200,
+              "to": {
+                "x": 0,
+                "y": 0.45
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 11400,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 12600,
+      "enemyId": "sine",
+      "x": 0,
+      "y": -0.08,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 950,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "angleDeg": 90,
+                "kind": "fixed"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 180
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 14900,
+      "enemyId": "sine_silent",
+      "x": -0.24,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 15700,
+      "enemyId": "sine_silent",
+      "x": 0.24,
+      "y": -0.08,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 950,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 180
+            }
+          ]
+        },
+        "hp": 1
+      }
+    },
+    {
+      "atMs": 17100,
+      "enemyId": "sine",
+      "x": 0,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1,
+        "fire": {
+          "loop": false,
+          "steps": []
+        }
+      }
+    },
+    {
+      "atMs": 17800,
+      "enemyId": "sniper",
+      "x": 0,
+      "y": -0.12,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 1050,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "damage": 1,
+              "speed": 220
+            }
+          ]
+        },
+        "hp": 2
+      }
+    },
+    {
+      "atMs": 20100,
       "enemyId": "swooper",
       "x": 0,
-      "y": -0.18
-    },
-    {
-      "atMs": 5200,
-      "enemyId": "crossfire",
-      "x": 0,
-      "y": -0.14
-    },
-    {
-      "atMs": 8200,
-      "enemyId": "swooper",
-      "x": -0.25,
-      "y": -0.18
-    },
-    {
-      "atMs": 10000,
-      "enemyId": "swooper",
-      "x": 0.25,
-      "y": -0.18
-    },
-    {
-      "atMs": 13500,
-      "enemyId": "crossfire",
-      "x": -0.3,
-      "y": -0.14
-    },
-    {
-      "atMs": 15000,
-      "enemyId": "crossfire",
-      "x": 0.3,
-      "y": -0.14
-    },
-    {
-      "atMs": 19000,
-      "enemyId": "swooper",
-      "x": 0,
-      "y": -0.18
+      "y": -0.18,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": []
+        },
+        "hp": 2,
+        "move": {
+          "steps": [
+            {
+              "kind": "dashTo",
+              "ease": "out",
+              "durationMs": 1100,
+              "to": {
+                "x": 0,
+                "y": 0.5
+              }
+            },
+            {
+              "kind": "hover",
+              "durationMs": 900
+            },
+            {
+              "kind": "dashTo",
+              "ease": "in",
+              "durationMs": 1200,
+              "to": {
+                "x": 0,
+                "y": 0.45
+              }
+            }
+          ]
+        }
+      }
     }
   ]
 }

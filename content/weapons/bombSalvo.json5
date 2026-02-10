@@ -1,0 +1,34 @@
+{
+  "id": "bombSalvo",
+  "name": "Bomb Salvo",
+  "description": "Split bomb pair for area denial.",
+  "cost": 250,
+  "gunId": "bomb",
+  "size": "small",
+  "stats": {
+    "fireRate": 1.4,
+    "bulletId": "bomb",
+    "speed": 215,
+    "damage": 1.2,
+    "aoe": {
+      "radius": 58,
+      "damage": 1.5
+    },
+    "shots": [
+      {
+        "angleDeg": -16,
+        "offset": {
+          "x": -0.1,
+          "y": -0.2
+        }
+      },
+      {
+        "angleDeg": 16,
+        "offset": {
+          "x": 0.1,
+          "y": -0.2
+        }
+      }
+    ]
+  }
+}

@@ -1,17 +1,17 @@
 {
   "id": "shop_squeeze",
   "allowedWeapons": [
-    "dartGun",
-    "orbBlaster",
-    "orbBlasterPlus",
-    "pulseArray",
-    "haloOrbs",
-    "miniMissiles",
-    "rapidDarts"
+    "orbPulse",
+    "orbTwin",
+    "dartNeedler",
+    "missileRack",
+    "bombSalvo"
   ],
+  "allowedMods": ["powerCore", "multiLens"],
   "allowedShips": ["starter", "scout", "interceptor"],
   "caps": {
-    "weaponCost": 260,
+    "weaponCost": 270,
+    "modCost": 210,
     "shipCost": 220
   }
 }

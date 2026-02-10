@@ -1,4 +1,5 @@
 import type { EnemyDef } from "../data/enemies";
+import type { EnemyHitbox } from "../data/enemyTypes";
 import type { MoveScript } from "../data/scripts";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
@@ -7,6 +8,7 @@ import Phaser from "phaser";
 import { drawEnemyToGraphics } from "../render/enemyShapes";
 import { FireScriptRunner } from "../systems/FireScriptRunner";
 import { MoveScriptRunner } from "../systems/MoveScriptRunner";
+import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "../util/playArea";
 
 export class Enemy {
   scene: Phaser.Scene;
@@ -16,6 +18,7 @@ export class Enemy {
   hp: number;
   maxHp: number;
   radius: number;
+  hitbox: EnemyHitbox;
   active: boolean;
   graphics: Phaser.GameObjects.Graphics;
   private flashTimer = 0;
@@ -25,8 +28,17 @@ export class Enemy {
   private moveRunner: MoveScriptRunner;
   private fireRunner: FireScriptRunner;
   private fixedRotationRad = 0;
+  private playfieldWidth = PLAYFIELD_BASE_WIDTH;
+  private playfieldHeight = PLAYFIELD_BASE_HEIGHT;
 
-  constructor(scene: Phaser.Scene, def: EnemyDef, x: number, y: number) {
+  constructor(
+    scene: Phaser.Scene,
+    def: EnemyDef,
+    x: number,
+    y: number,
+    playfieldWidth = PLAYFIELD_BASE_WIDTH,
+    playfieldHeight = PLAYFIELD_BASE_HEIGHT,
+  ) {
     this.scene = scene;
     this.def = def;
     this.x = x;
@@ -34,8 +46,10 @@ export class Enemy {
     this.hp = def.hp;
     this.maxHp = def.hp;
     this.radius = def.radius;
+    this.hitbox = def.hitbox;
     this.active = true;
     this.moveRunner = new MoveScriptRunner(def.move);
+    this.setPlayfieldSize(playfieldWidth, playfieldHeight);
     this.fireRunner = new FireScriptRunner(def.fire);
     this.moveRunner.reset(x, y);
     this.fireRunner.reset();
@@ -54,11 +68,13 @@ export class Enemy {
     this.hp = Math.max(1, Math.round(def.hp * hpMultiplier));
     this.maxHp = this.hp;
     this.radius = def.radius;
+    this.hitbox = def.hitbox;
     this.active = true;
     this.flashTimer = 0;
     this.finishedElapsedMsValue = 0;
     this.exitTriggered = false;
     this.phaseIndex = 0;
+    this.moveRunner.setPlayfieldSize(this.playfieldWidth, this.playfieldHeight);
     this.moveRunner.setScript(def.move);
     this.fireRunner.setScript(def.fire);
     this.moveRunner.reset(x, y);
@@ -112,6 +128,10 @@ export class Enemy {
     return this.fireRunner.isCharging;
   }
 
+  get chargeProgress(): number {
+    return this.fireRunner.chargeProgress;
+  }
+
   get finishedElapsedMs(): number {
     return this.finishedElapsedMsValue;
   }
@@ -141,7 +161,10 @@ export class Enemy {
           durationMs: Math.max(durationMs, 1),
           ease: "in",
           kind: "dashTo",
-          to: { x: targetX - this.x, y: targetY - this.y },
+          to: {
+            x: (targetX - this.x) / this.playfieldWidth,
+            y: (targetY - this.y) / this.playfieldHeight,
+          },
         },
       ],
     };
@@ -149,6 +172,12 @@ export class Enemy {
     this.moveRunner.reset(this.x, this.y);
     this.fireRunner.setScript({ steps: [] });
     this.fireRunner.reset();
+  }
+
+  setPlayfieldSize(width: number, height: number): void {
+    this.playfieldWidth = Math.max(1, width);
+    this.playfieldHeight = Math.max(1, height);
+    this.moveRunner.setPlayfieldSize(this.playfieldWidth, this.playfieldHeight);
   }
 
   deactivate(): void {

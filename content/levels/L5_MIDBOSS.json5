@@ -1,10 +1,13 @@
 {
   "id": "L5_MIDBOSS",
-  "title": "Midboss",
+  "title": "Command Intercept",
   "pressureProfile": {
     "primary": "focus",
-    "secondary": ["enemy"]
+    "secondary": ["enemy", "space"]
   },
+  "objectiveSetId": "obj_s1_l5",
+  "preBeatId": "beat_s1_l5_pre",
+  "postBeatId": "beat_s1_l5_post",
   "waveIds": ["midboss-screen", "midboss-fight"],
   "shopId": "shop_midboss",
   "winCondition": {

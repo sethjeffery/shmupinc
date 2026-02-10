@@ -6,6 +6,148 @@
       "enemyId": "midboss",
       "x": 0,
       "y": -0.1
+    },
+    {
+      "atMs": 2600,
+      "enemyId": "snake",
+      "x": -0.26,
+      "y": -0.1
+    },
+    {
+      "atMs": 3300,
+      "enemyId": "snake",
+      "x": 0.26,
+      "y": -0.1
+    },
+    {
+      "atMs": 5200,
+      "enemyId": "swooper",
+      "x": -0.24,
+      "y": -0.1
+    },
+    {
+      "atMs": 5800,
+      "enemyId": "swooper",
+      "x": 0.24,
+      "y": -0.1
+    },
+    {
+      "atMs": 7600,
+      "enemyId": "crossfire",
+      "x": 0,
+      "y": -0.1,
+      "overrides": {
+        "hp": 6
+      }
+    },
+    {
+      "atMs": 9800,
+      "enemyId": "sniper",
+      "x": -0.16,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 900,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "damage": 1,
+              "speed": 300
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 10400,
+      "enemyId": "sniper",
+      "x": 0.16,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 900,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "damage": 1,
+              "speed": 300
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 12600,
+      "enemyId": "bomber",
+      "x": 0,
+      "y": -0.1,
+      "overrides": {
+        "fire": {
+          "loop": false,
+          "steps": [
+            {
+              "durationMs": 700,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "angleDeg": 90,
+                "kind": "fixed"
+              },
+              "bulletId": "orbHeavy",
+              "count": 3,
+              "intervalMs": 180,
+              "kind": "burst",
+              "damage": 2,
+              "speed": 180
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 15200,
+      "enemyId": "skitter",
+      "x": 0,
+      "y": -0.1
+    },
+    {
+      "atMs": 18000,
+      "enemyId": "crossfire",
+      "x": -0.22,
+      "y": -0.1
+    },
+    {
+      "atMs": 18800,
+      "enemyId": "crossfire",
+      "x": 0.22,
+      "y": -0.1
+    },
+    {
+      "atMs": 21600,
+      "enemyId": "swooper",
+      "x": 0,
+      "y": -0.1
     }
   ]
 }

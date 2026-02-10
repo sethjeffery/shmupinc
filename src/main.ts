@@ -2,6 +2,7 @@ import "./styles.css";
 
 import { createGame } from "./game/createGame";
 import { PLAYFIELD_CORNER_RADIUS, computePlayArea } from "./game/util/playArea";
+import { setPlayfieldCssVars } from "./game/util/playfieldCssVars";
 import { UiRouter } from "./ui/router";
 
 const startApp = async (): Promise<void> => {
@@ -22,14 +23,13 @@ const startApp = async (): Promise<void> => {
 
   const updateOuterVars = (): void => {
     const rect = computePlayArea(window.innerWidth, window.innerHeight);
-    const root = document.documentElement;
-    root.style.setProperty("--play-x", `${rect.x}px`);
-    root.style.setProperty("--play-y", `${rect.y}px`);
-    root.style.setProperty("--play-w", `${rect.width}px`);
-    root.style.setProperty("--play-h", `${rect.height}px`);
-    root.style.setProperty("--play-cx", `${rect.x + rect.width / 2}px`);
-    root.style.setProperty("--play-cy", `${rect.y + rect.height / 2}px`);
-    root.style.setProperty("--play-r", `${PLAYFIELD_CORNER_RADIUS}px`);
+    setPlayfieldCssVars({
+      cornerRadius: PLAYFIELD_CORNER_RADIUS,
+      height: rect.height,
+      width: rect.width,
+      x: rect.x,
+      y: rect.y,
+    });
   };
   updateOuterVars();
   window.addEventListener("resize", updateOuterVars);

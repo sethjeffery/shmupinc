@@ -48,6 +48,8 @@ const EMPTY_REGISTRY: ContentRegistry = {
   gunsById: {},
   hazardsById: {},
   levelsById: {},
+  modsById: {},
+  objectivesById: {},
   shipsById: {},
   shopsById: {},
   wavesById: {},

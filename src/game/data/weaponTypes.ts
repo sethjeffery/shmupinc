@@ -2,8 +2,6 @@ import type { BulletAoe, BulletHoming, BulletSpec, Vec2 } from "./scripts";
 
 export type WeaponId = string;
 
-export type WeaponZone = "front" | "rear" | "side";
-
 export type WeaponSize = "large" | "small";
 
 export type MultiShotMode = "roundRobin" | "simultaneous";
@@ -34,9 +32,9 @@ export interface WeaponDefinition {
   name: string;
   description: string;
   cost: number;
+  costResource?: string;
   gunId: string;
+  requiresUnlocks?: string[];
   size: WeaponSize;
-  zones: WeaponZone[];
   stats: WeaponStats;
-  zoneStats?: Partial<Record<WeaponZone, Partial<WeaponStats>>>;
 }

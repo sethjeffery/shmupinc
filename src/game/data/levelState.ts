@@ -26,7 +26,3 @@ export function clearActiveLevel(): void {
 export function getActiveLevelSession(): LevelSession | null {
   return activeSession;
 }
-
-export function getActiveLevel(): LevelDefinition | null {
-  return activeSession?.level ?? null;
-}

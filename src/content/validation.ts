@@ -5,6 +5,8 @@ import type {
   LevelDefinition,
   ShopRules,
 } from "../game/data/levels/types";
+import type { ModDefinition } from "../game/data/modTypes";
+import type { ObjectiveSetDefinition } from "../game/data/objectiveTypes";
 import type {
   BulletAoe,
   BulletHoming,
@@ -19,7 +21,6 @@ import type {
   WeaponDefinition,
   WeaponShot,
   WeaponStats,
-  WeaponZone,
 } from "../game/data/weaponTypes";
 import type {
   BeatContent,
@@ -29,6 +30,8 @@ import type {
   GunContent,
   HazardContent,
   LevelContent,
+  ModContent,
+  ObjectiveContent,
   ShipContent,
   ShopContent,
   WaveContent,
@@ -59,6 +62,8 @@ export interface ContentRegistry {
   gunsById: Record<string, GunDefinition>;
   hazardsById: Record<string, HazardScript>;
   levelsById: Record<string, LevelDefinition>;
+  modsById: Record<string, ModDefinition>;
+  objectivesById: Record<string, ObjectiveSetDefinition>;
   shipsById: Record<string, ShipDefinition>;
   shopsById: Record<string, ShopRules>;
   wavesById: Record<string, WaveDefinition>;
@@ -72,6 +77,20 @@ export interface ContentBuildResult {
 
 const parseColor = (value: number | string | undefined): number | undefined => {
   if (typeof value === "number") return value;
+  if (typeof value !== "string") return undefined;
+  const text = value.trim();
+  const hashMatch = /^#([0-9a-f]{6})$/i.exec(text);
+  if (hashMatch) {
+    return Number.parseInt(hashMatch[1], 16);
+  }
+  const hexMatch = /^0x([0-9a-f]{1,6})$/i.exec(text);
+  if (hexMatch) {
+    return Number.parseInt(hexMatch[1], 16);
+  }
+  if (/^\d+$/.test(text)) {
+    const parsed = Number.parseInt(text, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
   return undefined;
 };
 
@@ -83,17 +102,18 @@ const resolveColor = (
 };
 
 type BulletTrailInput = Omit<NonNullable<BulletSpec["trail"]>, "color"> & {
-  color?: number;
+  color?: number | string;
 };
 
 interface BulletVisualsInput {
   aoe?: BulletAoe;
-  color?: number;
+  color?: number | string;
   homing?: BulletHoming;
   kind: BulletSpec["kind"];
   length?: number;
   lifetimeMs?: number;
   radius: number;
+  speed?: number;
   thickness?: number;
   trail?: BulletTrailInput;
 }
@@ -101,6 +121,13 @@ interface BulletVisualsInput {
 type BulletEffectsInput = Partial<
   Pick<BulletSpec, "aoe" | "homing" | "lifetimeMs" | "speed">
 >;
+
+const DEFAULT_BULLET_SPEED_BY_KIND: Record<BulletSpec["kind"], number> = {
+  bomb: 200,
+  dart: 260,
+  missile: 260,
+  orb: 200,
+};
 
 const resolveBulletFromId = (
   bulletId: string | undefined,
@@ -136,6 +163,14 @@ const coerceBulletSpec = (
           0xffffff,
       }
     : undefined;
+  const requestedSpeed =
+    effects?.speed ??
+    visuals.speed ??
+    DEFAULT_BULLET_SPEED_BY_KIND[visuals.kind];
+  const normalizedSpeed =
+    Number.isFinite(requestedSpeed) && requestedSpeed > 0
+      ? requestedSpeed
+      : DEFAULT_BULLET_SPEED_BY_KIND[visuals.kind];
   return {
     aoe: effects?.aoe ?? visuals.aoe,
     color: resolveColor(rawColor),
@@ -145,7 +180,7 @@ const coerceBulletSpec = (
     length: visuals.length,
     lifetimeMs: effects?.lifetimeMs ?? visuals.lifetimeMs,
     radius: visuals.radius,
-    speed: effects?.speed ?? 0,
+    speed: normalizedSpeed,
     thickness: visuals.thickness,
     trail,
   };
@@ -179,10 +214,10 @@ const coerceFireStep = (
   // Handle burst and spray steps
   let bulletVisuals: BulletVisualsInput | null = null;
 
-  if ("bulletId" in step && step.bulletId) {
-    if (!bulletsById) {
-      throw new Error("bulletsById required for bulletId resolution");
-    }
+  if ("bullet" in step && step.bullet) {
+    bulletVisuals = step.bullet;
+  }
+  if ("bulletId" in step && step.bulletId && bulletsById) {
     const resolved = resolveBulletFromId(
       step.bulletId,
       bulletsById,
@@ -191,27 +226,50 @@ const coerceFireStep = (
     );
     if (resolved) {
       bulletVisuals = resolved;
-    } else {
-      throw new Error(`Failed to resolve bullet: ${step.bulletId}`);
     }
-  } else if ("bullet" in step && step.bullet) {
-    bulletVisuals = step.bullet;
   }
 
   if (!bulletVisuals) {
-    throw new Error("Fire step must have either bullet or bulletId");
+    if (errors && context) {
+      if ("bulletId" in step && step.bulletId) {
+        addReferenceError(
+          errors,
+          context,
+          `Missing bullet "${step.bulletId}". Falling back to default orb.`,
+        );
+      } else {
+        addReferenceError(
+          errors,
+          context,
+          "Fire step has no bullet or bulletId. Falling back to default orb.",
+        );
+      }
+    }
+    bulletVisuals = {
+      kind: "orb",
+      radius: 3,
+    };
   }
 
-  const { _bulletId, aoe, damage, homing, lifetimeMs, speed, ...rest } =
-    step as unknown as {
-      _bulletId?: string;
-      aoe?: BulletAoe;
-      damage?: number;
-      homing?: BulletHoming;
-      lifetimeMs?: number;
-      speed?: number;
-      [key: string]: unknown;
-    };
+  const {
+    aoe,
+    bullet: _inlineBullet,
+    bulletId: _bulletId,
+    damage,
+    homing,
+    lifetimeMs,
+    speed,
+    ...rest
+  } = step as unknown as {
+    aoe?: BulletAoe;
+    bullet?: BulletVisualsInput;
+    bulletId?: string;
+    damage?: number;
+    homing?: BulletHoming;
+    lifetimeMs?: number;
+    speed?: number;
+    [key: string]: unknown;
+  };
   const bulletDamage = damage ?? 1;
 
   return {
@@ -310,6 +368,8 @@ export const buildContentRegistry = (
   const gunsById: Record<string, GunContent> = {};
   const hazardsById: Record<string, HazardContent> = {};
   const levelsById: Record<string, LevelContent> = {};
+  const modsById: Record<string, ModContent> = {};
+  const objectiveSetsById: Record<string, ObjectiveContent> = {};
   const shipsById: Record<string, ShipContent> = {};
   const shopsById: Record<string, ShopContent> = {};
   const wavesById: Record<string, WaveContent> = {};
@@ -376,12 +436,26 @@ export const buildContentRegistry = (
         }
         hazardsById[id] = value as HazardContent;
         break;
+      case "mods":
+        if (modsById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        modsById[id] = value as ModContent;
+        break;
       case "levels":
         if (levelsById[id]) {
           addDuplicateError(errors, entry.path, entry.kind, id);
           break;
         }
         levelsById[id] = value as LevelContent;
+        break;
+      case "objectives":
+        if (objectiveSetsById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        objectiveSetsById[id] = value as ObjectiveContent;
         break;
       case "ships":
         if (shipsById[id]) {
@@ -539,48 +613,19 @@ export const buildContentRegistry = (
 
   const resolvedWeapons: Record<string, WeaponDefinition> = {};
   for (const [id, weapon] of Object.entries(weaponsById)) {
-    const zoneStats = weapon.zoneStats ?? {};
-    const resolvedZoneStats: Partial<Record<WeaponZone, Partial<WeaponStats>>> =
-      {};
-    for (const [zone, override] of Object.entries(zoneStats)) {
-      if (!override) continue;
-      const { bullet, bulletId, damage, shots, ...rest } =
-        override as Partial<WeaponStats> & {
-          damage?: number;
-          bulletId?: string;
-        };
-      const resolvedOverride: Partial<WeaponStats> = {
-        ...rest,
-        shots: shots ? normalizeWeaponShots(shots) : undefined,
-      };
-
-      let bulletToUse: BulletVisualsInput | undefined = bullet;
-      if (bulletId && !bullet) {
-        const resolved = resolveBulletFromId(
-          bulletId,
-          bulletsById,
-          errors,
-          `weapons/${id}/zoneStats/${zone}`,
-        );
-        if (resolved) {
-          bulletToUse = resolved;
-        }
-      }
-
-      if (bulletToUse) {
-        resolvedOverride.bullet = coerceBulletSpec(bulletToUse, damage ?? 1);
-      }
-      resolvedZoneStats[zone as WeaponZone] = resolvedOverride;
-    }
     resolvedWeapons[id] = {
       ...weapon,
       stats: resolveWeaponStats(
         weapon.stats as WeaponStats & { damage?: number; bulletId?: string },
         id,
       ),
-      zoneStats: Object.keys(resolvedZoneStats).length
-        ? resolvedZoneStats
-        : undefined,
+    };
+  }
+
+  const resolvedMods: Record<string, ModDefinition> = {};
+  for (const [id, mod] of Object.entries(modsById)) {
+    resolvedMods[id] = {
+      ...mod,
     };
   }
 
@@ -635,6 +680,7 @@ export const buildContentRegistry = (
   const resolvedShops: Record<string, ShopRules> = {};
   for (const [id, shop] of Object.entries(shopsById)) {
     resolvedShops[id] = {
+      allowedMods: shop.allowedMods,
       allowedShips: shop.allowedShips,
       allowedWeapons: shop.allowedWeapons,
       caps: shop.caps,
@@ -651,6 +697,11 @@ export const buildContentRegistry = (
     for (const shipId of shop.allowedShips ?? []) {
       if (!resolvedShips[shipId]) {
         addReferenceError(errors, `shops/${id}`, `Missing ship "${shipId}".`);
+      }
+    }
+    for (const modId of shop.allowedMods ?? []) {
+      if (!resolvedMods[modId]) {
+        addReferenceError(errors, `shops/${id}`, `Missing mod "${modId}".`);
       }
     }
   }
@@ -731,10 +782,22 @@ export const buildContentRegistry = (
       );
     }
 
+    const objectiveSet = level.objectiveSetId
+      ? objectiveSetsById[level.objectiveSetId]
+      : undefined;
+    if (level.objectiveSetId && !objectiveSet) {
+      addReferenceError(
+        errors,
+        `levels/${id}`,
+        `Missing objectives "${level.objectiveSetId}".`,
+      );
+    }
+
     resolvedLevels[id] = {
       endCondition: coerceEndCondition(level.endCondition),
       hazards: hazards.length ? hazards : undefined,
       id: level.id,
+      objectiveSet,
       postBeatId: level.postBeatId,
       preBeatId: level.preBeatId,
       pressureProfile: level.pressureProfile,
@@ -754,6 +817,8 @@ export const buildContentRegistry = (
       gunsById: resolvedGuns,
       hazardsById: resolvedHazards,
       levelsById: resolvedLevels,
+      modsById: resolvedMods,
+      objectivesById: objectiveSetsById,
       shipsById: resolvedShips,
       shopsById: resolvedShops,
       wavesById: resolvedWaves,

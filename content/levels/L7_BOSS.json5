@@ -1,12 +1,13 @@
 {
   "id": "L7_BOSS",
-  "title": "Boss",
+  "title": "Core Siege",
   "pressureProfile": {
     "primary": "focus",
-    "secondary": ["enemy"]
+    "secondary": ["enemy", "time"]
   },
-  "preBeatId": "beat_s1_boss_pre",
-  "postBeatId": "beat_s1_boss_post",
+  "objectiveSetId": "obj_s1_l7",
+  "preBeatId": "beat_s1_l7_pre",
+  "postBeatId": "beat_s1_l7_post",
   "waveIds": ["boss-approach", "boss-finale"],
   "shopId": "shop_boss",
   "winCondition": {

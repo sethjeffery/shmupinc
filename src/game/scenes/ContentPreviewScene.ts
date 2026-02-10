@@ -1,19 +1,31 @@
-import type { EnemyDef } from "../data/enemies";
+import type { ModDefinition } from "../data/modTypes";
 import type { MountedWeapon } from "../data/save";
 import type { BulletSpec } from "../data/scripts";
 import type { ShipDefinition, WeaponMount } from "../data/shipTypes";
 import type { EnemyOverride, Spawn, WaveDefinition } from "../data/waves";
-import type { WeaponDefinition, WeaponZone } from "../data/weaponTypes";
+import type { WeaponDefinition } from "../data/weaponTypes";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
 
-import { canMountWeapon, resolveWeaponStats } from "../data/weaponMounts";
+import { resolveEnemyDefinition, type EnemyDef } from "../data/enemies";
+import {
+  normalizeMountMods,
+  resolveWeaponStatsWithMods,
+} from "../data/weaponMods";
+import { canMountWeapon } from "../data/weaponMounts";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { Enemy } from "../entities/Enemy";
 import { Ship } from "../entities/Ship";
+import { DEFAULT_SHIP_VECTOR } from "../render/shipShapes";
 import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
+import { updatePlayerBulletsRuntime } from "../systems/play/BulletRuntime";
+import {
+  getBulletExplosionInfo,
+  spawnBulletExplosionFx,
+  spawnBulletTrail,
+} from "../systems/play/BulletVisualFx";
 import { PlayerFiring } from "../systems/PlayerFiring";
 import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "../util/playArea";
 import { ObjectPool } from "../util/pool";
@@ -24,6 +36,43 @@ const EXIT_MARGIN = 70;
 const LOOP_DELAY_MS = 600;
 const PLAYER_Y_RATIO = 0.84;
 const WEAPON_PREVIEW_ZOOM = 2;
+const WEAPON_PREVIEW_DUMMY_HP = 14;
+
+const createWeaponPreviewDummy = (id: string, lineColor: number): EnemyDef => ({
+  fire: { loop: false, steps: [] },
+  goldDrop: { max: 0, min: 0 },
+  hitbox: { kind: "circle", radius: 14 },
+  hp: WEAPON_PREVIEW_DUMMY_HP,
+  id,
+  move: {
+    loop: true,
+    steps: [{ durationMs: 2400, kind: "hover" }],
+  },
+  radius: 14,
+  style: {
+    fillColor: 0x151b27,
+    lineColor,
+    shape: "blimp",
+  },
+});
+
+const WEAPON_PREVIEW_DUMMIES: { def: EnemyDef; x: number; y: number }[] = [
+  {
+    def: createWeaponPreviewDummy("previewDummyA", 0x7fa8ff),
+    x: -0.24,
+    y: 0.33,
+  },
+  {
+    def: createWeaponPreviewDummy("previewDummyB", 0xff8ab6),
+    x: 0.02,
+    y: 0.36,
+  },
+  {
+    def: createWeaponPreviewDummy("previewDummyC", 0x85ffd6),
+    x: 0.18,
+    y: 0.34,
+  },
+];
 export class ContentPreviewScene extends Phaser.Scene {
   private bounds = new Phaser.Geom.Rectangle(
     0,
@@ -69,7 +118,8 @@ export class ContentPreviewScene extends Phaser.Scene {
         mode: "weapon";
         weapon: WeaponDefinition;
         ship: ShipDefinition;
-        zone?: WeaponZone;
+        mountId?: string;
+        mods?: ModDefinition[];
       }
     | { mode: null }
     | null = null;
@@ -80,16 +130,7 @@ export class ContentPreviewScene extends Phaser.Scene {
     _angleRad: number,
     spec: BulletSpec,
   ): void => {
-    const trail = spec.trail;
-    if (!trail) return;
-    this.particles.spawnTrail(
-      x,
-      y,
-      trail.color ?? spec.color ?? 0x7df9ff,
-      trail.sizeMin,
-      trail.sizeMax,
-      trail.count,
-    );
+    spawnBulletTrail(this.particles, x, y, spec);
   };
 
   private handleBulletExplosion = (
@@ -98,11 +139,8 @@ export class ContentPreviewScene extends Phaser.Scene {
     spec: BulletSpec,
     owner: "enemy" | "player",
   ): void => {
-    const aoe = spec.aoe;
-    const radius = aoe?.radius ?? spec.radius * 3;
-    const color = spec.color ?? (owner === "player" ? 0x7df9ff : 0xff9f43);
-    this.particles.spawnBurst(x, y, 18, color);
-    this.particles.spawnRing(x, y, radius, color);
+    const explosion = getBulletExplosionInfo(spec, owner);
+    spawnBulletExplosionFx(this.particles, x, y, explosion, 18);
   };
 
   private emitEnemyBullet: EmitBullet = (x, y, angleRad, bullet) => {
@@ -141,7 +179,7 @@ export class ContentPreviewScene extends Phaser.Scene {
       maxHp: 6,
       moveSpeed: 0,
       radius: 17,
-      shape: "starling",
+      vector: DEFAULT_SHIP_VECTOR,
     });
     this.playerShip.graphics.setDepth(8);
     this.playerShip.graphics.setVisible(false);
@@ -161,7 +199,12 @@ export class ContentPreviewScene extends Phaser.Scene {
       } else if (payload.mode === "wave") {
         this.setWave(payload.wave, payload.enemiesById);
       } else if (payload.mode === "weapon") {
-        this.setWeapon(payload.weapon, payload.ship, payload.zone);
+        this.setWeapon(
+          payload.weapon,
+          payload.ship,
+          payload.mountId,
+          payload.mods,
+        );
       } else {
         this.setMode(null);
       }
@@ -186,6 +229,7 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.elapsedMs += deltaMs;
     if (this.mode === "weapon") {
       this.updateWeaponPreview(delta);
+      this.updateEnemies(deltaMs);
       this.updatePlayerBullets(delta);
       return;
     }
@@ -239,33 +283,41 @@ export class ContentPreviewScene extends Phaser.Scene {
   setWeapon(
     weapon: WeaponDefinition,
     ship: ShipDefinition,
-    zone?: WeaponZone,
+    mountId?: string,
+    mods?: ModDefinition[],
   ): void {
-    this.setWeaponPreview(weapon, ship, zone);
+    this.setWeaponPreview(weapon, ship, mountId, mods);
   }
 
   private setWeaponPreview(
     weapon: WeaponDefinition,
     ship: ShipDefinition,
-    zone?: WeaponZone,
+    mountId?: string,
+    mods?: ModDefinition[],
   ): void {
     if (!this.ready) {
       this.pendingPayload = {
         mode: "weapon",
+        mods,
+        mountId,
         ship,
         weapon,
-        zone,
       };
       return;
     }
     this.mode = "weapon";
-    const mount = this.getPreviewMount(weapon, ship, zone);
+    const mount = this.getPreviewMount(weapon, ship, mountId);
+    const normalizedMods = normalizeMountMods(mods ?? []).slice(
+      0,
+      mount?.modSlots ?? 0,
+    );
     this.mountedWeapons = mount
       ? [
           {
             instanceId: "__preview__",
+            mods: normalizedMods,
             mount,
-            stats: resolveWeaponStats(weapon, mount.zone),
+            stats: resolveWeaponStatsWithMods(weapon, normalizedMods),
             weapon,
           },
         ]
@@ -278,6 +330,7 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.loopDelayMs = 0;
     this.playerFiring.reset();
     this.clearEntities();
+    this.spawnWeaponPreviewDummies();
     this.showWeaponPreview(true);
     this.applyWeaponZoom();
   }
@@ -313,11 +366,11 @@ export class ContentPreviewScene extends Phaser.Scene {
   private getPreviewMount(
     weapon: WeaponDefinition,
     ship: ShipDefinition,
-    zone?: WeaponZone,
+    mountId?: string,
   ): null | WeaponMount {
-    if (zone) {
+    if (mountId) {
       const match = ship.mounts.find(
-        (mount) => mount.zone === zone && canMountWeapon(weapon, mount),
+        (mount) => mount.id === mountId && canMountWeapon(weapon, mount),
       );
       if (match) return match;
     }
@@ -325,12 +378,11 @@ export class ContentPreviewScene extends Phaser.Scene {
       canMountWeapon(weapon, mount),
     );
     if (compatible) return compatible;
-    const fallbackZone = zone ?? weapon.zones[0] ?? "front";
     return {
       id: "__preview_mount__",
+      modSlots: 0,
       offset: { x: 0, y: -0.4 },
       size: weapon.size,
-      zone: fallbackZone,
     };
   }
 
@@ -397,17 +449,21 @@ export class ContentPreviewScene extends Phaser.Scene {
   private updatePlayerBullets(delta: number): void {
     const ship = this.playerShip;
     if (!ship) return;
-    this.bulletContext.playerX = ship.x;
-    this.bulletContext.playerY = ship.y;
-    this.bulletContext.enemies = [];
-    this.playerBullets.forEachActive((bullet) => {
-      bullet.update(
-        delta,
-        this.bounds,
-        this.bulletContext,
-        this.emitMissileTrail,
-        (x, y, spec, owner) => this.handleBulletExplosion(x, y, spec, owner),
-      );
+    updatePlayerBulletsRuntime(delta, {
+      bulletContext: this.bulletContext,
+      emitTrail: this.emitMissileTrail,
+      enemies: this.enemies,
+      enemyBullets: this.enemyBullets,
+      handleExplosion: (x, y, spec, owner) =>
+        this.handleBulletExplosion(x, y, spec, owner),
+      onDamagePlayer: () => undefined,
+      onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex),
+      playArea: this.bounds,
+      playerAlive: true,
+      playerBullets: this.playerBullets,
+      playerRadius: ship.radius,
+      playerX: ship.x,
+      playerY: ship.y,
     });
   }
 
@@ -449,24 +505,26 @@ export class ContentPreviewScene extends Phaser.Scene {
     }
   }
 
+  private spawnWeaponPreviewDummies(): void {
+    if (this.mode !== "weapon") return;
+    for (const dummy of WEAPON_PREVIEW_DUMMIES) {
+      this.spawnEnemy(dummy.def, dummy.x, dummy.y);
+    }
+  }
+
   private spawnEnemy(
     base: EnemyDef,
     xNorm: number,
     yNorm: number,
     overrides?: EnemyOverride,
   ): void {
-    const def = overrides ? { ...base, ...overrides } : base;
-    def.move ??= base.move;
-    def.fire ??= base.fire;
-    def.goldDrop ??= base.goldDrop;
-    def.radius ??= base.radius;
-    def.phases ??= base.phases;
-    def.style ??= base.style;
-    def.rotation ??= base.rotation;
-    def.rotationDeg ??= base.rotationDeg;
+    const def = resolveEnemyDefinition(base, overrides);
     const x = this.bounds.x + (0.5 + xNorm) * this.bounds.width;
     const y = this.bounds.y + yNorm * this.bounds.height;
-    const enemy = this.enemyPool.pop() ?? new Enemy(this, def, x, y);
+    const enemy =
+      this.enemyPool.pop() ??
+      new Enemy(this, def, x, y, this.bounds.width, this.bounds.height);
+    enemy.setPlayfieldSize(this.bounds.width, this.bounds.height);
     enemy.reset(def, x, y, 1);
     this.enemyEntered.set(enemy, false);
     this.enemies.push(enemy);
@@ -500,6 +558,9 @@ export class ContentPreviewScene extends Phaser.Scene {
   }
 
   private shouldLoop(): boolean {
+    if (this.mode === "weapon") {
+      return this.enemies.length === 0 && !this.hasActiveBullets();
+    }
     if (this.enemies.length > 0) return false;
     if (this.hasActiveBullets()) return false;
     if (this.mode === "enemy") {
@@ -514,6 +575,10 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.clearEntities();
     if (this.mode === "enemy") {
       this.spawnSingleEnemy();
+      return;
+    }
+    if (this.mode === "weapon") {
+      this.spawnWeaponPreviewDummies();
     }
   }
 
@@ -525,10 +590,7 @@ export class ContentPreviewScene extends Phaser.Scene {
       this.playerShip.graphics.setVisible(show);
       if (show && this.shipDef) {
         const radius = 17 * (this.shipDef.radiusMultiplier ?? 1);
-        this.playerShip.setAppearance(
-          this.shipDef.color,
-          this.shipDef.vector ?? this.shipDef.shape,
-        );
+        this.playerShip.setAppearance(this.shipDef.color, this.shipDef.vector);
         this.playerShip.setRadius(radius);
         this.playerShip.setMountedWeapons(this.mountedWeapons);
       }

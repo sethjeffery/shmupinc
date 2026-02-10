@@ -1,0 +1,35 @@
+{
+  "id": "obj_s1_l1",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 40 },
+        "unlocks": ["bp_ship_interceptor"]
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 62s",
+      "maxMs": 62000,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 30 }
+      }
+    },
+    {
+      "id": "control",
+      "kind": "takeDamageUnder",
+      "label": "Take at most 4.5 damage",
+      "maxDamage": 4.5,
+      "stars": 1,
+      "reward": {
+        "unlocks": ["bp_cross_plus"]
+      }
+    }
+  ]
+}

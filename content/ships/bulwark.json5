@@ -1,52 +1,43 @@
 {
-  "color": 16739179,
+  "color": "#ff6b6b",
   "cost": 260,
-  "description": "High armor, slower handling.",
+  "requiresUnlocks": ["bp_ship_bulwark"],
+  "description": "Large and mighty. The bulwark may be slow but nothing else delivers as much pure firepower.",
   "id": "bulwark",
   "magnetMultiplier": 1,
   "maxHp": 10,
   "moveSpeed": 5.5,
   "mounts": [
     {
-      "id": "front",
+      "id": "nose",
       "offset": {
         "x": 0,
-        "y": -0.5
+        "y": -0.6
+      },
+      "size": "small",
+      "modSlots": 2
+    },
+    {
+      "id": "port",
+      "offset": {
+        "x": -0.35,
+        "y": -0.26
       },
       "size": "large",
-      "zone": "front"
+      "modSlots": 1
     },
     {
-      "id": "side-left",
+      "id": "starboard",
       "offset": {
-        "x": -0.8,
-        "y": -0.4
+        "x": 0.35,
+        "y": -0.26
       },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "side-right",
-      "offset": {
-        "x": 0.8,
-        "y": -0.4
-      },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "rear",
-      "offset": {
-        "x": 0,
-        "y": 0.7
-      },
-      "size": "small",
-      "zone": "rear"
+      "size": "large",
+      "modSlots": 1
     }
   ],
   "name": "Bulwark",
   "radiusMultiplier": 1.35,
-  "shape": "bulwark",
   "vector": {
     "outline": [
       {

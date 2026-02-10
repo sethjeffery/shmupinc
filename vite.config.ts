@@ -29,6 +29,18 @@ const sendJson = (
 };
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("monaco-editor")) {
+            return "content-editor";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
   server: {
     watch: {
       ignored: ["**/content/**"],

@@ -1,0 +1,60 @@
+{
+  "id": "blimp",
+  "hp": 30,
+  "radius": 35,
+  "hitbox": {
+    "kind": "ellipse",
+    "radiusX": 32,
+    "radiusY": 46
+  },
+  "goldDrop": {
+    "min": 16,
+    "max": 22
+  },
+  "move": {
+    "loop": false,
+    "steps": [
+      {
+        "kind": "dashTo",
+        "ease": "out",
+        "durationMs": 17000,
+        "to": {
+          "x": 0,
+          "y": 1.4
+        }
+      }
+    ]
+  },
+  "fire": {
+    "loop": true,
+    "steps": [
+      {
+        "kind": "cooldown",
+        "durationMs": 1600
+      },
+      {
+        "kind": "burst",
+        "aim": {
+          "kind": "fixed",
+          "angleDeg": 90
+        },
+        "bulletId": "orbHeavy",
+        "count": 2,
+        "intervalMs": 220,
+        "damage": 2,
+        "speed": 165
+      },
+      {
+        "kind": "cooldown",
+        "durationMs": 1500
+      }
+    ]
+  },
+  "rotation": "fixed",
+  "rotationDeg": 180,
+  "style": {
+    "shape": "blimp",
+    "fillColor": "#1e2036",
+    "lineColor": "#9ec9ff"
+  }
+}

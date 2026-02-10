@@ -1,17 +1,21 @@
 {
   "id": "shop_deadline",
   "allowedWeapons": [
-    "orbBlaster",
-    "dartGun",
+    "orbPulse",
+    "orbTwin",
+    "dartNeedler",
+    "missileRack",
+    "bombSalvo",
+    "orbFan",
+    "gatlingArray",
     "railDart",
-    "gatlingGun",
-    "needleDarts",
-    "rapidDarts",
-    "stingerMissiles"
+    "bombMortar"
   ],
-  "allowedShips": ["starter", "interceptor", "scout"],
+  "allowedMods": ["powerCore", "multiLens", "homingUnit", "aoeWarhead"],
+  "allowedShips": ["starter", "scout", "interceptor", "vanguard", "bulwark"],
   "caps": {
-    "weaponCost": 280,
-    "shipCost": 240
+    "weaponCost": 350,
+    "modCost": 250,
+    "shipCost": 320
   }
 }

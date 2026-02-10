@@ -1,34 +1,61 @@
+import type { ENEMIES } from "../data/enemies";
+import type { EnemyHitbox } from "../data/enemyTypes";
 import type { MountedWeapon } from "../data/save";
 import type { BulletSpec } from "../data/scripts";
+import type { Enemy } from "../entities/Enemy";
 import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
 
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
-import { ENEMIES } from "../data/enemies";
+import { recordLevelCompletion } from "../data/levelProgress";
 import { getActiveLevelSession } from "../data/levelState";
 import { bankGold, computePlayerLoadout } from "../data/save";
 import { type EnemyOverride } from "../data/waves";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
-import { Enemy } from "../entities/Enemy";
 import { PickupGold } from "../entities/PickupGold";
 import { Ship } from "../entities/Ship";
-import { circleOverlap } from "../systems/Collision";
+import { CONTACT_DAMAGE_PER_SEC } from "../systems/combatConstants";
+import {
+  circleHitboxOverlap,
+  resolveCircleHitboxPenetration,
+} from "../systems/hitbox";
 import { LevelRunner } from "../systems/LevelRunner";
 import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
+import {
+  updateEnemyBulletsRuntime,
+  updatePlayerBulletsRuntime,
+} from "../systems/play/BulletRuntime";
+import {
+  getBulletExplosionInfo,
+  spawnBulletExplosionFx,
+  spawnBulletTrail,
+} from "../systems/play/BulletVisualFx";
+import {
+  spawnEnemyRuntime,
+  updateEnemiesRuntime,
+} from "../systems/play/EnemyRuntime";
+import { updatePickupsRuntime } from "../systems/play/PickupRuntime";
+import {
+  bankRunGoldOnce,
+  clearWaveEntitiesRuntime,
+  emitGameOverEvent,
+  emitVictoryRoute,
+} from "../systems/play/RunOutcome";
 import { PlayerCollisionResolver } from "../systems/PlayerCollision";
 import { PlayerFiring } from "../systems/PlayerFiring";
 import { HUD } from "../ui/HUD";
 import { computePlayArea, PLAYFIELD_CORNER_RADIUS } from "../util/playArea";
+import { setPlayfieldCssVars } from "../util/playfieldCssVars";
 import { ObjectPool } from "../util/pool";
 
 const PADDING = 0.05;
 const MAGNET_RADIUS = 120;
 const FINISH_LINGER_MS = 2400;
 const EXIT_DASH_MS = 700;
+const ENEMY_MARGIN = 120;
 const SHIP_REGEN_PER_SEC = 0.1;
-const CONTACT_DAMAGE_PER_SEC = 1.4;
 const PLAYER_DAMAGE_MULTIPLIER = 1.2;
 const HIT_COOLDOWN_SEC = 0.5;
 const BUMP_FX = {
@@ -81,9 +108,15 @@ export class PlayScene extends Phaser.Scene {
   private isGameOver = false;
   private gold = 0;
   private goldBanked = false;
+  private runDamageTaken = 0;
+  private runElapsedMs = 0;
+  private runEnemiesDefeated = 0;
+  private runEnemiesSpawned = 0;
   private shipAlive = true;
   private bossTimerMs = 0;
   private bossActive = false;
+  private enemyEntered = new WeakMap<Enemy, boolean>();
+  private chargeRingCooldownMs = new WeakMap<Enemy, number>();
   private healthPulseTime = 0;
   private healthPulseStrength = 0;
   private touchOffsetY = 0;
@@ -111,16 +144,7 @@ export class PlayScene extends Phaser.Scene {
     _angleRad: number,
     spec: BulletSpec,
   ): void => {
-    const trail = spec.trail;
-    if (!trail) return;
-    this.particles.spawnTrail(
-      x,
-      y,
-      trail.color ?? spec.color ?? 0x7df9ff,
-      trail.sizeMin,
-      trail.sizeMax,
-      trail.count,
-    );
+    spawnBulletTrail(this.particles, x, y, spec);
   };
   private handleBulletExplosion = (
     x: number,
@@ -128,26 +152,29 @@ export class PlayScene extends Phaser.Scene {
     spec: BulletSpec,
     owner: "enemy" | "player",
   ): void => {
-    const aoe = spec.aoe;
-    const radius = aoe?.radius ?? spec.radius * 3;
-    const damage = aoe?.damage ?? spec.damage;
-    const color = spec.color ?? (owner === "player" ? 0x7df9ff : 0xff9f43);
-    this.particles.spawnBurst(x, y, 24, color);
-    this.particles.spawnRing(x, y, radius, color);
+    const explosion = getBulletExplosionInfo(spec, owner);
+    spawnBulletExplosionFx(this.particles, x, y, explosion, 24);
     if (owner === "player") {
       for (const enemy of this.enemies) {
         if (!enemy.active) continue;
-        const dx = enemy.x - x;
-        const dy = enemy.y - y;
-        if (dx * dx + dy * dy <= radius * radius) {
-          enemy.takeDamage(damage);
+        if (
+          circleHitboxOverlap(
+            x,
+            y,
+            explosion.radius,
+            enemy.x,
+            enemy.y,
+            enemy.hitbox,
+          )
+        ) {
+          enemy.takeDamage(explosion.damage);
         }
       }
     } else if (this.shipAlive) {
       const dx = this.ship.x - x;
       const dy = this.ship.y - y;
-      if (dx * dx + dy * dy <= radius * radius) {
-        this.damagePlayer(damage, x, y);
+      if (dx * dx + dy * dy <= explosion.radius * explosion.radius) {
+        this.damagePlayer(explosion.damage, x, y);
       }
     }
   };
@@ -174,8 +201,14 @@ export class PlayScene extends Phaser.Scene {
     this.shipAlive = true;
     this.magnetMultiplier = 1;
     this.mountedWeapons = [];
+    this.runDamageTaken = 0;
+    this.runElapsedMs = 0;
+    this.runEnemiesDefeated = 0;
+    this.runEnemiesSpawned = 0;
     this.bossTimerMs = 0;
     this.bossActive = false;
+    this.enemyEntered = new WeakMap();
+    this.chargeRingCooldownMs = new WeakMap();
     if (this.levelRunner) {
       this.levelRunner.destroy();
       this.levelRunner = undefined;
@@ -211,7 +244,7 @@ export class PlayScene extends Phaser.Scene {
       maxHp: stats.ship.maxHp,
       moveSpeed: stats.ship.moveSpeed,
       radius: 17 * (stats.ship.radiusMultiplier ?? 1),
-      shape: stats.ship.vector ?? stats.ship.shape,
+      vector: stats.ship.vector,
     });
     this.ship.setMountedWeapons(this.mountedWeapons);
     this.collisionResolver = new PlayerCollisionResolver(
@@ -233,6 +266,10 @@ export class PlayScene extends Phaser.Scene {
 
     this.gold = 0;
     this.goldBanked = false;
+    this.runDamageTaken = 0;
+    this.runElapsedMs = 0;
+    this.runEnemiesDefeated = 0;
+    this.runEnemiesSpawned = 0;
     this.ship.setPosition(this.defaultTarget.x, this.defaultTarget.y);
     this.target.copy(this.defaultTarget);
 
@@ -304,6 +341,7 @@ export class PlayScene extends Phaser.Scene {
     this.particles.update(delta);
     this.updateFps(deltaMs);
     if (this.overlayShown) return;
+    this.runElapsedMs += deltaMs;
     this.collisionResolver?.update(deltaMs);
     this.updateShip(delta);
     this.updateLowHealthEffect(delta);
@@ -375,154 +413,113 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updatePlayerBullets(delta: number): void {
-    this.bulletContext.enemies = this.enemies;
-    this.bulletContext.playerX = this.ship.x;
-    this.bulletContext.playerY = this.ship.y;
-    this.bulletContext.playerAlive = this.shipAlive;
-    this.playerBullets.forEachActive((bullet) => {
-      bullet.update(
-        delta,
-        this.playArea,
-        this.bulletContext,
-        this.emitMissileTrail,
-        this.handleBulletExplosion,
-      );
-      if (!bullet.active) return;
-
-      for (let i = this.enemies.length - 1; i >= 0; i -= 1) {
-        const enemy = this.enemies[i];
-        if (!enemy.active) continue;
-        const hit = circleOverlap(
-          bullet.x,
-          bullet.y,
-          bullet.radius,
-          enemy.x,
-          enemy.y,
-          enemy.radius,
-        );
-        if (hit) {
-          if (bullet.spec.kind === "bomb" || bullet.spec.aoe) {
-            bullet.hit(this.handleBulletExplosion);
-          } else {
-            enemy.takeDamage(bullet.damage);
-            bullet.deactivate();
-            if (!enemy.active) {
-              this.releaseEnemy(i, true);
-            }
-          }
-          break;
-        }
-      }
+    updatePlayerBulletsRuntime(delta, {
+      bulletContext: this.bulletContext,
+      emitTrail: this.emitMissileTrail,
+      enemies: this.enemies,
+      enemyBullets: this.enemyBullets,
+      handleExplosion: this.handleBulletExplosion,
+      onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
+      onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
+      playArea: this.playArea,
+      playerAlive: this.shipAlive,
+      playerBullets: this.playerBullets,
+      playerRadius: this.ship.radius,
+      playerX: this.ship.x,
+      playerY: this.ship.y,
     });
   }
 
   private updateEnemies(deltaMs: number): void {
-    const bounds = this.playArea;
-    const margin = 120;
-    const contactDamage = (CONTACT_DAMAGE_PER_SEC * deltaMs) / 1000;
-    for (let i = this.enemies.length - 1; i >= 0; i -= 1) {
-      const enemy = this.enemies[i];
-      if (!enemy.active) {
-        this.releaseEnemy(i, true);
-        continue;
-      }
-      enemy.update(
-        deltaMs,
-        this.ship.x,
-        this.ship.y,
-        this.shipAlive,
-        this.emitEnemyBullet,
-      );
-      if (enemy.def.id === "boss" && enemy.isCharging) {
+    updateEnemiesRuntime({
+      bounds: this.playArea,
+      contactDamagePerSec: CONTACT_DAMAGE_PER_SEC,
+      deltaMs,
+      emitEnemyBullet: this.emitEnemyBullet,
+      enemies: this.enemies,
+      exitDashMs: EXIT_DASH_MS,
+      finishLingerMs: FINISH_LINGER_MS,
+      getEnemyEntered: (enemy) => this.enemyEntered.get(enemy) ?? false,
+      getEnemyPush: (enemyX, enemyY, enemyRadius) =>
+        this.getEnemyPush(enemyX, enemyY, enemyRadius),
+      margin: ENEMY_MARGIN,
+      markEnemyEntered: (enemy) => {
+        this.enemyEntered.set(enemy, true);
+      },
+      onEnemyCharging: (enemy) => {
+        const progress = Phaser.Math.Clamp(enemy.chargeProgress, 0, 1);
         const color = enemy.def.style?.lineColor ?? 0xff6b6b;
+        const inwardCount = Phaser.Math.Clamp(
+          Math.round(2 + progress * 4),
+          2,
+          6,
+        );
         this.particles.spawnInward(
           enemy.x,
           enemy.y,
-          4,
+          inwardCount,
           color,
-          enemy.radius * 2.8,
+          enemy.radius * (2.3 + progress * 0.9),
         );
-        enemy.glow(0.22);
-      }
 
-      const offscreen =
-        enemy.y >= bounds.y + bounds.height + margin ||
-        enemy.y <= bounds.y - margin ||
-        enemy.x <= bounds.x - margin ||
-        enemy.x >= bounds.x + bounds.width + margin;
-      if (
-        (enemy.isMoveFinished && offscreen) ||
-        enemy.y >= bounds.y + bounds.height + margin
-      ) {
-        this.releaseEnemy(i, false);
-        continue;
-      }
-      if (enemy.isMoveFinished && enemy.finishedElapsedMs > FINISH_LINGER_MS) {
-        const { height, width, x, y } = bounds;
-        const leftDist = enemy.x - x;
-        const rightDist = x + width - enemy.x;
-        const topDist = enemy.y - y;
-        const bottomDist = y + height - enemy.y;
-        const marginExit = 120;
-        let targetX = enemy.x;
-        let targetY = enemy.y;
-        const minDist = Math.min(leftDist, rightDist, topDist, bottomDist);
-        if (minDist === leftDist) {
-          targetX = x - marginExit;
-        } else if (minDist === rightDist) {
-          targetX = x + width + marginExit;
-        } else if (minDist === topDist) {
-          targetY = y - marginExit;
+        const ringCooldown = this.chargeRingCooldownMs.get(enemy) ?? 0;
+        const remaining = ringCooldown - deltaMs;
+        if (remaining <= 0) {
+          this.particles.spawnRing(
+            enemy.x,
+            enemy.y,
+            enemy.radius * (1.4 + progress * 1.2),
+            color,
+            2,
+            0.22,
+          );
+          this.chargeRingCooldownMs.set(
+            enemy,
+            Phaser.Math.Linear(220, 70, progress),
+          );
         } else {
-          targetY = y + height + marginExit;
+          this.chargeRingCooldownMs.set(enemy, remaining);
         }
-        enemy.triggerExit(targetX, targetY, EXIT_DASH_MS);
-      }
-
-      if (this.shipAlive) {
-        const push = this.getEnemyPush(enemy.x, enemy.y, enemy.radius);
-        if (push) {
-          const fxColor =
-            enemy.def.style?.lineColor ??
-            enemy.def.style?.fillColor ??
-            0xff6b6b;
-          const contactX = this.ship.x - push.nx * this.ship.radius;
-          const contactY = this.ship.y - push.ny * this.ship.radius;
-          this.applyPlayerPush(push.x, push.y, fxColor, contactX, contactY);
-          this.applyContactDamage(contactDamage, contactX, contactY);
+        enemy.glow(0.12 + progress * 0.32);
+      },
+      onEnemyContact: (index, enemy, push, contactDamage) => {
+        const fxColor =
+          enemy.def.style?.lineColor ?? enemy.def.style?.fillColor ?? 0xff6b6b;
+        const contactX = this.ship.x - push.nx * this.ship.radius;
+        const contactY = this.ship.y - push.ny * this.ship.radius;
+        this.applyPlayerPush(push.x, push.y, fxColor, contactX, contactY);
+        this.applyContactDamage(contactDamage, contactX, contactY);
+        enemy.takeDamage(contactDamage * 2);
+        if (!enemy.active) {
+          this.releaseEnemy(index, true);
         }
-      }
-    }
+      },
+      onReleaseEnemy: (index, dropGold) => this.releaseEnemy(index, dropGold),
+      playerAlive: this.shipAlive,
+      playerX: this.ship.x,
+      playerY: this.ship.y,
+    });
   }
 
   private getEnemyPush(
     enemyX: number,
     enemyY: number,
-    enemyRadius: number,
+    enemyHitbox: EnemyHitbox,
   ): { x: number; y: number; nx: number; ny: number } | null {
-    const dx = this.ship.x - enemyX;
-    const dy = this.ship.y - enemyY;
-    const minDist = this.ship.radius + enemyRadius;
-    const distSq = dx * dx + dy * dy;
-    if (distSq >= minDist * minDist) return null;
-
+    const penetration = resolveCircleHitboxPenetration(
+      this.ship.x,
+      this.ship.y,
+      this.ship.radius,
+      enemyX,
+      enemyY,
+      enemyHitbox,
+    );
+    if (!penetration) return null;
     const out = this.collisionPush;
-    if (distSq > 0.0001) {
-      const dist = Math.sqrt(distSq);
-      const nx = dx / dist;
-      const ny = dy / dist;
-      const push = minDist - dist;
-      out.nx = nx;
-      out.ny = ny;
-      out.x = nx * push;
-      out.y = ny * push;
-      return out;
-    }
-
-    out.nx = 1;
-    out.ny = 0;
-    out.x = minDist;
-    out.y = 0;
+    out.nx = penetration.nx;
+    out.ny = penetration.ny;
+    out.x = penetration.nx * penetration.depth;
+    out.y = penetration.ny * penetration.depth;
     return out;
   }
 
@@ -537,68 +534,45 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private applyContactDamage(amount: number, fxX?: number, fxY?: number): void {
+    const beforeHp = this.ship?.hp ?? 0;
     this.collisionResolver?.applyContactDamage(amount, fxX, fxY);
+    const afterHp = this.ship?.hp ?? beforeHp;
+    if (beforeHp > afterHp) {
+      this.runDamageTaken += beforeHp - afterHp;
+    }
   }
 
   private updateEnemyBullets(delta: number): void {
-    this.bulletContext.enemies = this.enemies;
-    this.bulletContext.playerX = this.ship.x;
-    this.bulletContext.playerY = this.ship.y;
-    this.bulletContext.playerAlive = this.shipAlive;
-    this.enemyBullets.forEachActive((bullet) => {
-      bullet.update(
-        delta,
-        this.playArea,
-        this.bulletContext,
-        this.emitMissileTrail,
-        this.handleBulletExplosion,
-      );
-      if (!bullet.active || !this.shipAlive) return;
-      const hit = circleOverlap(
-        bullet.x,
-        bullet.y,
-        bullet.radius,
-        this.ship.x,
-        this.ship.y,
-        this.ship.radius,
-      );
-      if (hit) {
-        if (bullet.spec.kind === "bomb" || bullet.spec.aoe) {
-          bullet.hit(this.handleBulletExplosion);
-        } else {
-          bullet.deactivate();
-          this.damagePlayer(bullet.damage, bullet.x, bullet.y);
-        }
-      }
+    updateEnemyBulletsRuntime(delta, {
+      bulletContext: this.bulletContext,
+      emitTrail: this.emitMissileTrail,
+      enemies: this.enemies,
+      enemyBullets: this.enemyBullets,
+      handleExplosion: this.handleBulletExplosion,
+      onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
+      onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
+      playArea: this.playArea,
+      playerAlive: this.shipAlive,
+      playerBullets: this.playerBullets,
+      playerRadius: this.ship.radius,
+      playerX: this.ship.x,
+      playerY: this.ship.y,
     });
   }
 
   private updatePickups(delta: number): void {
-    this.goldPickups.forEachActive((pickup) => {
-      const magnetRadius = this.shipAlive
-        ? MAGNET_RADIUS * this.magnetMultiplier
-        : 0;
-      pickup.update(
-        delta,
-        this.playArea,
-        this.ship.x,
-        this.ship.y,
-        magnetRadius,
-      );
-      if (this.shipAlive) {
-        const collected = circleOverlap(
-          pickup.x,
-          pickup.y,
-          pickup.radius,
-          this.ship.x,
-          this.ship.y,
-          this.ship.radius,
-        );
-        if (collected) {
-          this.gold += pickup.value;
-          pickup.deactivate();
-        }
-      }
+    updatePickupsRuntime({
+      delta,
+      goldPickups: this.goldPickups,
+      magnetRadius: MAGNET_RADIUS * this.magnetMultiplier,
+      onCollected: (value) => {
+        this.gold += value;
+      },
+      playArea: this.playArea,
+      playerAlive: this.shipAlive,
+      playerRadius: this.ship.radius,
+      playerX: this.ship.x,
+      playerY: this.ship.y,
     });
   }
 
@@ -609,26 +583,27 @@ export class PlayScene extends Phaser.Scene {
     hpMultiplier: number,
     overrides?: EnemyOverride,
   ): void {
-    const base = ENEMIES[enemyId];
-    const def = overrides ? { ...base, ...overrides } : base;
-    def.move ??= base.move;
-    def.fire ??= base.fire;
-    def.goldDrop ??= base.goldDrop;
-    def.radius ??= base.radius;
-    def.phases ??= base.phases;
-    def.style ??= base.style;
-    def.rotation ??= base.rotation;
-    def.rotationDeg ??= base.rotationDeg;
-    const worldX = this.playArea.x + (0.5 + x) * this.playArea.width;
-    const worldY = this.playArea.y + y * this.playArea.height;
-    const enemy = this.enemyPool.pop() ?? new Enemy(this, def, worldX, worldY);
-    enemy.reset(def, worldX, worldY, hpMultiplier);
-    this.enemies.push(enemy);
+    this.runEnemiesSpawned += 1;
+    spawnEnemyRuntime(enemyId, {
+      enemies: this.enemies,
+      enemyPool: this.enemyPool,
+      hpMultiplier,
+      overrides,
+      playArea: this.playArea,
+      scene: this,
+      spawnX: x,
+      spawnY: y,
+    });
+    const spawned = this.enemies[this.enemies.length - 1];
+    if (spawned) {
+      this.enemyEntered.set(spawned, false);
+    }
   }
 
   private releaseEnemy(index: number, dropGold: boolean): void {
     const enemy = this.enemies[index];
     if (dropGold) {
+      this.runEnemiesDefeated += 1;
       if (enemy.def.id === "boss") {
         this.particles.spawnBurst(enemy.x, enemy.y, 40, 0xff6b6b);
         this.particles.spawnBurst(enemy.x, enemy.y, 30, 0xff9fae);
@@ -656,12 +631,18 @@ export class PlayScene extends Phaser.Scene {
       this.particles.spawnBurst(enemy.x, enemy.y, 6, 0x1f3c5e);
     }
     enemy.deactivate();
+    this.enemyEntered.delete(enemy);
     this.enemies.splice(index, 1);
     this.enemyPool.push(enemy);
   }
 
   private damagePlayer(amount: number, fxX?: number, fxY?: number): void {
+    const beforeHp = this.ship?.hp ?? 0;
     this.collisionResolver?.applyHitDamage(amount, fxX, fxY);
+    const afterHp = this.ship?.hp ?? beforeHp;
+    if (beforeHp > afterHp) {
+      this.runDamageTaken += beforeHp - afterHp;
+    }
   }
 
   private dropGold(enemy: Enemy): void {
@@ -699,9 +680,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private bankRunGold(): void {
-    if (this.goldBanked) return;
-    bankGold(this.gold);
-    this.goldBanked = true;
+    this.goldBanked = bankRunGoldOnce(this.gold, this.goldBanked, bankGold);
   }
 
   private handleShipDeath(): void {
@@ -714,7 +693,7 @@ export class PlayScene extends Phaser.Scene {
     this.particles.spawnBurst(this.ship.x, this.ship.y, 80, 0xff8ba0);
     this.gameOverTimer = this.time.delayedCall(1000, () => {
       this.overlayShown = true;
-      this.game.events.emit("ui:gameover", {
+      emitGameOverEvent(this.game, {
         gold: this.gold,
         wave: this.getWaveDisplay(),
       });
@@ -722,15 +701,13 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private clearWaveEntities(): void {
-    for (const enemy of this.enemies) {
-      enemy.deactivate();
-      this.enemyPool.push(enemy);
-    }
-    this.enemies.length = 0;
-
-    this.playerBullets.forEachActive((bullet) => bullet.deactivate());
-    this.enemyBullets.forEachActive((bullet) => bullet.deactivate());
-    this.goldPickups.forEachActive((pickup) => pickup.deactivate());
+    clearWaveEntitiesRuntime({
+      enemies: this.enemies,
+      enemyBullets: this.enemyBullets,
+      enemyPool: this.enemyPool,
+      goldPickups: this.goldPickups,
+      playerBullets: this.playerBullets,
+    });
   }
 
   private goToShop(): void {
@@ -824,6 +801,9 @@ export class PlayScene extends Phaser.Scene {
     if (this.parallax) this.parallax.setBounds(this.playArea);
     if (this.hud) this.hud.setBounds(this.playArea);
     if (this.levelRunner) this.levelRunner.setBounds(this.playArea);
+    for (const enemy of this.enemies) {
+      enemy.setPlayfieldSize(this.playArea.width, this.playArea.height);
+    }
     this.positionFpsText();
   }
 
@@ -897,21 +877,16 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateOuterFrameVars(): void {
-    const root = document.documentElement;
     const canvasBounds = this.game.canvas.getBoundingClientRect();
     const scaleX = canvasBounds.width / this.scale.width;
     const scaleY = canvasBounds.height / this.scale.height;
-    const playX = canvasBounds.left + this.playArea.x * scaleX;
-    const playY = canvasBounds.top + this.playArea.y * scaleY;
-    const playW = this.playArea.width * scaleX;
-    const playH = this.playArea.height * scaleY;
-    root.style.setProperty("--play-x", `${playX}px`);
-    root.style.setProperty("--play-y", `${playY}px`);
-    root.style.setProperty("--play-w", `${playW}px`);
-    root.style.setProperty("--play-h", `${playH}px`);
-    root.style.setProperty("--play-cx", `${playX + playW / 2}px`);
-    root.style.setProperty("--play-cy", `${playY + playH / 2}px`);
-    root.style.setProperty("--play-r", `${PLAYFIELD_CORNER_RADIUS * scaleX}px`);
+    setPlayfieldCssVars({
+      cornerRadius: PLAYFIELD_CORNER_RADIUS * scaleX,
+      height: this.playArea.height * scaleY,
+      width: this.playArea.width * scaleX,
+      x: canvasBounds.left + this.playArea.x * scaleX,
+      y: canvasBounds.top + this.playArea.y * scaleY,
+    });
   }
 
   private onResize = (_gameSize: Phaser.Structs.Size): void => {
@@ -928,17 +903,19 @@ export class PlayScene extends Phaser.Scene {
     this.clearWaveEntities();
     this.bankRunGold();
     const activeSession = getActiveLevelSession();
+    if (activeSession?.id) {
+      recordLevelCompletion(activeSession.id, {
+        damageTaken: this.runDamageTaken,
+        elapsedMs: this.runElapsedMs,
+        enemiesDefeated: this.runEnemiesDefeated,
+        enemiesSpawned: this.runEnemiesSpawned,
+        hp: this.ship.hp,
+        maxHp: this.ship.maxHp,
+      });
+    }
     const beatId = activeSession?.level.postBeatId;
     this.time.delayedCall(700, () => {
-      if (beatId) {
-        this.game.events.emit("ui:story", {
-          beatId,
-          clearLevelOnExit: true,
-          nextRoute: "menu",
-        });
-      } else {
-        this.game.events.emit("ui:route", "menu");
-      }
+      emitVictoryRoute(this.game, beatId);
     });
   }
 

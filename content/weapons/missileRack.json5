@@ -1,0 +1,30 @@
+{
+  "id": "missileRack",
+  "name": "Missile Rack",
+  "description": "Twin missile lanes with solid impact.",
+  "cost": 240,
+  "gunId": "missile",
+  "size": "small",
+  "stats": {
+    "fireRate": 1.9,
+    "bulletId": "missile",
+    "speed": 300,
+    "damage": 1.35,
+    "shots": [
+      {
+        "angleDeg": -5,
+        "offset": {
+          "x": -0.18,
+          "y": 0
+        }
+      },
+      {
+        "angleDeg": 5,
+        "offset": {
+          "x": 0.18,
+          "y": 0
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "obj_s1_l7",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 120 }
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 105s",
+      "maxMs": 105000,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 80 }
+      }
+    },
+    {
+      "id": "survivor",
+      "kind": "finishWithHpRatio",
+      "label": "Finish with at least 55% HP",
+      "minRatio": 0.55,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 100 }
+      }
+    }
+  ]
+}

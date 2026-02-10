@@ -46,17 +46,8 @@ export class WaveScheduler {
     }
   }
 
-  skipToNext(): void {
-    if (this.completed) return;
-    this.startWave(this.waveIndex + 1);
-  }
-
   isComplete(): boolean {
     return this.completed;
-  }
-
-  getWaveIndex(): number {
-    return this.waveIndex;
   }
 
   getWaveNumber(): number {

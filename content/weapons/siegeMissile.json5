@@ -1,0 +1,23 @@
+{
+  "id": "siegeMissile",
+  "name": "Siege Missile",
+  "description": "Slow heavy missile for decisive volleys.",
+  "cost": 360,
+  "gunId": "missile2",
+  "size": "large",
+  "stats": {
+    "fireRate": 1,
+    "bulletId": "missile",
+    "speed": 245,
+    "damage": 3.4,
+    "shots": [
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": -0.35
+        }
+      }
+    ]
+  }
+}

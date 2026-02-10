@@ -10,11 +10,11 @@
   "motion": {
     "kind": "sine",
     "axis": "x",
-    "amplitude": 0.08,
-    "periodMs": 12000,
+    "amplitude": 0.11,
+    "periodMs": 9000,
     "phase": 0.8
   },
   "damageOnTouch": true,
-  "fillColor": 725536,
-  "lineColor": 1782089
+  "fillColor": "#0b1220",
+  "lineColor": "#1b3149"
 }

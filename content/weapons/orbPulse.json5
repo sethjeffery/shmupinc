@@ -1,0 +1,23 @@
+{
+  "id": "orbPulse",
+  "name": "Orb Pulse",
+  "description": "Stable single-orb pressure.",
+  "cost": 100,
+  "gunId": "orb",
+  "size": "small",
+  "stats": {
+    "fireRate": 4.2,
+    "bulletId": "orb",
+    "speed": 420,
+    "damage": 1,
+    "shots": [
+      {
+        "angleDeg": 0,
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    ]
+  }
+}

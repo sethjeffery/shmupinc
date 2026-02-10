@@ -1,15 +1,11 @@
 {
   "id": "shop_intro",
-  "allowedWeapons": [
-    "orbBlaster",
-    "dartGun",
-    "pulseArray",
-    "rapidDarts",
-    "haloOrbs"
-  ],
+  "allowedWeapons": ["orbPulse", "orbTwin", "dartNeedler"],
+  "allowedMods": ["powerCore"],
   "allowedShips": ["starter", "scout"],
   "caps": {
-    "weaponCost": 200,
-    "shipCost": 180
+    "weaponCost": 220,
+    "modCost": 180,
+    "shipCost": 150
   }
 }

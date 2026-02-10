@@ -1,4 +1,6 @@
-import { z } from "zod";
+import type { JsonSchema } from "./jsonSchema";
+
+import traverse from "json-schema-traverse";
 
 export interface SchemaExplorerEntry {
   defaultValue?: string;
@@ -36,94 +38,150 @@ const mergeTypeLabels = (left: string, right: string): string => {
   return Array.from(parts).join(" | ");
 };
 
-const resolveDefault = (value: unknown): unknown => {
-  if (typeof value === "function") {
-    return (value as () => unknown)();
-  }
-  return value;
-};
+const decodePointerSegment = (value: string): string =>
+  value.replace(/~1/g, "/").replace(/~0/g, "~");
 
-interface ZodDef {
-  defaultValue?: unknown;
-  element?: z.ZodTypeAny;
-  entries?: Record<string, string>;
-  innerType?: z.ZodTypeAny;
-  options?: z.ZodTypeAny[];
-  shape?: Record<string, z.ZodTypeAny>;
-  type: string;
-  valueType?: z.ZodTypeAny;
-  values?: unknown[];
-}
+const isNumberSegment = (value: string): boolean => /^\d+$/.test(value);
 
-const unwrapSchema = (
-  schema: z.ZodTypeAny,
-): { defaultValue?: unknown; description?: string; schema: z.ZodTypeAny } => {
-  let current = schema;
-  let defaultValue: unknown = undefined;
-  let description = schema.description;
+const pointerToPath = (jsonPtr: string): string => {
+  if (!jsonPtr) return "";
+  const rawSegments = jsonPtr
+    .split("/")
+    .slice(1)
+    .map((segment) => decodePointerSegment(segment));
 
-  while (current.type === "default") {
-    const def = current._def as ZodDef;
-    if (defaultValue === undefined) {
-      defaultValue = resolveDefault(def.defaultValue);
+  const tokens: string[] = [];
+  for (let i = 0; i < rawSegments.length; i += 1) {
+    const segment = rawSegments[i];
+    if (segment === "properties") {
+      const key = rawSegments[i + 1];
+      if (key) {
+        tokens.push(key);
+        i += 1;
+      }
+      continue;
     }
-    current = def.innerType ?? current;
-    description = description ?? current.description;
+    if (segment === "items") {
+      if (tokens.length === 0) {
+        tokens.push("[]");
+      } else {
+        const last = tokens.length - 1;
+        tokens[last] = `${tokens[last]}[]`;
+      }
+      continue;
+    }
+    if (segment === "additionalProperties") {
+      if (tokens.length === 0) {
+        tokens.push("*");
+      } else {
+        const last = tokens.length - 1;
+        tokens[last] = `${tokens[last]}.*`;
+      }
+      continue;
+    }
+    if (segment === "patternProperties") {
+      const key = rawSegments[i + 1];
+      if (key) {
+        if (tokens.length === 0) {
+          tokens.push("*");
+        } else {
+          const last = tokens.length - 1;
+          tokens[last] = `${tokens[last]}.*`;
+        }
+        i += 1;
+      }
+      continue;
+    }
+    if (
+      segment === "allOf" ||
+      segment === "anyOf" ||
+      segment === "oneOf" ||
+      segment === "$defs" ||
+      segment === "definitions" ||
+      segment === "dependentSchemas" ||
+      segment === "else" ||
+      segment === "if" ||
+      segment === "not" ||
+      segment === "then"
+    ) {
+      const next = rawSegments[i + 1];
+      if (next && isNumberSegment(next)) {
+        i += 1;
+      }
+      continue;
+    }
+    if (isNumberSegment(segment)) {
+      continue;
+    }
   }
 
-  while (current.type === "optional" || current.type === "nullable") {
-    const def = current._def as ZodDef;
-    current = def.innerType ?? current;
-    description = description ?? current.description;
-  }
-
-  return { defaultValue, description, schema: current };
+  return tokens.join(".");
 };
 
-const formatType = (schema: z.ZodTypeAny): string => {
-  const def = schema._def as ZodDef;
-  switch (schema.type) {
-    case "string":
-      return "string";
-    case "number":
-      return "number";
-    case "boolean":
-      return "boolean";
-    case "literal":
-      return JSON.stringify(def.values?.[0]);
-    case "enum":
-      return Object.values(def.entries ?? {})
-        .map((value) => JSON.stringify(value))
-        .join(" | ");
-    case "array":
-      return `${formatType(def.element ?? z.unknown())}[]`;
-    case "object":
-      return "object";
-    case "union":
-      return (def.options ?? [])
-        .map((option) => formatType(option))
-        .join(" | ");
-    case "record":
-      return "record";
-    case "any":
-      return "any";
-    case "unknown":
-      return "unknown";
-    default:
-      return "unknown";
-  }
+const asSchemaArray = (value: unknown): JsonSchema[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry): entry is JsonSchema => Boolean(entry) && typeof entry === "object",
+  );
 };
 
-const getShape = (schema: z.ZodTypeAny): Record<string, z.ZodTypeAny> => {
-  const def = schema._def as ZodDef;
-  if (def.shape && typeof def.shape === "object") {
-    return def.shape;
+const formatType = (schema: JsonSchema): string => {
+  const enumValues = (schema as { enum?: unknown[] }).enum;
+  if (Array.isArray(enumValues) && enumValues.length > 0) {
+    return enumValues.map((value) => JSON.stringify(value)).join(" | ");
   }
-  return {};
+
+  const constValue = (schema as { const?: unknown }).const;
+  if (constValue !== undefined) {
+    return JSON.stringify(constValue);
+  }
+
+  const explicitType = (schema as { type?: string | string[] }).type;
+  if (Array.isArray(explicitType)) {
+    return explicitType.join(" | ");
+  }
+
+  if (typeof explicitType === "string") {
+    if (explicitType === "array") {
+      const items = (schema as { items?: unknown }).items;
+      if (items && typeof items === "object" && !Array.isArray(items)) {
+        return `${formatType(items as JsonSchema)}[]`;
+      }
+      return "array";
+    }
+    return explicitType;
+  }
+
+  let unionType = "";
+  for (const keyword of ["anyOf", "oneOf", "allOf"] as const) {
+    const options = asSchemaArray((schema as Record<string, unknown>)[keyword]);
+    for (const option of options) {
+      unionType = mergeTypeLabels(unionType, formatType(option));
+    }
+  }
+  if (unionType) return unionType;
+
+  const items = (schema as { items?: unknown }).items;
+  if (items && typeof items === "object" && !Array.isArray(items)) {
+    return `${formatType(items as JsonSchema)}[]`;
+  }
+
+  const properties = (schema as { properties?: unknown }).properties;
+  if (properties && typeof properties === "object") {
+    return "object";
+  }
+
+  const additionalProperties = (schema as { additionalProperties?: unknown })
+    .additionalProperties;
+  if (additionalProperties) {
+    return "record";
+  }
+
+  return "unknown";
 };
 
 export const buildSchemaExplorer = (
-  schema: z.ZodTypeAny,
+  schema: JsonSchema,
 ): SchemaExplorerEntry[] => {
   const entries = new Map<string, SchemaExplorerEntry>();
 
@@ -138,53 +196,24 @@ export const buildSchemaExplorer = (
     existing.defaultValue = existing.defaultValue ?? entry.defaultValue;
   };
 
-  const walk = (current: z.ZodTypeAny, path: string): void => {
-    const { defaultValue, description, schema: base } = unwrapSchema(current);
-    const typeLabel = formatType(base);
-    if (path) {
-      addEntry({
-        defaultValue: formatDefault(defaultValue),
-        description,
-        path,
-        type: typeLabel,
-      });
-    }
+  traverse(schema, (currentSchema: JsonSchema, jsonPtr: string) => {
+    const path = pointerToPath(jsonPtr);
+    if (!path) return;
+    const description =
+      typeof currentSchema.description === "string"
+        ? currentSchema.description
+        : undefined;
+    addEntry({
+      defaultValue: formatDefault(
+        (currentSchema as { default?: unknown }).default,
+      ),
+      description,
+      path,
+      type: formatType(currentSchema),
+    });
+  });
 
-    if (base.type === "object") {
-      const shape = getShape(base);
-      for (const [key, value] of Object.entries(shape)) {
-        const nextPath = path ? `${path}.${key}` : key;
-        walk(value, nextPath);
-      }
-      return;
-    }
-
-    if (base.type === "array") {
-      const def = base._def as ZodDef;
-      const nextPath = path ? `${path}[]` : "[]";
-      if (def.element) {
-        walk(def.element, nextPath);
-      }
-      return;
-    }
-
-    if (base.type === "union") {
-      const def = base._def as ZodDef;
-      for (const option of def.options ?? []) {
-        walk(option, path);
-      }
-    }
-
-    if (base.type === "record") {
-      const def = base._def as ZodDef;
-      const nextPath = path ? `${path}.*` : "*";
-      if (def.valueType) {
-        walk(def.valueType, nextPath);
-      }
-    }
-  };
-
-  walk(schema, "");
-
-  return Array.from(entries.values());
+  return Array.from(entries.values()).sort((left, right) =>
+    left.path.localeCompare(right.path),
+  );
 };

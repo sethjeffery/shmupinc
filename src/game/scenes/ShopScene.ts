@@ -1,8 +1,11 @@
 import type { ShopRules } from "../data/levels";
+import type { ModInstanceId } from "../data/modInstances";
+import type { ModIconKind, ModId } from "../data/mods";
+import type { ModDefinition } from "../data/modTypes";
 import type { MountAssignment, SaveData } from "../data/save";
 import type { BulletKind } from "../data/scripts";
 import type { ShipId } from "../data/ships";
-import type { ShipDefinition, ShipShape, ShipVector } from "../data/shipTypes";
+import type { ShipDefinition, ShipVector } from "../data/shipTypes";
 import type { WeaponInstanceId } from "../data/weaponInstances";
 import type { WeaponDefinition, WeaponId } from "../data/weapons";
 import type { WeaponSize } from "../data/weaponTypes";
@@ -11,16 +14,28 @@ import Phaser from "phaser";
 
 import { GUNS } from "../data/guns";
 import { getActiveLevelSession } from "../data/levelState";
-import { buildMountedWeapons, loadSave, mutateSave } from "../data/save";
+import { MODS } from "../data/mods";
+import {
+  addResourceInSave,
+  buildMountedWeapons,
+  createModInstanceInSave,
+  createWeaponInstanceInSave,
+  getMissingUnlocks,
+  getResourceAmount,
+  hasRequiredUnlocks,
+  loadSave,
+  mutateSave,
+  spendResourceInSave,
+} from "../data/save";
 import { SHIPS } from "../data/ships";
 import { filterShopItems, pickAllowedId } from "../data/shopRules";
 import { canMountWeapon } from "../data/weaponMounts";
 import { WEAPONS } from "../data/weapons";
 import { drawGunToCanvas } from "../render/gunShapes";
-import { drawShipToCanvas } from "../render/shipShapes";
+import { DEFAULT_SHIP_VECTOR, drawShipToCanvas } from "../render/shipShapes";
 import { PreviewScene } from "./PreviewScene";
 
-type ShopItemType = "inventory" | "mount" | "ship" | "weapon";
+type ShopItemType = "inventory" | "mod" | "mount" | "ship" | "weapon";
 
 type ShopCategory = "armory" | "loadout" | "ships";
 
@@ -28,14 +43,27 @@ type ShopCardState = "equipped" | "locked" | "mounted" | "owned" | "restricted";
 
 type TabIcon = "mount" | "play" | "ship" | "weapon";
 
-type CardIconKind = "gun" | "ship";
+type CardIconKind = "gun" | "mod" | "ship";
 
-interface DragPayload {
+interface WeaponDragPayload {
+  kind: "weapon";
   instanceId: WeaponInstanceId;
   sourceMountId?: string;
 }
 
+interface ModDragPayload {
+  kind: "mod";
+  instanceId: ModInstanceId;
+  sourceMountId?: string;
+}
+
+type DragPayload = ModDragPayload | WeaponDragPayload;
+
 const SELL_RATIO = 0.5;
+const PRIMARY_RESOURCE_ID = "gold";
+
+const formatCost = (cost: number, resourceId: string): string =>
+  resourceId === PRIMARY_RESOURCE_ID ? `${cost}g` : `${cost} ${resourceId}`;
 
 const formatColor = (color: number): string =>
   `#${color.toString(16).padStart(6, "0")}`;
@@ -339,7 +367,9 @@ export class ShopScene extends Phaser.Scene {
       return;
     this.syncShopRules();
     this.ensureAllowedSelections();
-    const goldValue = `Gold: ${this.save.gold}`;
+    const goldValue = `Gold: ${Math.round(
+      getResourceAmount(this.save, PRIMARY_RESOURCE_ID),
+    )}`;
     this.goldText.textContent = goldValue;
     if (this.goldFooterText) this.goldFooterText.textContent = goldValue;
 
@@ -470,7 +500,7 @@ export class ShopScene extends Phaser.Scene {
     switch (category) {
       case "armory":
         return {
-          cards: this.buildArmoryWeaponCards(),
+          cards: this.buildArmoryCards(),
           title: "Armory",
         };
       case "loadout":
@@ -490,6 +520,7 @@ export class ShopScene extends Phaser.Scene {
   ): MountAssignment[] {
     if (!save.mountedWeapons[ship.id]) {
       save.mountedWeapons[ship.id] = ship.mounts.map((mount) => ({
+        modInstanceIds: [],
         mountId: mount.id,
         weaponInstanceId: null,
       }));
@@ -505,6 +536,12 @@ export class ShopScene extends Phaser.Scene {
     if (!this.shopRules) return true;
     const filtered = this.getFilteredWeapons();
     return filtered.some((item) => item.id === weapon.id);
+  }
+
+  private isModAllowed(mod: ModDefinition): boolean {
+    if (!this.shopRules) return true;
+    const filtered = this.getFilteredMods();
+    return filtered.some((item) => item.id === mod.id);
   }
 
   private isShipAllowedForPurchase(id: ShipId): boolean {
@@ -546,6 +583,16 @@ export class ShopScene extends Phaser.Scene {
     );
   }
 
+  private getFilteredMods(): (typeof MODS)[ModId][] {
+    const mods = Object.values(MODS);
+    return filterShopItems(
+      mods,
+      this.shopRules,
+      this.shopRules?.allowedMods,
+      this.shopRules?.caps?.modCost,
+    );
+  }
+
   private buildShipCards(): HTMLElement[] {
     const allowedIds = new Set(this.getFilteredShips().map((ship) => ship.id));
     return this.getVisibleShips()
@@ -553,6 +600,11 @@ export class ShopScene extends Phaser.Scene {
       .map((ship) => {
         const owned = this.save.unlockedShips.includes(ship.id);
         const selected = this.save.selectedShipId === ship.id;
+        const missingUnlocks = getMissingUnlocks(
+          this.save,
+          ship.requiresUnlocks,
+        );
+        const unlockBlocked = !owned && missingUnlocks.length > 0;
         const purchasable = allowedIds.has(ship.id);
         const state: ShopCardState = selected
           ? "equipped"
@@ -563,9 +615,14 @@ export class ShopScene extends Phaser.Scene {
           ? "Equipped"
           : owned
             ? "Owned"
-            : purchasable
-              ? `${ship.cost}g`
-              : "Restricted";
+            : unlockBlocked
+              ? "Blueprint Required"
+              : purchasable
+                ? formatCost(
+                    ship.cost,
+                    ship.costResource ?? PRIMARY_RESOURCE_ID,
+                  )
+                : "Restricted";
         return this.buildCard({
           accent: formatColor(ship.color),
           accentColor: ship.color,
@@ -573,7 +630,7 @@ export class ShopScene extends Phaser.Scene {
           iconKind: "ship",
           id: ship.id,
           name: ship.name,
-          shipShape: ship.vector ?? ship.shape,
+          shipShape: ship.vector,
           state,
           status,
           type: "ship",
@@ -581,17 +638,32 @@ export class ShopScene extends Phaser.Scene {
       });
   }
 
-  private buildArmoryWeaponCards(): HTMLElement[] {
-    return this.getFilteredWeapons()
+  private buildArmoryCards(): HTMLElement[] {
+    const weaponCards = this.getFilteredWeapons()
       .sort((a, b) => a.cost - b.cost)
       .map((weapon) => {
         const ownedCount = this.save.ownedWeapons.filter(
           (instance) => instance.weaponId === weapon.id,
         ).length;
-        const status =
-          ownedCount > 0
-            ? `Owned x${ownedCount} · ${weapon.cost}g`
-            : `${weapon.cost}g`;
+        const missingUnlocks = getMissingUnlocks(
+          this.save,
+          weapon.requiresUnlocks,
+        );
+        const unlockBlocked = ownedCount === 0 && missingUnlocks.length > 0;
+        const status = unlockBlocked
+          ? `Blueprint Required · ${formatCost(
+              weapon.cost,
+              weapon.costResource ?? PRIMARY_RESOURCE_ID,
+            )}`
+          : ownedCount > 0
+            ? `Owned x${ownedCount} · ${formatCost(
+                weapon.cost,
+                weapon.costResource ?? PRIMARY_RESOURCE_ID,
+              )}`
+            : formatCost(
+                weapon.cost,
+                weapon.costResource ?? PRIMARY_RESOURCE_ID,
+              );
         const state: ShopCardState = ownedCount > 0 ? "owned" : "locked";
         return this.buildCard({
           accent: formatColor(weapon.stats.bullet.color ?? 0x7df9ff),
@@ -607,6 +679,44 @@ export class ShopScene extends Phaser.Scene {
           weaponSize: weapon.size,
         });
       });
+    const modCards = this.getFilteredMods()
+      .sort((a, b) => a.cost - b.cost)
+      .map((mod) => {
+        const ownedCount = this.save.ownedMods.filter(
+          (instance) => instance.modId === mod.id,
+        ).length;
+        const missingUnlocks = getMissingUnlocks(
+          this.save,
+          mod.requiresUnlocks,
+        );
+        const unlockBlocked = ownedCount === 0 && missingUnlocks.length > 0;
+        const status = unlockBlocked
+          ? `Blueprint Required · ${formatCost(
+              mod.cost,
+              mod.costResource ?? PRIMARY_RESOURCE_ID,
+            )}`
+          : ownedCount > 0
+            ? `Owned x${ownedCount} · ${formatCost(
+                mod.cost,
+                mod.costResource ?? PRIMARY_RESOURCE_ID,
+              )}`
+            : formatCost(mod.cost, mod.costResource ?? PRIMARY_RESOURCE_ID);
+        const state: ShopCardState = ownedCount > 0 ? "owned" : "locked";
+        const accentColor = this.getModAccentColor(mod.iconKind);
+        return this.buildCard({
+          accent: formatColor(accentColor),
+          accentColor,
+          description: mod.description,
+          iconKind: "mod",
+          id: mod.id,
+          modIcon: mod.iconKind,
+          name: mod.name,
+          state,
+          status,
+          type: "mod",
+        });
+      });
+    return [...weaponCards, ...modCards];
   }
 
   private createCardBase(data: {
@@ -615,8 +725,9 @@ export class ShopScene extends Phaser.Scene {
     description: string;
     gunId?: string;
     iconKind: CardIconKind;
+    modIcon?: ModIconKind;
     name: string;
-    shipShape?: ShipShape | ShipVector;
+    shipShape?: ShipVector;
     weaponSize?: WeaponSize;
     state: ShopCardState;
     status: string;
@@ -645,8 +756,9 @@ export class ShopScene extends Phaser.Scene {
       data.iconKind,
       data.accent,
       data.accentColor,
-      data.shipShape ?? "starling",
+      data.shipShape ?? DEFAULT_SHIP_VECTOR,
       data.gunId,
+      data.modIcon,
       data.weaponSize,
     );
 
@@ -678,8 +790,9 @@ export class ShopScene extends Phaser.Scene {
     gunId?: string;
     iconKind: CardIconKind;
     id: string;
+    modIcon?: ModIconKind;
     name: string;
-    shipShape?: ShipShape | ShipVector;
+    shipShape?: ShipVector;
     weaponSize?: WeaponSize;
     state: ShopCardState;
     status: string;
@@ -709,9 +822,13 @@ export class ShopScene extends Phaser.Scene {
 
     const ship = this.getSelectedShip();
     const assignments = this.getAssignmentsForShip(ship);
-    const mountedIds = new Set<WeaponInstanceId>();
+    const mountedWeaponIds = new Set<WeaponInstanceId>();
+    const mountedModIds = new Set<ModInstanceId>();
     for (const entry of assignments) {
-      if (entry.weaponInstanceId) mountedIds.add(entry.weaponInstanceId);
+      if (entry.weaponInstanceId) mountedWeaponIds.add(entry.weaponInstanceId);
+      for (const modId of entry.modInstanceIds) {
+        mountedModIds.add(modId);
+      }
     }
 
     const mountSection = document.createElement("div");
@@ -722,36 +839,71 @@ export class ShopScene extends Phaser.Scene {
     mountSection.appendChild(mountTitle);
     mountSection.appendChild(this.buildMountVisual(ship, assignments));
 
-    const inventorySection = document.createElement("div");
-    inventorySection.className = "shop-loadout-section";
-    const inventoryTitle = document.createElement("div");
-    inventoryTitle.className = "shop-section-title";
-    inventoryTitle.textContent = "Inventory";
-    const inventoryGrid = document.createElement("div");
-    inventoryGrid.className = "shop-inventory-grid";
-    inventoryGrid.dataset.drop = "inventory";
+    const weaponInventorySection = document.createElement("div");
+    weaponInventorySection.className = "shop-loadout-section";
+    const weaponInventoryTitle = document.createElement("div");
+    weaponInventoryTitle.className = "shop-section-title";
+    weaponInventoryTitle.textContent = "Weapon Inventory";
+    const weaponInventoryGrid = document.createElement("div");
+    weaponInventoryGrid.className = "shop-inventory-grid";
+    weaponInventoryGrid.dataset.drop = "inventory";
+    weaponInventoryGrid.dataset.dropKind = "weapon";
 
-    const inventory = this.save.ownedWeapons.filter(
-      (instance) => !mountedIds.has(instance.id),
+    const weaponInventory = this.save.ownedWeapons.filter(
+      (instance) => !mountedWeaponIds.has(instance.id),
     );
-    if (inventory.length === 0) {
+    if (weaponInventory.length === 0) {
       const empty = document.createElement("div");
       empty.className = "shop-empty";
       empty.textContent = "No spare weapons. Buy more in the Armory.";
-      inventoryGrid.appendChild(empty);
+      weaponInventoryGrid.appendChild(empty);
     } else {
-      for (const instance of inventory) {
+      for (const instance of weaponInventory) {
         const weapon = WEAPONS[instance.weaponId];
         if (!weapon) continue;
-        inventoryGrid.appendChild(this.buildInventoryCard(instance.id, weapon));
+        weaponInventoryGrid.appendChild(
+          this.buildInventoryCard(instance.id, weapon),
+        );
       }
     }
 
-    inventorySection.appendChild(inventoryTitle);
-    inventorySection.appendChild(inventoryGrid);
+    weaponInventorySection.appendChild(weaponInventoryTitle);
+    weaponInventorySection.appendChild(weaponInventoryGrid);
+
+    const modInventorySection = document.createElement("div");
+    modInventorySection.className = "shop-loadout-section";
+    const modInventoryTitle = document.createElement("div");
+    modInventoryTitle.className = "shop-section-title";
+    modInventoryTitle.textContent = "Mod Inventory";
+    const modInventoryGrid = document.createElement("div");
+    modInventoryGrid.className = "shop-inventory-grid";
+    modInventoryGrid.dataset.drop = "inventory";
+    modInventoryGrid.dataset.dropKind = "mod";
+
+    const modInventory = this.save.ownedMods.filter(
+      (instance) => !mountedModIds.has(instance.id),
+    );
+    if (modInventory.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "shop-empty";
+      empty.textContent = "No spare mods. Buy more in the Armory.";
+      modInventoryGrid.appendChild(empty);
+    } else {
+      for (const instance of modInventory) {
+        const mod = MODS[instance.modId];
+        if (!mod) continue;
+        modInventoryGrid.appendChild(
+          this.buildModInventoryCard(instance.id, mod),
+        );
+      }
+    }
+
+    modInventorySection.appendChild(modInventoryTitle);
+    modInventorySection.appendChild(modInventoryGrid);
 
     wrapper.appendChild(mountSection);
-    wrapper.appendChild(inventorySection);
+    wrapper.appendChild(weaponInventorySection);
+    wrapper.appendChild(modInventorySection);
     return wrapper;
   }
 
@@ -795,7 +947,7 @@ export class ShopScene extends Phaser.Scene {
       dot.className = `shop-mount-dot shop-mount-dot--${mount.size}`;
       dot.dataset.drop = "mount";
       dot.dataset.mountId = mount.id;
-      dot.title = `${mount.zone} ${mount.size}`;
+      dot.title = `${mount.size} · ${mount.modSlots} mod`;
       const assignment = assignmentById.get(mount.id);
       const instanceId = assignment?.weaponInstanceId ?? null;
       const instance = instanceId
@@ -803,6 +955,25 @@ export class ShopScene extends Phaser.Scene {
           null)
         : null;
       const weapon = instance ? WEAPONS[instance.weaponId] : null;
+      const mountedMods = (assignment?.modInstanceIds ?? [])
+        .map((modInstanceId) =>
+          this.save.ownedMods.find((entry) => entry.id === modInstanceId),
+        )
+        .filter((modInstance): modInstance is { id: string; modId: string } =>
+          Boolean(modInstance),
+        )
+        .map((modInstance) => ({
+          definition: MODS[modInstance.modId],
+          instanceId: modInstance.id,
+        }))
+        .filter(
+          (
+            entry,
+          ): entry is {
+            definition: ModDefinition;
+            instanceId: ModInstanceId;
+          } => Boolean(entry.definition),
+        );
       if (assignment?.weaponInstanceId) {
         dot.classList.add("is-occupied");
       }
@@ -823,10 +994,31 @@ export class ShopScene extends Phaser.Scene {
         callout.dataset.side = side;
         callout.dataset.instanceId = instance?.id;
         callout.dataset.mountId = mount.id;
+        callout.dataset.kind = "weapon";
         callout.setAttribute("draggable", "true");
         callout.addEventListener("dragstart", this.handleDragStartBound);
         callout.addEventListener("dragend", this.handleDragEndBound);
-        callout.textContent = weapon.name;
+        const weaponName = document.createElement("div");
+        weaponName.textContent = weapon.name;
+        callout.appendChild(weaponName);
+        if (mountedMods.length > 0) {
+          const modRow = document.createElement("div");
+          modRow.className = "shop-mount-mod-row";
+          for (const mod of mountedMods) {
+            const chip = document.createElement("div");
+            chip.className = "shop-mount-mod-chip";
+            chip.dataset.instanceId = mod.instanceId;
+            chip.dataset.kind = "mod";
+            chip.dataset.modId = mod.definition.id;
+            chip.dataset.mountId = mount.id;
+            chip.setAttribute("draggable", "true");
+            chip.addEventListener("dragstart", this.handleDragStartBound);
+            chip.addEventListener("dragend", this.handleDragEndBound);
+            chip.textContent = mod.definition.name;
+            modRow.appendChild(chip);
+          }
+          callout.appendChild(modRow);
+        }
         const line = document.createElement("div");
         line.className = "shop-mount-callout-line";
         callouts.appendChild(line);
@@ -872,7 +1064,7 @@ export class ShopScene extends Phaser.Scene {
     ctx.fillStyle = "rgba(15, 24, 38, 0.9)";
     ctx.strokeStyle = "rgba(125, 249, 255, 0.6)";
     ctx.lineWidth = Math.max(1.5, minDim * 0.008);
-    drawShipToCanvas(ctx, ship.vector ?? ship.shape, radius);
+    drawShipToCanvas(ctx, ship.vector, radius);
     ctx.restore();
 
     for (const mount of ship.mounts) {
@@ -931,20 +1123,57 @@ export class ShopScene extends Phaser.Scene {
   private updateMountVisualHighlights(): void {
     if (this.mountDots.size === 0) return;
     const ship = this.getSelectedShip();
+    const assignments = this.getAssignmentsForShip(ship);
+    const assignmentById = new Map(
+      assignments.map((entry) => [entry.mountId, entry]),
+    );
     const payload = this.dragPayload;
     if (this.mountVisual) {
       this.mountVisual.classList.toggle("is-dragging", Boolean(payload));
     }
     const eligibleMounts = new Set<string>();
     if (payload) {
-      const instance = this.save.ownedWeapons.find(
-        (item) => item.id === payload.instanceId,
-      );
-      const weapon = instance ? WEAPONS[instance.weaponId] : null;
-      if (weapon) {
-        for (const mount of ship.mounts) {
-          if (canMountWeapon(weapon, mount)) {
-            eligibleMounts.add(mount.id);
+      if (payload.kind === "weapon") {
+        const instance = this.save.ownedWeapons.find(
+          (item) => item.id === payload.instanceId,
+        );
+        const weapon = instance ? WEAPONS[instance.weaponId] : null;
+        if (weapon) {
+          for (const mount of ship.mounts) {
+            if (canMountWeapon(weapon, mount)) {
+              eligibleMounts.add(mount.id);
+            }
+          }
+        }
+      } else {
+        const modInstance = this.save.ownedMods.find(
+          (item) => item.id === payload.instanceId,
+        );
+        const mod = modInstance ? MODS[modInstance.modId] : null;
+        if (mod) {
+          for (const mount of ship.mounts) {
+            const assignment = assignmentById.get(mount.id);
+            if (!assignment?.weaponInstanceId) continue;
+            if (assignment.modInstanceIds.includes(payload.instanceId)) {
+              eligibleMounts.add(mount.id);
+              continue;
+            }
+            if (assignment.modInstanceIds.length >= (mount.modSlots ?? 0))
+              continue;
+            const hasSameType = assignment.modInstanceIds.some(
+              (modInstanceId) => {
+                const existingInstance = this.save.ownedMods.find(
+                  (item) => item.id === modInstanceId,
+                );
+                const existing = existingInstance
+                  ? MODS[existingInstance.modId]
+                  : null;
+                return existing?.iconKind === mod.iconKind;
+              },
+            );
+            if (!hasSameType) {
+              eligibleMounts.add(mount.id);
+            }
           }
         }
       }
@@ -979,6 +1208,7 @@ export class ShopScene extends Phaser.Scene {
     });
 
     card.dataset.type = "inventory";
+    card.dataset.kind = "weapon";
     card.dataset.instanceId = instanceId;
     card.dataset.weaponId = weapon.id;
     card.setAttribute("draggable", "true");
@@ -993,7 +1223,55 @@ export class ShopScene extends Phaser.Scene {
     sell.dataset.action = "sell-weapon";
     sell.dataset.instanceId = instanceId;
     const payout = Math.max(0, Math.round(weapon.cost * SELL_RATIO));
-    sell.textContent = `Sell +${payout}g`;
+    sell.textContent = `Sell +${formatCost(
+      payout,
+      weapon.costResource ?? PRIMARY_RESOURCE_ID,
+    )}`;
+    actions.appendChild(sell);
+    inner.appendChild(actions);
+    return card;
+  }
+
+  private buildModInventoryCard(
+    instanceId: ModInstanceId,
+    mod: ModDefinition,
+  ): HTMLElement {
+    const accentColor = this.getModAccentColor(mod.iconKind);
+    const accent = formatColor(accentColor);
+    const status = "Drag to mount";
+    const state: ShopCardState = "owned";
+    const { card, inner } = this.createCardBase({
+      accent,
+      accentColor,
+      description: mod.description,
+      iconKind: "mod",
+      modIcon: mod.iconKind,
+      name: mod.name,
+      state,
+      status,
+      tag: "div",
+    });
+
+    card.dataset.type = "inventory";
+    card.dataset.kind = "mod";
+    card.dataset.instanceId = instanceId;
+    card.dataset.modId = mod.id;
+    card.setAttribute("draggable", "true");
+    card.addEventListener("dragstart", this.handleDragStartBound);
+    card.addEventListener("dragend", this.handleDragEndBound);
+
+    const actions = document.createElement("div");
+    actions.className = "shop-card-actions";
+    const sell = document.createElement("button");
+    sell.type = "button";
+    sell.className = "shop-card-action";
+    sell.dataset.action = "sell-mod";
+    sell.dataset.instanceId = instanceId;
+    const payout = Math.max(0, Math.round(mod.cost * SELL_RATIO));
+    sell.textContent = `Sell +${formatCost(
+      payout,
+      mod.costResource ?? PRIMARY_RESOURCE_ID,
+    )}`;
     actions.appendChild(sell);
     inner.appendChild(actions);
     return card;
@@ -1028,6 +1306,11 @@ export class ShopScene extends Phaser.Scene {
       if (instanceId) this.sellWeaponInstance(instanceId);
       return;
     }
+    if (action?.dataset.action === "sell-mod") {
+      const instanceId = action.dataset.instanceId;
+      if (instanceId) this.sellModInstance(instanceId);
+      return;
+    }
     if (action?.dataset.action === "detach-weapon") {
       const mountId = action.dataset.mountId;
       if (mountId) this.detachWeaponFromMount(mountId);
@@ -1045,13 +1328,15 @@ export class ShopScene extends Phaser.Scene {
       if (!ship) return;
       const owned = this.save.unlockedShips.includes(id);
       const canPurchase = this.isShipAllowedForPurchase(id);
-      if (!owned && !canPurchase) return;
+      const canUnlock = hasRequiredUnlocks(this.save, ship.requiresUnlocks);
+      if (!owned && (!canPurchase || !canUnlock)) return;
       this.updateSave((data) => {
         const unlocked = data.unlockedShips.includes(id);
         if (!unlocked) {
-          if (data.gold < ship.cost) return;
+          if (!hasRequiredUnlocks(data, ship.requiresUnlocks)) return;
           if (!canPurchase) return;
-          data.gold -= ship.cost;
+          const resourceId = ship.costResource ?? PRIMARY_RESOURCE_ID;
+          if (!spendResourceInSave(data, resourceId, ship.cost)) return;
           data.unlockedShips = [...data.unlockedShips, id];
         }
         data.selectedShipId = id;
@@ -1064,12 +1349,27 @@ export class ShopScene extends Phaser.Scene {
       const weapon = WEAPONS[id];
       if (!weapon) return;
       if (!this.isWeaponAllowed(weapon)) return;
+      if (!hasRequiredUnlocks(this.save, weapon.requiresUnlocks)) return;
       this.updateSave((data) => {
-        if (data.gold < weapon.cost) return;
-        data.gold -= weapon.cost;
-        const instanceId = `w${data.nextWeaponInstanceId}`;
-        data.nextWeaponInstanceId += 1;
-        data.ownedWeapons.push({ id: instanceId, weaponId: weapon.id });
+        if (!hasRequiredUnlocks(data, weapon.requiresUnlocks)) return;
+        const resourceId = weapon.costResource ?? PRIMARY_RESOURCE_ID;
+        if (!spendResourceInSave(data, resourceId, weapon.cost)) return;
+        createWeaponInstanceInSave(data, weapon.id);
+      });
+      this.refreshOverlay();
+      return;
+    }
+
+    if (type === "mod") {
+      const mod = MODS[id];
+      if (!mod) return;
+      if (!this.isModAllowed(mod)) return;
+      if (!hasRequiredUnlocks(this.save, mod.requiresUnlocks)) return;
+      this.updateSave((data) => {
+        if (!hasRequiredUnlocks(data, mod.requiresUnlocks)) return;
+        const resourceId = mod.costResource ?? PRIMARY_RESOURCE_ID;
+        if (!spendResourceInSave(data, resourceId, mod.cost)) return;
+        createModInstanceInSave(data, mod.id);
       });
       this.refreshOverlay();
     }
@@ -1089,11 +1389,47 @@ export class ShopScene extends Phaser.Scene {
           for (const entry of assignments) {
             if (entry.weaponInstanceId === instanceId) {
               entry.weaponInstanceId = null;
+              entry.modInstanceIds = [];
             }
           }
         }
         data.ownedWeapons.splice(index, 1);
-        data.gold += Math.max(0, Math.round(weapon.cost * SELL_RATIO));
+        const payout = Math.max(0, Math.round(weapon.cost * SELL_RATIO));
+        addResourceInSave(
+          data,
+          weapon.costResource ?? PRIMARY_RESOURCE_ID,
+          payout,
+        );
+      },
+      { allowEmptyLoadout: true },
+    );
+    this.refreshOverlay();
+  }
+
+  private sellModInstance(instanceId: ModInstanceId): void {
+    this.updateSave(
+      (data) => {
+        const index = data.ownedMods.findIndex(
+          (item) => item.id === instanceId,
+        );
+        if (index < 0) return;
+        const modId = data.ownedMods[index].modId;
+        const mod = MODS[modId];
+        if (!mod) return;
+        for (const assignments of Object.values(data.mountedWeapons)) {
+          for (const entry of assignments) {
+            entry.modInstanceIds = entry.modInstanceIds.filter(
+              (mountedModId) => mountedModId !== instanceId,
+            );
+          }
+        }
+        data.ownedMods.splice(index, 1);
+        const payout = Math.max(0, Math.round(mod.cost * SELL_RATIO));
+        addResourceInSave(
+          data,
+          mod.costResource ?? PRIMARY_RESOURCE_ID,
+          payout,
+        );
       },
       { allowEmptyLoadout: true },
     );
@@ -1107,7 +1443,10 @@ export class ShopScene extends Phaser.Scene {
         if (!ship) return;
         const assignments = this.ensureMountAssignments(data, ship);
         const entry = assignments.find((item) => item.mountId === mountId);
-        if (entry) entry.weaponInstanceId = null;
+        if (entry) {
+          entry.weaponInstanceId = null;
+          entry.modInstanceIds = [];
+        }
       },
       { allowEmptyLoadout: true },
     );
@@ -1115,6 +1454,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private assignWeaponToMount(payload: DragPayload, mountId: string): void {
+    if (payload.kind !== "weapon") return;
     if (payload.sourceMountId && payload.sourceMountId === mountId) return;
     this.updateSave(
       (data) => {
@@ -1156,6 +1496,67 @@ export class ShopScene extends Phaser.Scene {
     this.refreshOverlay();
   }
 
+  private detachModFromMount(
+    mountId: string,
+    modInstanceId: ModInstanceId,
+  ): void {
+    this.updateSave(
+      (data) => {
+        const ship = SHIPS[data.selectedShipId];
+        if (!ship) return;
+        const assignments = this.ensureMountAssignments(data, ship);
+        const entry = assignments.find((item) => item.mountId === mountId);
+        if (!entry) return;
+        entry.modInstanceIds = entry.modInstanceIds.filter(
+          (id) => id !== modInstanceId,
+        );
+      },
+      { allowEmptyLoadout: true },
+    );
+    this.refreshOverlay();
+  }
+
+  private assignModToMount(payload: DragPayload, mountId: string): void {
+    if (payload.kind !== "mod") return;
+    this.updateSave(
+      (data) => {
+        const ship = SHIPS[data.selectedShipId];
+        if (!ship) return;
+        const assignments = this.ensureMountAssignments(data, ship);
+        const target = assignments.find((item) => item.mountId === mountId);
+        const mount = ship.mounts.find((entry) => entry.id === mountId);
+        if (!target || !mount || !target.weaponInstanceId) return;
+
+        const modInstance = data.ownedMods.find(
+          (item) => item.id === payload.instanceId,
+        );
+        const mod = modInstance ? MODS[modInstance.modId] : null;
+        if (!mod) return;
+
+        if (target.modInstanceIds.includes(payload.instanceId)) return;
+
+        const hasSameType = target.modInstanceIds.some((instanceId) => {
+          const existing = data.ownedMods.find(
+            (item) => item.id === instanceId,
+          );
+          const existingMod = existing ? MODS[existing.modId] : null;
+          return existingMod?.iconKind === mod.iconKind;
+        });
+        if (hasSameType) return;
+        if (target.modInstanceIds.length >= (mount.modSlots ?? 0)) return;
+
+        for (const entry of assignments) {
+          entry.modInstanceIds = entry.modInstanceIds.filter(
+            (instanceId) => instanceId !== payload.instanceId,
+          );
+        }
+        target.modInstanceIds = [...target.modInstanceIds, payload.instanceId];
+      },
+      { allowEmptyLoadout: true },
+    );
+    this.refreshOverlay();
+  }
+
   private handleDragStart(event: DragEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target) return;
@@ -1164,13 +1565,25 @@ export class ShopScene extends Phaser.Scene {
     if (!card) return;
     const instanceId = card.dataset.instanceId;
     if (!instanceId) return;
-    if (this.dragPayload?.instanceId === instanceId) return;
-    const weapon =
-      this.resolveWeaponForDrag(card) ?? this.resolveWeaponForDrag(target);
-    const payload: DragPayload = {
-      instanceId,
-      sourceMountId: card.dataset.mountId,
-    };
+    const kind = card.dataset.kind === "mod" ? "mod" : "weapon";
+    if (
+      this.dragPayload?.instanceId === instanceId &&
+      this.dragPayload.kind === kind
+    ) {
+      return;
+    }
+    const payload: DragPayload =
+      kind === "mod"
+        ? {
+            instanceId,
+            kind,
+            sourceMountId: card.dataset.mountId,
+          }
+        : {
+            instanceId,
+            kind,
+            sourceMountId: card.dataset.mountId,
+          };
     this.dragPayload = payload;
     this.dragHoverMountId = null;
     this.updateMountVisualHighlights();
@@ -1178,8 +1591,18 @@ export class ShopScene extends Phaser.Scene {
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "move";
     }
-    if (weapon) {
-      this.setDragPreview(event, weapon);
+    if (payload.kind === "weapon") {
+      const weapon =
+        this.resolveWeaponForDrag(card) ?? this.resolveWeaponForDrag(target);
+      if (weapon) {
+        this.setDragPreview(event, weapon);
+      }
+    } else {
+      const mod =
+        this.resolveModForDrag(card) ?? this.resolveModForDrag(target);
+      if (mod) {
+        this.setModDragPreview(event, mod);
+      }
     }
   }
 
@@ -1225,7 +1648,13 @@ export class ShopScene extends Phaser.Scene {
     );
     if (mountTarget) {
       const mountId = mountTarget.dataset.mountId;
-      if (mountId) this.assignWeaponToMount(payload, mountId);
+      if (mountId) {
+        if (payload.kind === "weapon") {
+          this.assignWeaponToMount(payload, mountId);
+        } else {
+          this.assignModToMount(payload, mountId);
+        }
+      }
       this.dragPayload = null;
       this.dragHoverMountId = null;
       this.updateMountVisualHighlights();
@@ -1236,7 +1665,11 @@ export class ShopScene extends Phaser.Scene {
     );
     const detachTarget = target.closest<HTMLElement>("[data-drop='detach']");
     if ((inventoryTarget || detachTarget) && payload.sourceMountId) {
-      this.detachWeaponFromMount(payload.sourceMountId);
+      if (payload.kind === "weapon") {
+        this.detachWeaponFromMount(payload.sourceMountId);
+      } else {
+        this.detachModFromMount(payload.sourceMountId, payload.instanceId);
+      }
     }
     this.dragPayload = null;
     this.dragHoverMountId = null;
@@ -1263,6 +1696,16 @@ export class ShopScene extends Phaser.Scene {
     return WEAPONS[instance.weaponId] ?? null;
   }
 
+  private resolveModForDrag(element: HTMLElement): ModDefinition | null {
+    const modId = element.dataset.modId;
+    if (modId && MODS[modId]) return MODS[modId];
+    const instanceId = element.dataset.instanceId;
+    if (!instanceId) return null;
+    const instance = this.save.ownedMods.find((item) => item.id === instanceId);
+    if (!instance) return null;
+    return MODS[instance.modId] ?? null;
+  }
+
   private setDragPreview(event: DragEvent, weapon: WeaponDefinition): void {
     const transfer = event.dataTransfer;
     if (!transfer) return;
@@ -1280,9 +1723,38 @@ export class ShopScene extends Phaser.Scene {
       "gun",
       color,
       weapon.stats.bullet.color ?? 0x7df9ff,
-      this.getSelectedShip().vector ?? this.getSelectedShip().shape,
+      this.getSelectedShip().vector,
       weapon.gunId,
+      undefined,
       weapon.size,
+    );
+    document.body.appendChild(preview);
+    transfer.setDragImage(preview, 22, 22);
+    this.dragPreviewEl = preview;
+  }
+
+  private setModDragPreview(event: DragEvent, mod: ModDefinition): void {
+    const transfer = event.dataTransfer;
+    if (!transfer) return;
+    this.dragPreviewEl?.remove();
+    const preview = document.createElement("div");
+    preview.className = "shop-drag-preview";
+    const canvas = document.createElement("canvas");
+    canvas.className = "shop-drag-preview-icon";
+    canvas.width = 36;
+    canvas.height = 36;
+    preview.appendChild(canvas);
+    const colorValue = this.getModAccentColor(mod.iconKind);
+    const color = formatColor(colorValue);
+    this.drawIcon(
+      canvas,
+      "mod",
+      color,
+      colorValue,
+      this.getSelectedShip().vector,
+      undefined,
+      mod.iconKind,
+      undefined,
     );
     document.body.appendChild(preview);
     transfer.setDragImage(preview, 22, 22);
@@ -1295,8 +1767,10 @@ export class ShopScene extends Phaser.Scene {
     try {
       const parsed = JSON.parse(raw) as Partial<DragPayload>;
       if (!parsed.instanceId) return null;
+      const kind = parsed.kind === "mod" ? "mod" : "weapon";
       return {
         instanceId: parsed.instanceId,
+        kind,
         sourceMountId: parsed.sourceMountId,
       };
     } catch {
@@ -1376,8 +1850,9 @@ export class ShopScene extends Phaser.Scene {
     kind: CardIconKind,
     color: string,
     colorValue: number,
-    shipShape: ShipShape | ShipVector,
+    shipShape: ShipVector,
     gunId?: string,
+    modIcon?: ModIconKind,
     weaponSize?: WeaponSize,
   ): void {
     const ctx = canvas.getContext("2d");
@@ -1397,6 +1872,17 @@ export class ShopScene extends Phaser.Scene {
       );
       return;
     }
+    if (kind === "mod") {
+      this.drawModIcon(
+        ctx,
+        modIcon ?? "power",
+        width / 2,
+        height / 2,
+        width * 0.3,
+        color,
+      );
+      return;
+    }
     const gun = gunId ? GUNS[gunId] : null;
     if (gun) {
       const scale = weaponSize === "large" ? 0.34 : 0.26;
@@ -1413,6 +1899,86 @@ export class ShopScene extends Phaser.Scene {
     this.drawBullet(ctx, "orb", width / 2, height / 2, width * 0.32, color);
   }
 
+  private getModAccentColor(icon: ModIconKind): number {
+    switch (icon) {
+      case "aoe":
+        return 0xff6b6b;
+      case "bounce":
+        return 0x9fb7ff;
+      case "homing":
+        return 0x7df9ff;
+      case "multi":
+        return 0xffd166;
+      case "power":
+      default:
+        return 0xff8c42;
+    }
+  }
+
+  private drawModIcon(
+    ctx: CanvasRenderingContext2D,
+    icon: ModIconKind,
+    x: number,
+    y: number,
+    size: number,
+    color: string,
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    switch (icon) {
+      case "power":
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.5);
+        ctx.lineTo(size * 0.2, -size * 0.1);
+        ctx.lineTo(-size * 0.05, -size * 0.1);
+        ctx.lineTo(size * 0.18, size * 0.45);
+        ctx.lineTo(-size * 0.2, size * 0.02);
+        ctx.lineTo(size * 0.02, size * 0.02);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      case "homing":
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.2, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      case "aoe":
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case "multi":
+        for (const dx of [-0.35, 0, 0.35]) {
+          ctx.beginPath();
+          ctx.arc(size * dx, 0, size * 0.14, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      case "bounce":
+        ctx.beginPath();
+        ctx.arc(-size * 0.18, -size * 0.12, size * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.06, -size * 0.22);
+        ctx.lineTo(size * 0.3, -size * 0.22);
+        ctx.lineTo(size * 0.18, -size * 0.36);
+        ctx.moveTo(size * 0.3, -size * 0.22);
+        ctx.lineTo(size * 0.18, -size * 0.08);
+        ctx.stroke();
+        break;
+    }
+    ctx.restore();
+  }
+
   private drawShip(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -1420,14 +1986,14 @@ export class ShopScene extends Phaser.Scene {
     r: number,
     stroke: string,
     fill: string,
-    shape: ShipShape | ShipVector,
+    vector: ShipVector,
   ): void {
     ctx.save();
     ctx.translate(x, y);
     ctx.fillStyle = fill;
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 2;
-    drawShipToCanvas(ctx, shape, r);
+    drawShipToCanvas(ctx, vector, r);
     ctx.restore();
   }
 

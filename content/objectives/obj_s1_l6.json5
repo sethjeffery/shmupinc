@@ -1,0 +1,35 @@
+{
+  "id": "obj_s1_l6",
+  "objectives": [
+    {
+      "id": "clear",
+      "kind": "completeLevel",
+      "label": "Mission Complete",
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 90 },
+        "unlocks": ["bp_ship_bomber"]
+      }
+    },
+    {
+      "id": "pace",
+      "kind": "finishUnderMs",
+      "label": "Clear in under 90s",
+      "maxMs": 90000,
+      "stars": 1,
+      "reward": {
+        "unlocks": ["bp_guided_micro"]
+      }
+    },
+    {
+      "id": "control",
+      "kind": "takeDamageUnder",
+      "label": "Take at most 7 damage",
+      "maxDamage": 7,
+      "stars": 1,
+      "reward": {
+        "resources": { "gold": 60 }
+      }
+    }
+  ]
+}

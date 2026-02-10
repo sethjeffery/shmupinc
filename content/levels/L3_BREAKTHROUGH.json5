@@ -1,10 +1,13 @@
 {
   "id": "L3_BREAKTHROUGH",
-  "title": "Breakthrough",
+  "title": "Fracture Run",
   "pressureProfile": {
     "primary": "throughput",
-    "secondary": ["enemy"]
+    "secondary": ["enemy", "focus"]
   },
+  "objectiveSetId": "obj_s1_l3",
+  "preBeatId": "beat_s1_l3_pre",
+  "postBeatId": "beat_s1_l3_post",
   "waveIds": ["breakthrough-storm", "breakthrough-surge", "breakthrough-push"],
   "shopId": "shop_breakthrough",
   "winCondition": {

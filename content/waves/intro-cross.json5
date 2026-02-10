@@ -7,70 +7,122 @@
       "overrides": {
         "fire": {
           "loop": false,
-          "steps": []
-        }
+          "steps": [
+            {
+              "durationMs": 700,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 240
+            }
+          ]
+        },
+        "hp": 1
       },
-      "x": -0.15,
+      "x": -0.2,
       "y": 0
     },
     {
-      "atMs": 600,
+      "atMs": 550,
       "enemyId": "sine",
       "overrides": {
         "fire": {
           "loop": false,
           "steps": []
-        }
+        },
+        "hp": 1
       },
       "x": 0,
       "y": 0
     },
     {
-      "atMs": 1200,
+      "atMs": 1100,
       "enemyId": "sine",
       "overrides": {
         "fire": {
           "loop": false,
-          "steps": []
-        }
+          "steps": [
+            {
+              "durationMs": 850,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "angleDeg": 90,
+                "kind": "fixed"
+              },
+              "bulletId": "orb",
+              "count": 2,
+              "intervalMs": 180,
+              "kind": "burst",
+              "speed": 180
+            }
+          ]
+        },
+        "hp": 1
       },
-      "x": 0.15,
+      "x": 0.2,
       "y": 0
     },
     {
-      "atMs": 1800,
+      "atMs": 1650,
       "enemyId": "sine",
       "overrides": {
         "fire": {
           "loop": false,
           "steps": []
-        }
+        },
+        "hp": 1
       },
-      "x": -0.15,
+      "x": -0.24,
       "y": 0
     },
     {
-      "atMs": 2400,
+      "atMs": 2200,
       "enemyId": "sine",
       "overrides": {
         "fire": {
           "loop": false,
-          "steps": []
-        }
+          "steps": [
+            {
+              "durationMs": 700,
+              "kind": "cooldown"
+            },
+            {
+              "aim": {
+                "kind": "atPlayer"
+              },
+              "bulletId": "dart",
+              "count": 1,
+              "intervalMs": 1,
+              "kind": "burst",
+              "speed": 240
+            }
+          ]
+        },
+        "hp": 1
       },
       "x": 0,
       "y": 0
     },
     {
-      "atMs": 3000,
+      "atMs": 2750,
       "enemyId": "sine",
       "overrides": {
         "fire": {
           "loop": false,
           "steps": []
-        }
+        },
+        "hp": 1
       },
-      "x": 0.15,
+      "x": 0.24,
       "y": 0
     }
   ]

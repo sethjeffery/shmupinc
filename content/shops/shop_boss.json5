@@ -1,17 +1,35 @@
 {
   "id": "shop_boss",
   "allowedWeapons": [
-    "orbBlasterPlusPlus",
-    "missileSpread",
-    "heavyMissilePlus",
+    "orbPulse",
+    "orbTwin",
+    "orbFan",
+    "dartNeedler",
     "railDart",
-    "guidedMicroBombs",
-    "stingerMissiles",
-    "crossDartsPlus"
+    "gatlingArray",
+    "missileRack",
+    "siegeMissile",
+    "bombMortar",
+    "bombSalvo"
   ],
-  "allowedShips": ["starter", "bulwark", "interceptor", "scout"],
+  "allowedMods": [
+    "powerCore",
+    "multiLens",
+    "homingUnit",
+    "aoeWarhead",
+    "bounceMatrix"
+  ],
+  "allowedShips": [
+    "starter",
+    "scout",
+    "interceptor",
+    "vanguard",
+    "bulwark",
+    "bomber"
+  ],
   "caps": {
-    "weaponCost": 420,
-    "shipCost": 360
+    "weaponCost": 460,
+    "modCost": 360,
+    "shipCost": 400
   }
 }

@@ -6,6 +6,6 @@ const contentWeapons = getContentRegistry().weaponsById;
 
 export const WEAPONS: Record<string, WeaponDefinition> = contentWeapons;
 
-export const STARTER_WEAPON_ID: WeaponId = "orbBlaster";
+export const STARTER_WEAPON_ID: WeaponId = "orbPulse";
 
 export type { WeaponDefinition, WeaponId } from "./weaponTypes";

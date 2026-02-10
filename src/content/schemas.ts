@@ -6,6 +6,8 @@ export const CONTENT_KINDS = [
   "enemies",
   "guns",
   "hazards",
+  "mods",
+  "objectives",
   "levels",
   "ships",
   "shops",
@@ -21,9 +23,11 @@ const idField = (description: string): z.ZodString =>
 const idArray = (description: string): z.ZodArray<z.ZodString> =>
   z.array(idSchema).describe(description);
 
-const colorSchema = z.number().int();
+const colorSchema = z
+  .string()
+  .regex(/^#[0-9a-f]{6}$/i, "Expected hex color in #RRGGBB format.");
 const colorField = (description: string): typeof colorSchema =>
-  colorSchema.describe(`${description} (hex number, e.g. 0xffb067).`);
+  colorSchema.describe(`${description} (hex string, e.g. #ffb067).`);
 
 const vec2Schema = z.object({
   x: z.number().describe("Local X offset in pixels."),
@@ -52,9 +56,8 @@ const gunSchema = z.object({
     .describe("Closed outline points for the gun body."),
 });
 
-const weaponZoneSchema = z.enum(["front", "rear", "side"]);
-
 const weaponSizeSchema = z.enum(["large", "small"]);
+const modIconKindSchema = z.enum(["aoe", "bounce", "homing", "multi", "power"]);
 
 const pressureKindSchema = z.enum([
   "enemy",
@@ -100,9 +103,9 @@ const hazardMotionSchema = z.union([
 
 const laneWallSchema = z.object({
   damageOnTouch: z.boolean().describe("Deal damage on contact.").default(false),
-  fillColor: colorField("Fill color (kept subtle).").default(0x0b1220),
+  fillColor: colorField("Fill color (kept subtle).").default("#0b1220"),
   id: idField("Unique hazard id."),
-  lineColor: colorField("Outline color.").default(0x1b3149),
+  lineColor: colorField("Outline color.").default("#1b3149"),
   motion: hazardMotionSchema
     .describe("Optional motion applied to the center.")
     .optional(),
@@ -127,7 +130,7 @@ const moveStepSchema = z.union([
     points: z
       .array(vec2Schema)
       .describe(
-        "Bezier points relative to the step start (0,0 at current position).",
+        "Bezier points in playfield fractions from step start (x=1 full width, y=1 full height).",
       ),
   }),
   z.object({
@@ -143,7 +146,9 @@ const moveStepSchema = z.union([
       .describe("Interpret the target as absolute (spawn anchor) or relative.")
       .default("relative")
       .optional(),
-    to: vec2Schema.describe("Target offset from the step start."),
+    to: vec2Schema.describe(
+      "Target in playfield fractions (x=1 full width, y=1 full height).",
+    ),
   }),
   z.object({
     durationMs: z.number().describe("Step duration (ms)."),
@@ -296,11 +301,12 @@ const weaponShotSchema = z.object({
 });
 
 const enemyStyleSchema = z.object({
-  fillColor: colorField("Fill color for the shape.").default(0x1c0f1a),
-  lineColor: colorField("Outline color for the shape.").default(0xff6b6b),
+  fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
+  lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
   shape: z
     .enum([
       "asteroid",
+      "blimp",
       "bomber",
       "boss",
       "crossfire",
@@ -333,6 +339,18 @@ const enemyStyleSchema = z.object({
     .optional(),
 });
 
+const enemyHitboxSchema = z.union([
+  z.object({
+    kind: z.literal("circle").describe("Circular hit area."),
+    radius: z.number().positive().describe("Circle radius in pixels."),
+  }),
+  z.object({
+    kind: z.literal("ellipse").describe("Axis-aligned ellipse hit area."),
+    radiusX: z.number().positive().describe("Horizontal ellipse radius."),
+    radiusY: z.number().positive().describe("Vertical ellipse radius."),
+  }),
+]);
+
 const bossPhaseSchema = z.object({
   fire: fireScriptSchema.describe("Fire script for this phase.").optional(),
   hpThreshold: z
@@ -347,11 +365,12 @@ const enemySchema = z.object({
     max: z.number().describe("Maximum gold drop."),
     min: z.number().describe("Minimum gold drop."),
   }),
+  hitbox: enemyHitboxSchema.describe("Collision hit area."),
   hp: z.number().describe("Total hit points."),
   id: idField("Unique enemy id."),
   move: moveScriptSchema.describe("Base move script."),
   phases: z.array(bossPhaseSchema).describe("Optional boss phases.").optional(),
-  radius: z.number().describe("Collision radius in pixels."),
+  radius: z.number().describe("Visual size radius in pixels."),
   rotation: z
     .enum(["fixed", "movement"])
     .describe("How the sprite rotates.")
@@ -369,10 +388,11 @@ const enemyOverrideSchema = z.object({
     })
     .describe("Override gold drop range.")
     .optional(),
+  hitbox: enemyHitboxSchema.describe("Override collision hit area.").optional(),
   hp: z.number().describe("Override hit points.").optional(),
   move: moveScriptSchema.describe("Override move script.").optional(),
   phases: z.array(bossPhaseSchema).describe("Override boss phases.").optional(),
-  radius: z.number().describe("Override collision radius.").optional(),
+  radius: z.number().describe("Override visual size radius.").optional(),
   rotation: z
     .enum(["fixed", "movement"])
     .describe("Override rotation mode.")
@@ -409,6 +429,9 @@ const beatSchema = z.object({
 });
 
 const shopSchema = z.object({
+  allowedMods: idArray(
+    "Restrict to these mod ids (omit to allow all).",
+  ).optional(),
   allowedShips: idArray(
     "Restrict to these ship ids (omit to allow all).",
   ).optional(),
@@ -417,6 +440,11 @@ const shopSchema = z.object({
   ).optional(),
   caps: z
     .object({
+      modCost: z
+        .number()
+        .min(0)
+        .describe("Max cost allowed for mods.")
+        .optional(),
       shipCost: z
         .number()
         .min(0)
@@ -447,12 +475,93 @@ const winConditionSchema = z.union([
   }),
 ]);
 
+const rewardBundleSchema = z.object({
+  resources: z
+    .record(idSchema, z.number())
+    .describe("Resource deltas awarded when completed.")
+    .default({})
+    .optional(),
+  unlocks: idArray("Unlock ids granted when completed.").default([]).optional(),
+});
+
+const objectiveRuleSchema = z.union([
+  z.object({
+    id: idField("Objective id unique within the set."),
+    kind: z.literal("completeLevel").describe("Clear the level."),
+    label: z.string().describe("Player-facing objective label."),
+    reward: rewardBundleSchema
+      .describe("Optional objective rewards.")
+      .optional(),
+    stars: z.number().int().min(1).max(3).describe("Stars awarded."),
+  }),
+  z.object({
+    id: idField("Objective id unique within the set."),
+    kind: z
+      .literal("clearAllEnemies")
+      .describe("Defeat every enemy spawned in the level."),
+    label: z.string().describe("Player-facing objective label."),
+    reward: rewardBundleSchema
+      .describe("Optional objective rewards.")
+      .optional(),
+    stars: z.number().int().min(1).max(3).describe("Stars awarded."),
+  }),
+  z.object({
+    id: idField("Objective id unique within the set."),
+    kind: z.literal("finishUnderMs").describe("Finish within a time limit."),
+    label: z.string().describe("Player-facing objective label."),
+    maxMs: z.number().positive().describe("Max clear time in ms."),
+    reward: rewardBundleSchema
+      .describe("Optional objective rewards.")
+      .optional(),
+    stars: z.number().int().min(1).max(3).describe("Stars awarded."),
+  }),
+  z.object({
+    id: idField("Objective id unique within the set."),
+    kind: z
+      .literal("takeDamageUnder")
+      .describe("Take no more than this much total damage."),
+    label: z.string().describe("Player-facing objective label."),
+    maxDamage: z.number().min(0).describe("Maximum damage taken."),
+    reward: rewardBundleSchema
+      .describe("Optional objective rewards.")
+      .optional(),
+    stars: z.number().int().min(1).max(3).describe("Stars awarded."),
+  }),
+  z.object({
+    id: idField("Objective id unique within the set."),
+    kind: z
+      .literal("finishWithHpRatio")
+      .describe("Finish at or above this remaining HP ratio."),
+    label: z.string().describe("Player-facing objective label."),
+    minRatio: z
+      .number()
+      .min(0)
+      .max(1)
+      .describe("Minimum ending HP ratio (0..1)."),
+    reward: rewardBundleSchema
+      .describe("Optional objective rewards.")
+      .optional(),
+    stars: z.number().int().min(1).max(3).describe("Stars awarded."),
+  }),
+]);
+
+const objectiveSetSchema = z.object({
+  id: idField("Unique objective set id."),
+  objectives: z
+    .array(objectiveRuleSchema)
+    .min(1)
+    .describe("Objectives evaluated when the level is cleared."),
+});
+
 const levelSchema = z.object({
   endCondition: winConditionSchema
     .describe("Optional override that ends the level early.")
     .optional(),
   hazardIds: idArray("Hazards to spawn at level start.").default([]),
   id: idField("Unique level id."),
+  objectiveSetId: idField(
+    "Objective set to evaluate on level clear.",
+  ).optional(),
   postBeatId: idField("Beat id shown after victory.").optional(),
   preBeatId: idField("Beat id shown before the shop.").optional(),
   pressureProfile: pressureProfileSchema.describe("Intended pressure mix."),
@@ -495,9 +604,78 @@ const weaponStatsSchema = z.object({
     .describe("Projectile speed (applied to all bullets fired)."),
 });
 
-const weaponZoneStatsSchema = weaponStatsSchema
-  .partial()
-  .describe("Overrides applied when mounted in a specific zone.");
+const modSchema = z.object({
+  cost: z.number().min(0).describe("Shop cost."),
+  costResource: idField("Resource id used to buy this mod.")
+    .default("gold")
+    .optional(),
+  description: z.string().describe("Player-facing description."),
+  effects: z
+    .object({
+      aoe: z
+        .object({
+          damageMultiplier: z
+            .number()
+            .describe("AoE damage multiplier.")
+            .optional(),
+          defaultDamageFactor: z
+            .number()
+            .describe("Default AoE damage factor when weapon has no AoE.")
+            .optional(),
+          defaultRadius: z
+            .number()
+            .describe("Default AoE radius when weapon has no AoE.")
+            .optional(),
+          radiusAdd: z.number().describe("AoE radius add.").optional(),
+          radiusMultiplier: z
+            .number()
+            .describe("AoE radius multiplier.")
+            .optional(),
+        })
+        .describe("AoE modifier settings.")
+        .optional(),
+      bounce: z
+        .object({
+          damageRetention: z.number().describe("Damage retained after bounce."),
+          maxBounces: z.number().int().min(1).describe("Max bounces."),
+          sameTargetCooldownMs: z
+            .number()
+            .min(0)
+            .describe("Cooldown before re-hitting same target."),
+          speedRetention: z.number().describe("Speed retained after bounce."),
+        })
+        .describe("Ricochet settings.")
+        .optional(),
+      damageMultiplier: z
+        .number()
+        .describe("Global projectile damage multiplier.")
+        .optional(),
+      homing: bulletHomingSchema
+        .describe("Homing modifier settings.")
+        .optional(),
+      multi: z
+        .object({
+          count: z
+            .literal(3)
+            .describe("Number of shots to emit per base shot."),
+          projectileDamageMultiplier: z
+            .number()
+            .describe("Per-projectile damage multiplier."),
+          spreadDeg: z.number().describe("Spread angle in degrees."),
+        })
+        .describe("Spread modifier settings.")
+        .optional(),
+    })
+    .describe("Stat effects applied to mounted weapon."),
+  iconKind: modIconKindSchema.describe(
+    "Icon category for code-drawn mod icon.",
+  ),
+  id: idField("Unique mod id."),
+  name: z.string().describe("Display name."),
+  requiresUnlocks: idArray("Unlock ids required before this can be purchased.")
+    .default([])
+    .optional(),
+});
 
 const shipVectorSchema = z.object({
   lines: z
@@ -516,26 +694,26 @@ const shipVectorSchema = z.object({
 
 const weaponSchema = z.object({
   cost: z.number().min(0).describe("Shop cost."),
+  costResource: idField("Resource id used to buy this weapon.")
+    .default("gold")
+    .optional(),
   description: z.string().describe("Player-facing description."),
   gunId: idField("Gun model id used for icon + mount render."),
   id: idField("Unique weapon id."),
   name: z.string().describe("Display name."),
+  requiresUnlocks: idArray("Unlock ids required before this can be purchased.")
+    .default([])
+    .optional(),
   size: weaponSizeSchema.describe("Mount size required."),
   stats: weaponStatsSchema.describe("Base weapon stats."),
-  zones: z.array(weaponZoneSchema).describe("Supported mount zones."),
-  zoneStats: z
-    .object({
-      front: weaponZoneStatsSchema.optional(),
-      rear: weaponZoneStatsSchema.optional(),
-      side: weaponZoneStatsSchema.optional(),
-    })
-    .describe("Per-zone stat overrides.")
-    .optional(),
 });
 
 const shipSchema = z.object({
   color: colorField("Ship fill color."),
   cost: z.number().min(0).describe("Unlock cost."),
+  costResource: idField("Resource id used to buy this ship.")
+    .default("gold")
+    .optional(),
   description: z.string().describe("Player-facing description."),
   id: idField("Unique ship id."),
   magnetMultiplier: z.number().describe("Pickup magnet multiplier."),
@@ -544,6 +722,12 @@ const shipSchema = z.object({
     .array(
       z.object({
         id: idField("Unique mount id within this ship."),
+        modSlots: z
+          .int()
+          .min(0)
+          .optional()
+          .default(0)
+          .describe("Number of mod sockets on this mount."),
         offset: z
           .object({
             x: z.number().describe("Mount X offset in ship-radius units."),
@@ -551,19 +735,16 @@ const shipSchema = z.object({
           })
           .describe("Offset from ship center."),
         size: weaponSizeSchema.describe("Mount size."),
-        zone: weaponZoneSchema.describe("Mount zone."),
       }),
     )
     .describe("Weapon mounts for this ship."),
   moveSpeed: z.number().describe("Movement speed scalar."),
   name: z.string().describe("Display name."),
   radiusMultiplier: z.number().describe("Collision radius multiplier."),
-  shape: z
-    .enum(["bulwark", "interceptor", "scout", "starling"])
-    .describe("Ship silhouette."),
-  vector: shipVectorSchema
-    .describe("Custom vector shape (overrides built-in silhouette).")
+  requiresUnlocks: idArray("Unlock ids required before this can be purchased.")
+    .default([])
     .optional(),
+  vector: shipVectorSchema.describe("Required ship vector silhouette."),
 });
 
 export const contentSchemas = {
@@ -573,6 +754,8 @@ export const contentSchemas = {
   guns: gunSchema,
   hazards: laneWallSchema,
   levels: levelSchema,
+  mods: modSchema,
+  objectives: objectiveSetSchema,
   ships: shipSchema,
   shops: shopSchema,
   waves: waveSchema,
@@ -584,6 +767,8 @@ export type BulletContent = z.infer<typeof bulletSchema>;
 export type EnemyContent = z.infer<typeof enemySchema>;
 export type GunContent = z.infer<typeof gunSchema>;
 export type HazardContent = z.infer<typeof laneWallSchema>;
+export type ModContent = z.infer<typeof modSchema>;
+export type ObjectiveContent = z.infer<typeof objectiveSetSchema>;
 export type LevelContent = z.infer<typeof levelSchema>;
 export type ShipContent = z.infer<typeof shipSchema>;
 export type ShopContent = z.infer<typeof shopSchema>;

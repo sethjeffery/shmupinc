@@ -1,0 +1,14 @@
+{
+  "id": "homingUnit",
+  "name": "Homing Unit",
+  "description": "Adds gentle lock-on guidance.",
+  "cost": 220,
+  "requiresUnlocks": ["bp_snaplock"],
+  "iconKind": "homing",
+  "effects": {
+    "homing": {
+      "acquireRadius": 220,
+      "turnRateRadPerSec": 2.2
+    }
+  }
+}

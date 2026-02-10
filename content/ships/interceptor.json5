@@ -1,57 +1,39 @@
 {
-  "color": 8255999,
+  "color": "#7df9ff",
   "cost": 220,
-  "description": "Balanced ship with steady handling.",
+  "requiresUnlocks": ["bp_ship_interceptor"],
+  "description": "Initially used by space pirates, the interceptor has been well adopted due to its excellent tractor beam.",
   "id": "interceptor",
   "magnetMultiplier": 2.5,
   "maxHp": 7,
   "moveSpeed": 6.8,
   "mounts": [
     {
-      "id": "front",
+      "id": "fore",
       "offset": {
         "x": 0,
-        "y": -0.58
-      },
-      "size": "large",
-      "zone": "front"
-    },
-    {
-      "id": "side-left",
-      "offset": {
-        "x": -0.68,
-        "y": 0.1
+        "y": -0.7
       },
       "size": "small",
-      "zone": "side"
+      "modSlots": 1
     },
     {
-      "id": "side-right",
-      "offset": {
-        "x": 0.68,
-        "y": 0.1
-      },
-      "size": "small",
-      "zone": "side"
-    },
-    {
-      "id": "rear",
+      "id": "aft",
       "offset": {
         "x": 0,
-        "y": 0.64
+        "y": -0.2
       },
       "size": "small",
-      "zone": "rear"
+      "modSlots": 1
     }
   ],
   "name": "Interceptor",
-  "radiusMultiplier": 1,
-  "shape": "interceptor",
+  "radiusMultiplier": 1.2,
   "vector": {
     "outline": [
       {
         "x": 0,
-        "y": -0.8
+        "y": -0.9
       },
       {
         "x": 0.3,
@@ -62,15 +44,15 @@
         "y": -0.4
       },
       {
-        "x": 0.9,
+        "x": 0.7,
         "y": -0.8
       },
       {
-        "x": 1.15,
+        "x": 1,
         "y": 0
       },
       {
-        "x": 0.95,
+        "x": 0.75,
         "y": 0.9
       },
       {
@@ -86,15 +68,15 @@
         "y": 0.9
       },
       {
-        "x": -0.95,
+        "x": -0.75,
         "y": 0.9
       },
       {
-        "x": -1.15,
+        "x": -1,
         "y": 0
       },
       {
-        "x": -0.9,
+        "x": -0.7,
         "y": -0.8
       },
       {

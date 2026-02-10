@@ -1,0 +1,16 @@
+{
+  "id": "bounceMatrix",
+  "name": "Bounce Matrix",
+  "description": "Adds ricochet with controlled retention.",
+  "cost": 260,
+  "requiresUnlocks": ["bp_guided_micro"],
+  "iconKind": "bounce",
+  "effects": {
+    "bounce": {
+      "maxBounces": 2,
+      "speedRetention": 0.9,
+      "damageRetention": 0.9,
+      "sameTargetCooldownMs": 140
+    }
+  }
+}

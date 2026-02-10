@@ -1,4 +1,5 @@
-// All MoveScript coordinates are local offsets from the current step start.
+// MoveScript bezier/dashTo coordinates are normalized offsets from step start.
+// x=1 spans one full playfield width, y=1 spans one full playfield height.
 export interface Vec2 {
   x: number;
   y: number;
@@ -57,6 +58,13 @@ export interface BulletTrail {
   count?: number;
 }
 
+export interface BulletRicochet {
+  maxBounces: number;
+  speedRetention: number;
+  damageRetention: number;
+  sameTargetCooldownMs: number;
+}
+
 export interface BulletSpec {
   kind: BulletKind;
   damage: number;
@@ -69,6 +77,7 @@ export interface BulletSpec {
   color?: number;
   length?: number;
   thickness?: number;
+  ricochet?: BulletRicochet;
 }
 
 // originOffsets are local offsets from the emitter position (no rotation applied).

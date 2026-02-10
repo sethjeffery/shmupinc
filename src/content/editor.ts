@@ -1,5 +1,6 @@
 import type { EnemyDef } from "../game/data/enemies";
 import type { GunDefinition } from "../game/data/gunTypes";
+import type { ModDefinition } from "../game/data/modTypes";
 import type { ShipDefinition } from "../game/data/shipTypes";
 import type { WaveDefinition } from "../game/data/waves";
 import type { WeaponDefinition } from "../game/data/weaponTypes";
@@ -7,10 +8,12 @@ import type {
   ContentKind,
   EnemyContent,
   GunContent,
+  ModContent,
   ShipContent,
+  WaveContent,
   WeaponContent,
 } from "./schemas";
-import type { ContentRegistry } from "./validation";
+import type { ContentEntry, ContentRegistry } from "./validation";
 
 import "monaco-editor/esm/vs/editor/editor.main.js";
 
@@ -28,6 +31,7 @@ import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import Phaser from "phaser";
 
+import { canMountWeapon } from "../game/data/weaponMounts";
 import { drawEnemyToCanvas } from "../game/render/enemyShapes";
 import { drawGunToCanvas } from "../game/render/gunShapes";
 import { drawShipToCanvas } from "../game/render/shipShapes";
@@ -37,27 +41,23 @@ import {
   PLAYFIELD_BASE_HEIGHT,
   PLAYFIELD_BASE_WIDTH,
 } from "../game/util/playArea";
+import {
+  fetchRegistry,
+  listContentTree,
+  readContentFile,
+  type ContentRegistryResponse,
+  type ContentTreeNode,
+  writeContentFile,
+} from "./apiClient";
 import { buildJsonSchemaForKind } from "./jsonSchema";
 import { parseJsonWithLocation } from "./parseJson";
 import { buildSchemaExplorer } from "./schemaExplorer";
 import { CONTENT_KINDS, contentSchemas } from "./schemas";
 import { buildContentRegistry } from "./validation";
 
-interface ContentTreeNode {
-  children?: ContentTreeNode[];
-  name: string;
-  path: string;
-  type: "dir" | "file";
-}
-
-interface ContentRegistryResponse {
-  errors: { kind: string; message: string; path: string }[];
-  registry: ContentRegistry;
-}
-
 type ReferencePickerMode = "array" | "single";
 
-type GunPreviewZone = "front" | "rear" | "side";
+type WeaponPreviewMountId = string;
 
 interface ReferencePicker {
   contentKind: ContentKind;
@@ -88,6 +88,13 @@ const REFERENCE_PICKERS: ReferencePicker[] = [
     label: "Shop",
     mode: "single",
     registryKey: "shopsById",
+  },
+  {
+    contentKind: "objectives",
+    key: "objectiveSetId",
+    label: "Objectives",
+    mode: "single",
+    registryKey: "objectivesById",
   },
   {
     contentKind: "beats",
@@ -126,76 +133,6 @@ const debounce = (callback: () => void, delayMs: number): (() => void) => {
     window.clearTimeout(handle);
     handle = window.setTimeout(callback, delayMs);
   };
-};
-
-const registerSnippetProvider = (): void => {
-  monaco.languages.registerCompletionItemProvider("json", {
-    provideCompletionItems: (model, position) => {
-      const word = model.getWordUntilPosition(position);
-      const range = {
-        endColumn: word.endColumn,
-        endLineNumber: position.lineNumber,
-        startColumn: word.startColumn,
-        startLineNumber: position.lineNumber,
-      };
-
-      const items: monaco.languages.CompletionItem[] = [];
-
-      items.push({
-        detail: "Hazard",
-        insertText: [
-          "{",
-          '  "id": "$1",',
-          '  "type": "laneWall",',
-          '  "rect": { "x": 0.1, "y": 0.5, "w": 0.2, "h": 0.9 },',
-          '  "motion": { "kind": "sine", "axis": "x", "amplitude": 0.1, "periodMs": 12000, "phase": 0 },',
-          '  "damageOnTouch": true,',
-          '  "fillColor": "#0b1220",',
-          '  "lineColor": "#1b3149"',
-          "}",
-        ].join("\n"),
-        insertTextRules:
-          monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-        kind: monaco.languages.CompletionItemKind.Snippet,
-        label: "Insert laneWall",
-        range,
-      });
-
-      items.push({
-        detail: "Wave",
-        insertText: [
-          "{",
-          '  "atMs": 0,',
-          '  "enemyId": "$1",',
-          '  "x": 0.5,',
-          '  "y": -0.1',
-          "}",
-        ].join("\n"),
-        insertTextRules:
-          monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-        kind: monaco.languages.CompletionItemKind.Snippet,
-        label: "Insert spawn",
-        range,
-      });
-
-      items.push({
-        detail: "Level",
-        insertText: [
-          "{",
-          '  "kind": "survive",',
-          '  "durationMs": 45000',
-          "}",
-        ].join("\n"),
-        insertTextRules:
-          monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-        kind: monaco.languages.CompletionItemKind.Snippet,
-        label: "Insert winCondition: survive",
-        range,
-      });
-
-      return { suggestions: items };
-    },
-  });
 };
 
 export const initContentEditor = (): void => {
@@ -369,8 +306,6 @@ export const initContentEditor = (): void => {
     validate: true,
   });
 
-  registerSnippetProvider();
-
   let currentPath: null | string = null;
   let currentText = "";
   let originalText = "";
@@ -378,6 +313,7 @@ export const initContentEditor = (): void => {
   let currentEnemyDef: EnemyDef | null = null;
   let currentWaveDef: null | WaveDefinition = null;
   let currentWeaponDef: null | WeaponDefinition = null;
+  let currentModDef: ModDefinition | null = null;
   let currentGunDef: GunDefinition | null = null;
   let currentShipDef: null | ShipDefinition = null;
   let currentKind: ContentKind | null = null;
@@ -399,14 +335,20 @@ export const initContentEditor = (): void => {
   let gunPreviewCanvas: HTMLCanvasElement | null = null;
   let shipPreviewCanvas: HTMLCanvasElement | null = null;
   let enemyPreviewCanvas: HTMLCanvasElement | null = null;
-  let currentWeaponZone: GunPreviewZone = "front";
+  let currentWeaponMountId: WeaponPreviewMountId = "";
+  let currentWeaponPreviewModIds: string[] = [];
+  let currentModPreviewShipId = "";
+  let currentModPreviewWeaponId = "";
+  let currentModPreviewMountId = "";
   const loadTree = async (): Promise<void> => {
-    const response = await fetch("/__content/list");
-    if (!response.ok) return;
-    const payload = (await response.json()) as { tree: ContentTreeNode[] };
-    treeContainer.innerHTML = "";
-    buildTree(payload.tree);
-    contentPathIndex = buildContentIndex(payload.tree);
+    try {
+      const tree = await listContentTree();
+      treeContainer.innerHTML = "";
+      buildTree(tree);
+      contentPathIndex = buildContentIndex(tree);
+    } catch {
+      renderValidation(["Failed to load content tree."]);
+    }
   };
 
   const playfieldAspect = `${PLAYFIELD_BASE_WIDTH} / ${PLAYFIELD_BASE_HEIGHT}`;
@@ -462,7 +404,9 @@ export const initContentEditor = (): void => {
       schemaPanel.textContent = "Open a content file to see its schema.";
       return;
     }
-    const docs = buildSchemaExplorer(contentSchemas[kind]);
+    const docs = buildSchemaExplorer(
+      buildJsonSchemaForKind(kind, registryCache?.registry),
+    );
     if (!docs.length) {
       schemaPanel.textContent = "No schema info available.";
       return;
@@ -818,8 +762,8 @@ export const initContentEditor = (): void => {
     if (!metrics) return { x: 0, y: 0 };
     const origin = getBezierOrigin(metrics, anchor);
     return {
-      x: origin.x + point.x * metrics.scale,
-      y: origin.y + point.y * metrics.scale,
+      x: origin.x + point.x * metrics.playWidth,
+      y: origin.y + point.y * metrics.playHeight,
     };
   };
 
@@ -832,8 +776,8 @@ export const initContentEditor = (): void => {
     if (!metrics) return { x: 0, y: 0 };
     const origin = getBezierOrigin(metrics, anchor);
     return {
-      x: (x - origin.x) / metrics.scale,
-      y: (y - origin.y) / metrics.scale,
+      x: (x - origin.x) / metrics.playWidth,
+      y: (y - origin.y) / metrics.playHeight,
     };
   };
 
@@ -976,7 +920,7 @@ export const initContentEditor = (): void => {
     bezierState = resolved;
     setPanelVisible(bezierSection, true);
     const activePoint = draggingPointIndex ?? resolved.points.length - 1;
-    bezierInfo.textContent = `Points: ${resolved.points.length}. Origin: step start (0,0). X is centered.`;
+    bezierInfo.textContent = `Points: ${resolved.points.length}. Origin: step start (0,0). Units are normalized (x=1 full width, y=1 full height).`;
     drawBezierPreview(activePoint);
   };
 
@@ -1053,7 +997,6 @@ export const initContentEditor = (): void => {
 
   const renderGunPreview = (
     gun: GunDefinition,
-    zone: GunPreviewZone,
     ship: null | ShipDefinition,
   ): void => {
     teardownPreviewGame();
@@ -1111,10 +1054,10 @@ export const initContentEditor = (): void => {
     ctx.fillStyle = fill;
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 2;
-    drawShipToCanvas(ctx, ship.vector ?? ship.shape, radius);
+    drawShipToCanvas(ctx, ship.vector, radius);
     ctx.restore();
 
-    const mounts = ship.mounts.filter((mount) => mount.zone === zone);
+    const mounts = ship.mounts;
     const gunAccent = gun.lineColor ?? 0x7df9ff;
     const sizeForMount = (_size: "large" | "small"): number => radius;
     for (const mount of mounts) {
@@ -1157,7 +1100,7 @@ export const initContentEditor = (): void => {
     const centerY = height * 0.5;
     const baseRadius = Math.min(width, height) * 0.26;
     const radius = baseRadius * (ship.radiusMultiplier ?? 1);
-    const vectorShape = ship.vector ?? ship.shape;
+    const vectorShape = ship.vector;
 
     const color = ship.color;
     const r = (color >> 16) & 0xff;
@@ -1195,13 +1138,8 @@ export const initContentEditor = (): void => {
     ctx.stroke();
     ctx.restore();
 
-    const zoneColors: Record<string, string> = {
-      front: "#7df9ff",
-      rear: "#ff6b6b",
-      side: "#ffd166",
-    };
     for (const mount of ship.mounts) {
-      const colorHex = zoneColors[mount.zone] ?? "#8fa6c7";
+      const colorHex = mount.size === "large" ? "#7df9ff" : "#ffd166";
       const marker =
         Math.max(4, radius * 0.08) * (mount.size === "large" ? 1.1 : 0.85);
       const x = centerX + mount.offset.x * radius;
@@ -1273,44 +1211,144 @@ export const initContentEditor = (): void => {
     ctx.save();
     ctx.strokeStyle = "rgba(143, 166, 199, 0.45)";
     ctx.lineWidth = 1.5;
+    const hitboxScale = enemy.radius > 0 ? radius / enemy.radius : 1;
+    const hitbox = enemy.hitbox;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    if (hitbox.kind === "ellipse") {
+      ctx.ellipse(
+        centerX,
+        centerY,
+        hitbox.radiusX * hitboxScale,
+        hitbox.radiusY * hitboxScale,
+        0,
+        0,
+        Math.PI * 2,
+      );
+    } else {
+      ctx.arc(centerX, centerY, hitbox.radius * hitboxScale, 0, Math.PI * 2);
+    }
     ctx.stroke();
     ctx.restore();
   };
 
-  const renderZoneTabs = (
-    supportedZones: GunPreviewZone[],
-    activeZone: GunPreviewZone,
-    onSelect: (zone: GunPreviewZone) => void,
+  const createPreviewControlGroup = (label: string): HTMLDivElement => {
+    const group = document.createElement("div");
+    group.className = "content-editor__preview-group";
+    const labelEl = document.createElement("span");
+    labelEl.className = "content-editor__preview-group-label";
+    labelEl.textContent = label;
+    const controls = document.createElement("div");
+    controls.className = "content-editor__preview-group-controls";
+    group.appendChild(labelEl);
+    group.appendChild(controls);
+    previewTabs.appendChild(group);
+    return controls;
+  };
+
+  const renderMountTabs = (
+    mountIds: string[],
+    activeMountId: string,
+    onSelect: (mountId: string) => void,
   ): void => {
-    const supported = new Set(supportedZones);
-    previewTabs.replaceChildren();
-    const zoneLabels: Record<GunPreviewZone, string> = {
-      front: "Front",
-      rear: "Rear",
-      side: "Side",
-    };
-    (["front", "side", "rear"] as const).forEach((zone) => {
+    const controls = createPreviewControlGroup("Mount");
+    mountIds.forEach((mountId) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "content-editor__preview-tab";
-      button.textContent = zoneLabels[zone];
-      const enabled = supported.has(zone);
-      button.disabled = !enabled;
-      if (zone === activeZone) {
+      button.textContent = mountId;
+      if (mountId === activeMountId) {
         button.classList.add("is-active");
       }
-      if (!enabled) {
+      button.addEventListener("click", () => {
+        onSelect(mountId);
+      });
+      controls.appendChild(button);
+    });
+  };
+
+  const renderSelectControl = (
+    label: string,
+    options: { id: string; label: string }[],
+    selectedId: string,
+    onSelect: (id: string) => void,
+  ): void => {
+    const controls = createPreviewControlGroup(label);
+    const select = document.createElement("select");
+    select.className = "content-editor__preview-select";
+    for (const option of options) {
+      const node = document.createElement("option");
+      node.value = option.id;
+      node.textContent = option.label;
+      select.appendChild(node);
+    }
+    select.value = selectedId;
+    select.addEventListener("change", () => {
+      onSelect(select.value);
+    });
+    controls.appendChild(select);
+  };
+
+  const normalizePreviewModSelection = (
+    requestedModIds: string[],
+    availableMods: ModDefinition[],
+    maxSlots: number,
+  ): string[] => {
+    const byId = new Map(availableMods.map((mod) => [mod.id, mod]));
+    const seenKinds = new Set<ModDefinition["iconKind"]>();
+    const selected: string[] = [];
+    for (const modId of requestedModIds) {
+      const mod = byId.get(modId);
+      if (!mod) continue;
+      if (seenKinds.has(mod.iconKind)) continue;
+      seenKinds.add(mod.iconKind);
+      selected.push(modId);
+      if (selected.length >= maxSlots) break;
+    }
+    return selected;
+  };
+
+  const renderModTabs = (
+    mods: ModDefinition[],
+    selectedModIds: string[],
+    maxSlots: number,
+    onToggle: (modId: string) => void,
+  ): void => {
+    const controls = createPreviewControlGroup(
+      `Mods (${selectedModIds.length}/${maxSlots})`,
+    );
+    if (maxSlots <= 0) {
+      const message = document.createElement("span");
+      message.className = "content-editor__preview-empty";
+      message.textContent = "This mount has no mod slots.";
+      controls.appendChild(message);
+      return;
+    }
+    const selectedKinds = new Set(
+      selectedModIds
+        .map((id) => mods.find((mod) => mod.id === id))
+        .filter((mod): mod is ModDefinition => Boolean(mod))
+        .map((mod) => mod.iconKind),
+    );
+    mods.forEach((mod) => {
+      const isSelected = selectedModIds.includes(mod.id);
+      const hasTypeConflict = selectedKinds.has(mod.iconKind) && !isSelected;
+      const limitReached = selectedModIds.length >= maxSlots && !isSelected;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "content-editor__preview-tab";
+      button.textContent = mod.id;
+      if (isSelected) {
+        button.classList.add("is-active");
+      }
+      if (hasTypeConflict || limitReached) {
+        button.disabled = true;
         button.classList.add("is-disabled");
       }
       button.addEventListener("click", () => {
-        if (!enabled) return;
-        onSelect(zone);
+        onToggle(mod.id);
       });
-      previewTabs.appendChild(button);
+      controls.appendChild(button);
     });
-    previewTabs.style.display = "";
   };
 
   const renderPreview = (): void => {
@@ -1433,14 +1471,15 @@ export const initContentEditor = (): void => {
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       previewTabs.style.display = "none";
-      renderGunPreview(currentGunDef, "front", null);
+      renderGunPreview(currentGunDef, null);
       return;
     }
 
     if (currentKind === "weapons") {
       setPreviewAspect(playfieldAspect);
+      const registry = getRegistry();
       const ship = getPreviewShip();
-      if (!currentWeaponDef || !ship) {
+      if (!registry || !currentWeaponDef || !ship) {
         previewText.textContent = "Weapon preview unavailable.";
         previewCanvasHost.style.display = "none";
         previewTabs.style.display = "none";
@@ -1448,27 +1487,155 @@ export const initContentEditor = (): void => {
         setPanelVisible(previewSection, true);
         return;
       }
-      const shipZones = new Set(ship.mounts.map((mount) => mount.zone));
-      const uniqueZones = Array.from(new Set(currentWeaponDef.zones));
-      const supportedZones = uniqueZones.filter((zone) => shipZones.has(zone));
-      const fallbackZones =
-        supportedZones.length > 0
-          ? supportedZones
-          : uniqueZones.length
-            ? uniqueZones
-            : (["front", "side", "rear"] as GunPreviewZone[]);
-      if (!fallbackZones.includes(currentWeaponZone)) {
-        currentWeaponZone = fallbackZones[0] ?? "front";
+      const weaponDef = currentWeaponDef;
+      const compatibleMounts = ship.mounts.filter((mount) =>
+        canMountWeapon(weaponDef, mount),
+      );
+      const mountIds =
+        compatibleMounts.length > 0
+          ? compatibleMounts.map((mount) => mount.id)
+          : ship.mounts.map((mount) => mount.id);
+      if (!mountIds.includes(currentWeaponMountId)) {
+        currentWeaponMountId = mountIds[0] ?? "";
       }
+      const selectedMount =
+        ship.mounts.find((mount) => mount.id === currentWeaponMountId) ?? null;
+      const maxModSlots = selectedMount?.modSlots ?? 0;
+      const availableMods = Object.values(registry.modsById).sort((a, b) =>
+        a.id.localeCompare(b.id),
+      );
+      currentWeaponPreviewModIds = normalizePreviewModSelection(
+        currentWeaponPreviewModIds,
+        availableMods,
+        maxModSlots,
+      );
+      const selectedMods = currentWeaponPreviewModIds
+        .map((modId) => registry.modsById[modId])
+        .filter((mod): mod is ModDefinition => Boolean(mod));
       previewText.textContent = "";
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       ensurePreviewGame();
-      renderZoneTabs(fallbackZones, currentWeaponZone, (zone) => {
-        currentWeaponZone = zone;
+      previewTabs.replaceChildren();
+      renderMountTabs(mountIds, currentWeaponMountId, (mountId) => {
+        currentWeaponMountId = mountId;
+        currentWeaponPreviewModIds = [];
         renderPreview();
       });
-      previewScene?.setWeapon(currentWeaponDef, ship, currentWeaponZone);
+      renderModTabs(
+        availableMods,
+        currentWeaponPreviewModIds,
+        maxModSlots,
+        (modId) => {
+          if (currentWeaponPreviewModIds.includes(modId)) {
+            currentWeaponPreviewModIds = currentWeaponPreviewModIds.filter(
+              (id) => id !== modId,
+            );
+          } else {
+            currentWeaponPreviewModIds = [...currentWeaponPreviewModIds, modId];
+          }
+          renderPreview();
+        },
+      );
+      previewTabs.style.display = "";
+      previewScene?.setWeapon(
+        weaponDef,
+        ship,
+        currentWeaponMountId,
+        selectedMods,
+      );
+      return;
+    }
+
+    if (currentKind === "mods") {
+      setPreviewAspect(playfieldAspect);
+      const registry = getRegistry();
+      if (!registry || !currentModDef) {
+        previewText.textContent = "Mod preview unavailable.";
+        previewCanvasHost.style.display = "none";
+        previewTabs.style.display = "none";
+        previewScene?.setMode(null);
+        setPanelVisible(previewSection, true);
+        return;
+      }
+      const ships = Object.values(registry.shipsById).sort((a, b) =>
+        a.id.localeCompare(b.id),
+      );
+      const weapons = Object.values(registry.weaponsById).sort((a, b) =>
+        a.id.localeCompare(b.id),
+      );
+      if (ships.length === 0 || weapons.length === 0) {
+        previewText.textContent = "Mod preview unavailable.";
+        previewCanvasHost.style.display = "none";
+        previewTabs.style.display = "none";
+        previewScene?.setMode(null);
+        setPanelVisible(previewSection, true);
+        return;
+      }
+
+      if (!registry.shipsById[currentModPreviewShipId]) {
+        currentModPreviewShipId =
+          registry.shipsById.starter?.id ?? ships[0]?.id ?? "";
+      }
+      if (!registry.weaponsById[currentModPreviewWeaponId]) {
+        currentModPreviewWeaponId = weapons[0]?.id ?? "";
+      }
+
+      const ship = registry.shipsById[currentModPreviewShipId];
+      const weapon = registry.weaponsById[currentModPreviewWeaponId];
+      if (!ship || !weapon) {
+        previewText.textContent = "Mod preview unavailable.";
+        previewCanvasHost.style.display = "none";
+        previewTabs.style.display = "none";
+        previewScene?.setMode(null);
+        setPanelVisible(previewSection, true);
+        return;
+      }
+
+      const compatibleMounts = ship.mounts.filter((mount) =>
+        canMountWeapon(weapon, mount),
+      );
+      const mountIds =
+        compatibleMounts.length > 0
+          ? compatibleMounts.map((mount) => mount.id)
+          : ship.mounts.map((mount) => mount.id);
+      if (!mountIds.includes(currentModPreviewMountId)) {
+        currentModPreviewMountId = mountIds[0] ?? "";
+      }
+
+      previewText.textContent = "";
+      previewCanvasHost.style.display = "";
+      setPanelVisible(previewSection, true);
+      ensurePreviewGame();
+      previewTabs.replaceChildren();
+      renderSelectControl(
+        "Ship",
+        ships.map((entry) => ({ id: entry.id, label: entry.name })),
+        currentModPreviewShipId,
+        (shipId) => {
+          currentModPreviewShipId = shipId;
+          currentModPreviewMountId = "";
+          renderPreview();
+        },
+      );
+      renderSelectControl(
+        "Weapon",
+        weapons.map((entry) => ({ id: entry.id, label: entry.name })),
+        currentModPreviewWeaponId,
+        (weaponId) => {
+          currentModPreviewWeaponId = weaponId;
+          currentModPreviewMountId = "";
+          renderPreview();
+        },
+      );
+      renderMountTabs(mountIds, currentModPreviewMountId, (mountId) => {
+        currentModPreviewMountId = mountId;
+        renderPreview();
+      });
+      previewTabs.style.display = "";
+      previewScene?.setWeapon(weapon, ship, currentModPreviewMountId, [
+        currentModDef,
+      ]);
       return;
     }
 
@@ -1481,11 +1648,10 @@ export const initContentEditor = (): void => {
 
   const refreshRegistry = async (): Promise<void> => {
     try {
-      const response = await fetch("/__content/registry");
-      if (!response.ok) return;
-      registryCache = (await response.json()) as ContentRegistryResponse;
+      registryCache = await fetchRegistry();
       renderPreview();
       applySchema(currentKind);
+      renderSchemaDocs(currentKind);
       renderReferencePanel(getActiveReferencePath());
     } catch {
       registryCache = null;
@@ -1497,6 +1663,7 @@ export const initContentEditor = (): void => {
     currentEnemyDef = null;
     currentWaveDef = null;
     currentWeaponDef = null;
+    currentModDef = null;
     currentGunDef = null;
     currentShipDef = null;
     if (!currentPath) {
@@ -1552,7 +1719,27 @@ export const initContentEditor = (): void => {
       currentEnemyDef = build.registry.enemiesById[result.data.id] ?? null;
       setLevelButtonsEnabled(false);
     } else if (kind === "waves") {
-      currentWaveDef = result.data as WaveDefinition;
+      const entries: ContentEntry[] = [
+        {
+          data: result.data as WaveContent,
+          kind: "waves",
+          path: currentPath,
+        },
+      ];
+      const registry = getRegistry();
+      if (registry) {
+        for (const bullet of Object.values(registry.bulletsById)) {
+          entries.push({
+            data: bullet,
+            kind: "bullets",
+            path: `bullets/${bullet.id}.json5`,
+          });
+        }
+      }
+      const build = buildContentRegistry(entries);
+      currentWaveDef =
+        build.registry.wavesById[result.data.id] ??
+        (result.data as WaveDefinition);
       setLevelButtonsEnabled(false);
     } else if (kind === "weapons") {
       const build = buildContentRegistry([
@@ -1563,6 +1750,16 @@ export const initContentEditor = (): void => {
         },
       ]);
       currentWeaponDef = build.registry.weaponsById[result.data.id] ?? null;
+      setLevelButtonsEnabled(false);
+    } else if (kind === "mods") {
+      const build = buildContentRegistry([
+        {
+          data: result.data as ModContent,
+          kind: "mods",
+          path: currentPath,
+        },
+      ]);
+      currentModDef = build.registry.modsById[result.data.id] ?? null;
       setLevelButtonsEnabled(false);
     } else if (kind === "guns") {
       const build = buildContentRegistry([
@@ -1642,7 +1839,7 @@ export const initContentEditor = (): void => {
     if (!bezierState) return;
     const targetPath = [...bezierState.pointsPath, index];
     const formatOptions = { insertSpaces: true, tabSize: 2 };
-    const round = (value: number): number => Math.round(value * 10) / 10;
+    const round = (value: number): number => Math.round(value * 1000) / 1000;
     try {
       let next = currentText;
       const editsX = modify(next, [...targetPath, "x"], round(localX), {
@@ -1722,23 +1919,22 @@ export const initContentEditor = (): void => {
   bezierCanvas.addEventListener("pointercancel", stopBezierDrag);
 
   const openFile = async (path: string): Promise<void> => {
-    const response = await fetch(
-      `/__content/read?path=${encodeURIComponent(path)}`,
-    );
-    if (!response.ok) {
+    let contents = "";
+    try {
+      contents = await readContentFile(path);
+    } catch {
       renderValidation([`Failed to load ${path}.`]);
       return;
     }
-    const payload = (await response.json()) as { contents: string };
     currentPath = path;
-    currentText = payload.contents;
-    originalText = payload.contents;
+    currentText = contents;
+    originalText = contents;
     lastReferencePath = null;
     lastBezierPath = null;
     bezierActive = false;
     referenceSection.style.display = "none";
     fileLabel.textContent = path;
-    model.setValue(payload.contents);
+    model.setValue(contents);
     updateDirtyState();
     validateCurrent();
     renderReferencePanel(getActiveReferencePath());
@@ -1766,12 +1962,9 @@ export const initContentEditor = (): void => {
     if (!currentPath) return false;
     const contents = editor.getValue();
     currentText = contents;
-    const response = await fetch("/__content/write", {
-      body: JSON.stringify({ contents, path: currentPath }),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    });
-    if (!response.ok) {
+    try {
+      await writeContentFile(currentPath, contents);
+    } catch {
       renderValidation([`Failed to save ${currentPath}.`]);
       return false;
     }

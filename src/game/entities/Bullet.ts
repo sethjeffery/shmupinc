@@ -29,6 +29,30 @@ export type EmitBulletExplosion = (
   owner: BulletOwner,
 ) => void;
 
+const DEFAULT_SPEED_BY_KIND: Record<BulletSpec["kind"], number> = {
+  bomb: 200,
+  dart: 260,
+  missile: 260,
+  orb: 200,
+};
+
+const FALLBACK_SPEC_BY_OWNER: Record<BulletOwner, BulletSpec> = {
+  enemy: {
+    color: 0xff9f43,
+    damage: 1,
+    kind: "orb",
+    radius: 3,
+    speed: DEFAULT_SPEED_BY_KIND.orb,
+  },
+  player: {
+    color: 0x7df9ff,
+    damage: 1,
+    kind: "orb",
+    radius: 3,
+    speed: 420,
+  },
+};
+
 export class Bullet {
   scene: Phaser.Scene;
   owner: BulletOwner;
@@ -48,6 +72,8 @@ export class Bullet {
   private trailTimerMs = 0;
   private target: Enemy | null = null;
   private targetAcquireMs = 0;
+  private remainingBounces = 0;
+  private sameTargetCooldowns = new Map<Enemy, number>();
 
   constructor(scene: Phaser.Scene, config: BulletConfig) {
     this.scene = scene;
@@ -68,10 +94,16 @@ export class Bullet {
   }
 
   spawn(x: number, y: number, angleRad: number, spec: BulletSpec): void {
-    this.spec = spec;
-    this.radius = spec.radius;
-    this.speed = spec.speed ?? 0;
-    this.damage = spec.damage;
+    const safeSpec = spec ?? FALLBACK_SPEC_BY_OWNER[this.owner];
+    this.spec = safeSpec;
+    this.radius = safeSpec.radius ?? 3;
+    const fallbackSpeed = DEFAULT_SPEED_BY_KIND[safeSpec.kind];
+    const requestedSpeed = safeSpec.speed ?? fallbackSpeed;
+    this.speed =
+      Number.isFinite(requestedSpeed) && requestedSpeed > 0
+        ? requestedSpeed
+        : fallbackSpeed;
+    this.damage = safeSpec.damage ?? 1;
     this.angleRad = angleRad;
     this.x = x;
     this.y = y;
@@ -82,6 +114,8 @@ export class Bullet {
     this.trailTimerMs = 0;
     this.target = null;
     this.targetAcquireMs = 0;
+    this.remainingBounces = Math.max(0, safeSpec.ricochet?.maxBounces ?? 0);
+    this.sameTargetCooldowns.clear();
     this.redraw();
     this.graphics.setVisible(true);
     this.graphics.setPosition(x, y);
@@ -98,6 +132,7 @@ export class Bullet {
     if (!this.active) return;
     const deltaMs = delta * 1000;
     this.lifeMs += deltaMs;
+    this.updateRicochetCooldowns(deltaMs);
     if (this.spec.lifetimeMs && this.lifeMs >= this.spec.lifetimeMs) {
       this.explode(emitExplosion);
       return;
@@ -145,6 +180,42 @@ export class Bullet {
 
   destroy(): void {
     this.graphics.destroy();
+  }
+
+  canRicochetOff(enemy: Enemy): boolean {
+    const ricochet = this.spec.ricochet;
+    if (!ricochet) return false;
+    if (this.remainingBounces <= 0) return false;
+    return (this.sameTargetCooldowns.get(enemy) ?? 0) <= 0;
+  }
+
+  ricochetOff(enemy: Enemy): boolean {
+    const ricochet = this.spec.ricochet;
+    if (!ricochet) return false;
+    if (!this.canRicochetOff(enemy)) return false;
+
+    const dx = this.x - enemy.x;
+    const dy = this.y - enemy.y;
+    const length = Math.hypot(dx, dy);
+    const nx = length > 0 ? dx / length : -Math.cos(this.angleRad);
+    const ny = length > 0 ? dy / length : -Math.sin(this.angleRad);
+    const dot = this.vx * nx + this.vy * ny;
+    const reflectedX = this.vx - 2 * dot * nx;
+    const reflectedY = this.vy - 2 * dot * ny;
+    const speedRetention = Phaser.Math.Clamp(ricochet.speedRetention, 0, 1);
+
+    this.vx = reflectedX * speedRetention;
+    this.vy = reflectedY * speedRetention;
+    this.speed = Math.hypot(this.vx, this.vy);
+    this.damage *= Phaser.Math.Clamp(ricochet.damageRetention, 0, 1);
+    this.angleRad = Math.atan2(this.vy, this.vx);
+    this.graphics.setRotation(this.angleRad);
+    this.remainingBounces -= 1;
+    this.sameTargetCooldowns.set(
+      enemy,
+      Math.max(0, ricochet.sameTargetCooldownMs),
+    );
+    return true;
   }
 
   private redraw(): void {
@@ -253,6 +324,18 @@ export class Bullet {
     if (this.trailTimerMs <= 0) {
       emitTrail(this.x, this.y, this.angleRad, this.spec);
       this.trailTimerMs = intervalMs;
+    }
+  }
+
+  private updateRicochetCooldowns(deltaMs: number): void {
+    if (!this.spec.ricochet || this.sameTargetCooldowns.size === 0) return;
+    for (const [enemy, cooldown] of this.sameTargetCooldowns.entries()) {
+      const next = cooldown - deltaMs;
+      if (next <= 0 || !enemy.active) {
+        this.sameTargetCooldowns.delete(enemy);
+      } else {
+        this.sameTargetCooldowns.set(enemy, next);
+      }
     }
   }
 

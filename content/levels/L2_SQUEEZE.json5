@@ -1,19 +1,17 @@
 {
   "id": "L2_SQUEEZE",
-  "title": "The Squeeze",
+  "title": "Formation Test",
   "pressureProfile": {
-    "primary": "space",
-    "secondary": ["enemy", "focus"]
+    "primary": "enemy",
+    "secondary": ["focus", "throughput"]
   },
-  "preBeatId": "beat_squeeze_pre",
-  "postBeatId": "beat_squeeze_post",
+  "objectiveSetId": "obj_s1_l2",
+  "preBeatId": "beat_s1_l2_pre",
+  "postBeatId": "beat_s1_l2_post",
   "waveIds": ["squeeze-entry", "squeeze-lock"],
-  "hazardIds": ["squeeze-left", "squeeze-right"],
+  "hazardIds": [],
   "shopId": "shop_squeeze",
   "winCondition": {
-    "kind": "clearWaves"
-  },
-  "endCondition": {
     "kind": "clearWaves"
   }
 }

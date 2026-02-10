@@ -2,6 +2,10 @@
   "id": "midboss",
   "hp": 28,
   "radius": 28,
+  "hitbox": {
+    "kind": "circle",
+    "radius": 28
+  },
   "goldDrop": {
     "min": 18,
     "max": 26
@@ -10,8 +14,8 @@
   "rotationDeg": 180,
   "style": {
     "shape": "boss",
-    "fillColor": 1710888,
-    "lineColor": 16751083,
+    "fillColor": "#1a1b28",
+    "lineColor": "#ff99eb",
     "vector": {
       "lines": [
         {
@@ -102,7 +106,7 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 160
+          "y": 0.2
         }
       },
       {
@@ -114,8 +118,8 @@
         "ease": "inOut",
         "kind": "dashTo",
         "to": {
-          "x": 90,
-          "y": 30
+          "x": 0.2,
+          "y": 0.0375
         }
       },
       {
@@ -127,7 +131,7 @@
         "ease": "inOut",
         "kind": "dashTo",
         "to": {
-          "x": -180,
+          "x": -0.4,
           "y": 0
         }
       },

@@ -1,6 +1,6 @@
 {
   "id": "bomb",
   "kind": "bomb",
-  "color": 16739179,
+  "color": "#ff6b6b",
   "radius": 5
 }

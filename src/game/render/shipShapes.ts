@@ -1,78 +1,20 @@
-import type { ShipShape, ShipVector } from "../data/shipTypes";
+import type { ShipVector } from "../data/shipTypes";
 import type Phaser from "phaser";
 
-export const SHIP_VECTORS: Record<ShipShape, ShipVector> = {
-  bulwark: {
-    outline: [
-      { x: 0, y: -0.7 },
-      { x: 0.25, y: -0.9 },
-      { x: 0.8, y: -0.7 },
-      { x: 1, y: -1 },
-      { x: 1.15, y: 0 },
-      { x: 1, y: 0.8 },
-      { x: 0.35, y: 1 },
-      { x: -0.35, y: 1 },
-      { x: -1, y: 0.8 },
-      { x: -1.15, y: 0 },
-      { x: -1, y: -1 },
-      { x: -0.8, y: -0.7 },
-      { x: -0.25, y: -0.9 },
-    ],
-  },
-  interceptor: {
-    outline: [
-      { x: 0, y: -0.8 },
-      { x: 0.3, y: -0.7 },
-      { x: 0.5, y: -0.4 },
-      { x: 0.9, y: -0.8 },
-      { x: 1.15, y: 0 },
-      { x: 0.95, y: 0.9 },
-      { x: 0.65, y: 0.9 },
-      { x: 0, y: 0.8 },
-      { x: -0.65, y: 0.9 },
-      { x: -0.95, y: 0.9 },
-      { x: -1.15, y: 0 },
-      { x: -0.9, y: -0.8 },
-      { x: -0.5, y: -0.4 },
-      { x: -0.3, y: -0.7 },
-    ],
-  },
-  scout: {
-    outline: [
-      { x: 0, y: -1 },
-      { x: 0.4, y: -0.25 },
-      { x: 1, y: 0.3 },
-      { x: 1, y: 0.5 },
-      { x: 0.3, y: 0.2 },
-      { x: 0.45, y: 1 },
-      { x: 0.25, y: 1 },
-      { x: 0, y: 0.9 },
-      { x: -0.25, y: 1 },
-      { x: -0.45, y: 1 },
-      { x: -0.3, y: 0.2 },
-      { x: -1, y: 0.5 },
-      { x: -1, y: 0.3 },
-      { x: -0.4, y: -0.25 },
-    ],
-  },
-  starling: {
-    outline: [
-      { x: 0, y: -1 },
-      { x: 0.5, y: 0.3 },
-      { x: 0.8, y: -0.1 },
-      { x: 0.95, y: 0 },
-      { x: 0.8, y: 1 },
-      { x: 0, y: 0.8 },
-      { x: -0.8, y: 1 },
-      { x: -0.95, y: 0 },
-      { x: -0.8, y: -0.1 },
-      { x: -0.5, y: 0.3 },
-    ],
-  },
+export const DEFAULT_SHIP_VECTOR: ShipVector = {
+  outline: [
+    { x: 0, y: -1 },
+    { x: 0.5, y: 0.3 },
+    { x: 0.8, y: -0.1 },
+    { x: 0.95, y: 0 },
+    { x: 0.8, y: 1 },
+    { x: 0, y: 0.8 },
+    { x: -0.8, y: 1 },
+    { x: -0.95, y: 0 },
+    { x: -0.8, y: -0.1 },
+    { x: -0.5, y: 0.3 },
+  ],
 };
-
-const resolveShipVector = (shape: ShipShape | ShipVector): ShipVector =>
-  typeof shape === "string" ? SHIP_VECTORS[shape] : shape;
 
 const drawOutline = (
   outline: ShipVector["outline"],
@@ -104,10 +46,9 @@ const drawLines = (
 
 export const drawShipToGraphics = (
   graphics: Phaser.GameObjects.Graphics,
-  shape: ShipShape | ShipVector,
+  vector: ShipVector,
   radius: number,
 ): void => {
-  const vector = resolveShipVector(shape);
   graphics.beginPath();
   drawOutline(
     vector.outline,
@@ -134,10 +75,9 @@ export const drawShipToGraphics = (
 
 export const drawShipToCanvas = (
   ctx: CanvasRenderingContext2D,
-  shape: ShipShape | ShipVector,
+  vector: ShipVector,
   radius: number,
 ): void => {
-  const vector = resolveShipVector(shape);
   ctx.beginPath();
   drawOutline(
     vector.outline,

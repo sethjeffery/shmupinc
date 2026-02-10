@@ -32,7 +32,7 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 180
+          "y": 0.225
         }
       },
       {
@@ -44,15 +44,19 @@
         "kind": "dashTo",
         "to": {
           "x": 0,
-          "y": 540
+          "y": 0.675
         }
       }
     ]
   },
   "radius": 16,
+  "hitbox": {
+    "kind": "circle",
+    "radius": 16
+  },
   "style": {
-    "fillColor": 2757647,
-    "lineColor": 16752762,
+    "fillColor": "#2a140f",
+    "lineColor": "#ffa07a",
     "shape": "bomber",
     "vector": {
       "lines": [

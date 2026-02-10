@@ -1,17 +1,19 @@
 {
   "id": "shop_breakthrough",
   "allowedWeapons": [
-    "orbBlaster",
-    "pulseArray",
-    "bombMortar",
-    "missileSpread",
-    "microBombs",
-    "flareOrbs",
-    "spreadOrbs"
+    "orbPulse",
+    "orbTwin",
+    "dartNeedler",
+    "missileRack",
+    "bombSalvo",
+    "orbFan",
+    "gatlingArray"
   ],
-  "allowedShips": ["starter", "bulwark", "scout"],
+  "allowedMods": ["powerCore", "multiLens", "homingUnit"],
+  "allowedShips": ["starter", "scout", "interceptor", "vanguard"],
   "caps": {
-    "weaponCost": 260,
-    "shipCost": 260
+    "weaponCost": 300,
+    "modCost": 230,
+    "shipCost": 280
   }
 }

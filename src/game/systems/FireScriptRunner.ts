@@ -15,6 +15,7 @@ export class FireScriptRunner {
   private shotsFired = 0;
   private finished = false;
   private charging = false;
+  private chargeProgressValue = 0;
 
   constructor(script: FireScript) {
     this.script = script;
@@ -31,6 +32,7 @@ export class FireScriptRunner {
     this.shotsFired = 0;
     this.finished = false;
     this.charging = false;
+    this.chargeProgressValue = 0;
   }
 
   update(
@@ -44,21 +46,29 @@ export class FireScriptRunner {
   ): void {
     if (this.script.steps.length === 0 || this.finished) return;
     this.charging = false;
+    this.chargeProgressValue = 0;
     let remaining = deltaMs;
     while (remaining > 0 && this.script.steps.length > 0) {
       const step = this.script.steps[this.stepIndex];
       if (step.kind === "charge") {
+        this.charging = true;
         if (step.durationMs <= 0) {
+          this.chargeProgressValue = 1;
           if (this.advanceStep()) return;
           continue;
         }
         const timeLeft = step.durationMs - this.stepElapsedMs;
         if (timeLeft <= 0) {
+          this.chargeProgressValue = 1;
           if (this.advanceStep()) return;
           continue;
         }
         const slice = Math.min(remaining, timeLeft);
         this.stepElapsedMs += slice;
+        this.chargeProgressValue = Math.min(
+          this.stepElapsedMs / step.durationMs,
+          1,
+        );
         remaining -= slice;
         if (this.stepElapsedMs >= step.durationMs) {
           if (this.advanceStep()) return;
@@ -166,6 +176,9 @@ export class FireScriptRunner {
     }
     if (this.script.steps.length > 0 && !this.finished) {
       this.charging = this.script.steps[this.stepIndex]?.kind === "charge";
+      if (!this.charging) {
+        this.chargeProgressValue = 0;
+      }
     }
   }
 
@@ -184,6 +197,7 @@ export class FireScriptRunner {
     this.shotTimerMs = 0;
     this.shotsFired = 0;
     this.charging = false;
+    this.chargeProgressValue = 0;
     return false;
   }
 
@@ -234,5 +248,9 @@ export class FireScriptRunner {
 
   get isCharging(): boolean {
     return this.charging;
+  }
+
+  get chargeProgress(): number {
+    return this.chargeProgressValue;
   }
 }

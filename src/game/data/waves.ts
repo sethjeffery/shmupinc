@@ -5,12 +5,14 @@ export type EnemyOverride = Partial<
     EnemyDef,
     | "fire"
     | "goldDrop"
+    | "hitbox"
     | "hp"
     | "move"
     | "phases"
     | "radius"
     | "rotation"
     | "rotationDeg"
+    | "style"
   >
 >;
 
