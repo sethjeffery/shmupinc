@@ -25,12 +25,42 @@
       }
     },
 
-    { "atMs": 1400, "enemyId": "sine_silent", "x": -0.24, "y": -0.08, "overrides": { "hp": 1 } },
-    { "atMs": 1900, "enemyId": "sine_silent", "x": 0, "y": -0.08, "overrides": { "hp": 1 } },
-    { "atMs": 2400, "enemyId": "sine_silent", "x": 0.24, "y": -0.08, "overrides": { "hp": 1 } },
+    {
+      "atMs": 1400,
+      "enemyId": "sine_silent",
+      "x": -0.24,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 1900,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 2400,
+      "enemyId": "sine_silent",
+      "x": 0.24,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
 
-    { "atMs": 3300, "enemyId": "swooper", "x": -0.3, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 3900, "enemyId": "swooper", "x": 0.3, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 3300,
+      "enemyId": "swooper",
+      "x": -0.3,
+      "y": -0.16,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 3900,
+      "enemyId": "swooper",
+      "x": 0.3,
+      "y": -0.16,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
     {
       "atMs": 4800,
       "enemyId": "sine",
@@ -55,15 +85,57 @@
       }
     },
 
-    { "atMs": 6400, "enemyId": "crossfire", "x": -0.24, "y": -0.12, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 7100, "enemyId": "crossfire", "x": 0.24, "y": -0.12, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 6400,
+      "enemyId": "crossfire",
+      "x": -0.24,
+      "y": -0.12,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 7100,
+      "enemyId": "crossfire",
+      "x": 0.24,
+      "y": -0.12,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
 
-    { "atMs": 8600, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
-    { "atMs": 8850, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
-    { "atMs": 9100, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
-    { "atMs": 9350, "enemyId": "circler", "x": 0, "y": 0, "overrides": { "hp": 1 } },
+    {
+      "atMs": 8600,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 8850,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 9100,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 9350,
+      "enemyId": "circler",
+      "x": 0,
+      "y": 0,
+      "overrides": { "hp": 1 }
+    },
 
-    { "atMs": 10800, "enemyId": "swooper", "x": -0.28, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 10800,
+      "enemyId": "swooper",
+      "x": -0.28,
+      "y": -0.16,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
     {
       "atMs": 11400,
       "enemyId": "swooper",
@@ -151,8 +223,20 @@
       }
     },
 
-    { "atMs": 15400, "enemyId": "sine_silent", "x": -0.26, "y": -0.08, "overrides": { "hp": 1 } },
-    { "atMs": 15850, "enemyId": "sine_silent", "x": 0.26, "y": -0.08, "overrides": { "hp": 1 } },
+    {
+      "atMs": 15400,
+      "enemyId": "sine_silent",
+      "x": -0.26,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 15850,
+      "enemyId": "sine_silent",
+      "x": 0.26,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
     {
       "atMs": 16300,
       "enemyId": "sine",
@@ -200,8 +284,20 @@
       "overrides": { "hp": 2, "fire": { "steps": [] } }
     },
 
-    { "atMs": 20900, "enemyId": "swooper", "x": -0.24, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 21400, "enemyId": "swooper", "x": 0.24, "y": -0.16, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 20900,
+      "enemyId": "swooper",
+      "x": -0.24,
+      "y": -0.16,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 21400,
+      "enemyId": "swooper",
+      "x": 0.24,
+      "y": -0.16,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
     {
       "atMs": 22400,
       "enemyId": "spinner",

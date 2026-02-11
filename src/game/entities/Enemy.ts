@@ -10,6 +10,8 @@ import { FireScriptRunner } from "../systems/FireScriptRunner";
 import { MoveScriptRunner } from "../systems/MoveScriptRunner";
 import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "../util/playArea";
 
+const DYING_HP_RATIO = 0.25;
+
 export class Enemy {
   scene: Phaser.Scene;
   def: EnemyDef;
@@ -136,11 +138,21 @@ export class Enemy {
     return this.finishedElapsedMsValue;
   }
 
+  get hpRatio(): number {
+    if (this.maxHp <= 0) return 0;
+    return Phaser.Math.Clamp(this.hp / this.maxHp, 0, 1);
+  }
+
+  get isDying(): boolean {
+    return this.active && this.hp > 0 && this.hpRatio <= DYING_HP_RATIO;
+  }
+
   takeDamage(amount: number): void {
     this.hp -= amount;
-    this.flashTimer = 0.25;
+    this.flashTimer = 0.42;
     this.redraw(this.flashTimer);
     if (this.hp <= 0) {
+      this.hp = 0;
       this.active = false;
       this.graphics.setVisible(false);
     }
@@ -225,21 +237,55 @@ export class Enemy {
     const style = this.def.style ?? {};
     const baseFill = style.fillColor ?? 0x1c0f1a;
     const baseLine = style.lineColor ?? 0xff6b6b;
+    const flashBlend = Phaser.Math.Clamp(flashStrength * 1.55, 0, 1);
+    const dyingProgress = Phaser.Math.Clamp(
+      (DYING_HP_RATIO - this.hpRatio) / DYING_HP_RATIO,
+      0,
+      1,
+    );
     const flash = Phaser.Display.Color.Interpolate.ColorWithColor(
       Phaser.Display.Color.ValueToColor(baseFill),
-      Phaser.Display.Color.ValueToColor(0xff6b6b),
+      Phaser.Display.Color.ValueToColor(0xffe7b6),
       1,
-      Phaser.Math.Clamp(flashStrength, 0, 1),
+      flashBlend,
     );
     const fill = Phaser.Display.Color.GetColor(flash.r, flash.g, flash.b);
+    const lineBlend = Phaser.Display.Color.Interpolate.ColorWithColor(
+      Phaser.Display.Color.ValueToColor(baseLine),
+      Phaser.Display.Color.ValueToColor(0xffffff),
+      1,
+      Phaser.Math.Clamp(dyingProgress * 0.6 + flashBlend * 0.9, 0, 1),
+    );
+    const lineColor = Phaser.Display.Color.GetColor(
+      lineBlend.r,
+      lineBlend.g,
+      lineBlend.b,
+    );
 
-    this.graphics.lineStyle(2, baseLine, 1);
-    this.graphics.fillStyle(fill, 1);
+    this.graphics.lineStyle(
+      2 + dyingProgress * 0.7 + flashBlend * 0.7,
+      lineColor,
+      1,
+    );
+    this.graphics.fillStyle(fill, 0.92 + flashBlend * 0.08);
     drawEnemyToGraphics(
       this.graphics,
       style.vector ?? style.shape ?? "swooper",
       this.radius,
     );
+    if (flashBlend > 0.04) {
+      this.graphics.lineStyle(
+        1.4 + flashBlend * 0.8,
+        lineColor,
+        flashBlend * 0.5,
+      );
+      this.graphics.strokeCircle(
+        0,
+        0,
+        this.radius * (1.08 + flashBlend * 0.12),
+      );
+    }
+    this.graphics.setScale(1 + flashBlend * 0.05);
   }
 
   private applyRotationMode(): void {

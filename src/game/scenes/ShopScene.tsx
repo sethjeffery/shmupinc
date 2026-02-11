@@ -10,13 +10,16 @@ import type { WeaponInstanceId } from "../data/weaponInstances";
 import type { WeaponDefinition, WeaponId } from "../data/weapons";
 import type { WeaponSize } from "../data/weaponTypes";
 
+import { signal, type Signal } from "@preact/signals";
 import Phaser from "phaser";
+import { render } from "preact";
 
 import { GUNS } from "../data/guns";
 import { getActiveLevelSession } from "../data/levelState";
 import { MODS } from "../data/mods";
 import {
   addResourceInSave,
+  autoAttachWeaponsForShipInSave,
   buildMountedWeapons,
   createModInstanceInSave,
   createWeaponInstanceInSave,
@@ -41,8 +44,6 @@ type ShopCategory = "armory" | "loadout" | "ships";
 
 type ShopCardState = "equipped" | "locked" | "mounted" | "owned" | "restricted";
 
-type TabIcon = "mount" | "play" | "ship" | "weapon";
-
 type CardIconKind = "gun" | "mod" | "ship";
 
 interface WeaponDragPayload {
@@ -59,6 +60,27 @@ interface ModDragPayload {
 
 type DragPayload = ModDragPayload | WeaponDragPayload;
 
+interface MountNodeSelection {
+  kind: "mount";
+  mountId: string;
+}
+
+interface ModNodeSelection {
+  kind: "mod";
+  mountId: string;
+  slotIndex: number;
+}
+
+type LoadoutNodeSelection = ModNodeSelection | MountNodeSelection;
+
+interface NodeOptionIcon {
+  accentColor: number;
+  gunId?: string;
+  iconKind: CardIconKind;
+  modIcon?: ModIconKind;
+  weaponSize?: WeaponSize;
+}
+
 const SELL_RATIO = 0.5;
 const PRIMARY_RESOURCE_ID = "gold";
 
@@ -68,33 +90,176 @@ const formatCost = (cost: number, resourceId: string): string =>
 const formatColor = (color: number): string =>
   `#${color.toString(16).padStart(6, "0")}`;
 
+interface ShopStatsView {
+  hull: string;
+  magnet: string;
+  speed: string;
+}
+
+interface ShopOverlaySignals {
+  catalogNote: Signal<string>;
+  catalogTitle: Signal<string>;
+  category: Signal<ShopCategory>;
+  gold: Signal<string>;
+  missionActive: Signal<boolean>;
+  missionText: Signal<string>;
+  stats: Signal<ShopStatsView>;
+}
+
+const tabClass = (
+  activeCategory: ShopCategory,
+  tabCategory: ShopCategory,
+): string => `shop-tab${activeCategory === tabCategory ? " is-active" : ""}`;
+
+const ShopOverlayView = (props: {
+  onCatalogGridRef: (element: HTMLDivElement | null) => void;
+  onPreviewRootRef: (element: HTMLDivElement | null) => void;
+  signals: ShopOverlaySignals;
+}) => {
+  const category = props.signals.category.value;
+  const missionClass = `shop-mission${
+    props.signals.missionActive.value ? " is-active" : ""
+  }`;
+  const deckClass = `shop-deck${
+    category === "loadout" ? " is-loadout-focus" : ""
+  }`;
+  const stats = props.signals.stats.value;
+
+  return (
+    <div className="shop-panel">
+      <div className="shop-header">
+        <div className="shop-header-meta">
+          <div className="shop-title">Hangar Exchange</div>
+          <div className={missionClass}>{props.signals.missionText.value}</div>
+        </div>
+        <button
+          className="shop-header-start"
+          data-action="deploy"
+          type="button"
+        >
+          Start
+        </button>
+        <div className="shop-gold">{props.signals.gold.value}</div>
+      </div>
+
+      <div className={deckClass}>
+        <div className="shop-left">
+          <div className="shop-preview-card">
+            <div className="shop-preview-canvas" ref={props.onPreviewRootRef} />
+          </div>
+
+          <div className="shop-stats">
+            <div className="shop-stat">
+              <strong>Hull</strong>
+              <span>{stats.hull}</span>
+            </div>
+            <div className="shop-stat">
+              <strong>Thrust</strong>
+              <span>{stats.speed}</span>
+            </div>
+            <div className="shop-stat">
+              <strong>Magnet</strong>
+              <span>{stats.magnet}</span>
+            </div>
+          </div>
+
+          <div className="shop-cta">
+            <button className="shop-play" data-action="deploy" type="button">
+              <span className="shop-play-icon" />
+              <span className="shop-play-label">Start Mission</span>
+            </button>
+            <div className="shop-cta-meta">
+              <span className="shop-cta-gold">{props.signals.gold.value}</span>
+              <span className="shop-cta-hint">
+                Configure mounts before deploying.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="shop-right">
+          <div className="shop-tabs">
+            <button
+              className={tabClass(category, "ships")}
+              data-action="show-ships"
+              type="button"
+            >
+              <span className="shop-tab-icon shop-tab-icon--ship">
+                <svg className="shop-tab-icon-svg" viewBox="0 0 24 24">
+                  <path d="M12 2 L17.5 8.5 L21 7.8 L21 18.8 L12 17 L3 18.8 L3 7.8 L6.5 8.5 Z" />
+                </svg>
+              </span>
+              <span className="shop-tab-label">Ships</span>
+            </button>
+            <button
+              className={tabClass(category, "armory")}
+              data-action="show-armory"
+              type="button"
+            >
+              <span className="shop-tab-icon shop-tab-icon--weapon" />
+              <span className="shop-tab-label">Armory</span>
+            </button>
+            <button
+              className={tabClass(category, "loadout")}
+              data-action="show-loadout"
+              type="button"
+            >
+              <span className="shop-tab-icon shop-tab-icon--mount" />
+              <span className="shop-tab-label">Loadout</span>
+            </button>
+          </div>
+
+          <div className="shop-content">
+            <div className="shop-content-header">
+              <div className="shop-section-title">
+                {props.signals.catalogTitle.value}
+              </div>
+              <div className="shop-content-note">
+                {props.signals.catalogNote.value}
+              </div>
+            </div>
+            <div className="shop-grid" ref={props.onCatalogGridRef} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export class ShopScene extends Phaser.Scene {
   private save!: SaveData;
   private overlay?: HTMLDivElement;
-  private goldText?: HTMLDivElement;
-  private goldFooterText?: HTMLSpanElement;
-  private catalogTitle?: HTMLDivElement;
-  private catalogNote?: HTMLDivElement;
   private catalogGrid?: HTMLDivElement;
-  private missionText?: HTMLDivElement;
   private previewRoot?: HTMLDivElement;
   private previewGame?: Phaser.Game;
   private previewScene?: PreviewScene;
   private resizeObserver?: ResizeObserver;
-  private mountVisual?: HTMLDivElement;
-  private mountCanvas?: HTMLCanvasElement;
-  private mountDots = new Map<string, HTMLDivElement>();
+  private mountVisual?: HTMLElement;
+  private mountDots = new Map<string, HTMLElement>();
   private mountCallouts = new Map<string, HTMLDivElement>();
   private mountCalloutLines = new Map<string, HTMLDivElement>();
   private dragHoverMountId: null | string = null;
   private dragPreviewEl?: HTMLDivElement;
   private currentCategory: ShopCategory = "loadout";
-  private tabButtons: Partial<Record<ShopCategory, HTMLButtonElement>> = {};
-  private statHull?: HTMLSpanElement;
-  private statSpeed?: HTMLSpanElement;
-  private statMagnet?: HTMLSpanElement;
+  private readonly categorySignal = signal<ShopCategory>("loadout");
+  private readonly catalogNoteSignal = signal(
+    "Equip anything you own at no cost.",
+  );
+  private readonly catalogTitleSignal = signal("Loadout");
+  private readonly goldSignal = signal("Gold: 0");
+  private readonly missionActiveSignal = signal(false);
+  private readonly missionTextSignal = signal("");
+  private readonly statsSignal = signal<ShopStatsView>({
+    hull: "--",
+    magnet: "--",
+    speed: "--",
+  });
   private shopRules: null | ShopRules = null;
   private dragPayload: DragPayload | null = null;
+  private loadoutSelection: LoadoutNodeSelection | null = null;
+  private activeEnergySurge: { mountId: string; slotIndex?: number } | null =
+    null;
+  private energySurgeTimeout: null | number = null;
   private handleClickBound = (event: MouseEvent) =>
     this.handleOverlayClick(event);
   private handleDragStartBound = (event: DragEvent) =>
@@ -117,9 +282,14 @@ export class ShopScene extends Phaser.Scene {
 
   private showOverlay(): void {
     if (this.overlay) return;
-    this.overlay = this.buildOverlay();
+    const overlayHost = document.getElementById("shop-overlay-root");
+    if (!(overlayHost instanceof HTMLDivElement)) {
+      throw new Error("Missing #shop-overlay-root host.");
+    }
+    this.overlay = overlayHost;
+    this.overlay.className = "shop-overlay";
+    this.renderOverlay(this.overlay);
     document.body.classList.add("shop-open");
-    document.body.appendChild(this.overlay);
     this.overlay.addEventListener("click", this.handleClickBound);
     this.overlay.addEventListener("dragstart", this.handleDragStartBound);
     this.overlay.addEventListener("dragover", this.handleDragOverBound);
@@ -137,255 +307,67 @@ export class ShopScene extends Phaser.Scene {
     this.overlay.removeEventListener("dragover", this.handleDragOverBound);
     this.overlay.removeEventListener("drop", this.handleDropBound);
     this.overlay.removeEventListener("dragend", this.handleDragEndBound);
-    this.overlay.remove();
+    render(null, this.overlay);
+    this.overlay.className = "";
     this.overlay = undefined;
-    this.goldText = undefined;
-    this.goldFooterText = undefined;
-    this.catalogTitle = undefined;
-    this.catalogNote = undefined;
     this.catalogGrid = undefined;
-    this.missionText = undefined;
     this.previewRoot = undefined;
-    this.tabButtons = {};
-    this.statHull = undefined;
-    this.statSpeed = undefined;
-    this.statMagnet = undefined;
     this.shopRules = null;
     this.mountVisual = undefined;
-    this.mountCanvas = undefined;
     this.mountDots.clear();
     this.mountCallouts.clear();
     this.mountCalloutLines.clear();
     this.dragHoverMountId = null;
-    this.dragPreviewEl?.remove();
-    this.dragPreviewEl = undefined;
+    this.clearDragPreview();
+    if (this.energySurgeTimeout !== null) {
+      window.clearTimeout(this.energySurgeTimeout);
+      this.energySurgeTimeout = null;
+    }
+    this.activeEnergySurge = null;
     document.body.classList.remove("shop-open");
   }
 
-  private buildOverlay(): HTMLDivElement {
-    const overlay = document.createElement("div");
-    overlay.className = "shop-overlay";
-
-    const panel = document.createElement("div");
-    panel.className = "shop-panel";
-
-    const header = document.createElement("div");
-    header.className = "shop-header";
-
-    const headerMeta = document.createElement("div");
-    headerMeta.className = "shop-header-meta";
-
-    const title = document.createElement("div");
-    title.className = "shop-title";
-    title.textContent = "Hangar Exchange";
-
-    const mission = document.createElement("div");
-    mission.className = "shop-mission";
-    mission.textContent = "";
-
-    const gold = document.createElement("div");
-    gold.className = "shop-gold";
-    gold.textContent = "Gold: 0";
-
-    headerMeta.appendChild(title);
-    headerMeta.appendChild(mission);
-    header.appendChild(headerMeta);
-    header.appendChild(gold);
-
-    const deck = document.createElement("div");
-    deck.className = "shop-deck";
-
-    const left = document.createElement("div");
-    left.className = "shop-left";
-
-    const previewCard = document.createElement("div");
-    previewCard.className = "shop-preview-card";
-    const previewRoot = document.createElement("div");
-    previewRoot.className = "shop-preview-canvas";
-    previewCard.appendChild(previewRoot);
-
-    const stats = document.createElement("div");
-    stats.className = "shop-stats";
-    const { stat: hullStat, value: hullValue } = this.createStat("Hull");
-    const { stat: speedStat, value: speedValue } = this.createStat("Thrust");
-    const { stat: magnetStat, value: magnetValue } = this.createStat("Magnet");
-    stats.appendChild(hullStat);
-    stats.appendChild(speedStat);
-    stats.appendChild(magnetStat);
-
-    const cta = document.createElement("div");
-    cta.className = "shop-cta";
-    const playButton = document.createElement("button");
-    playButton.className = "shop-play";
-    playButton.type = "button";
-    playButton.dataset.action = "deploy";
-    const playIcon = document.createElement("span");
-    playIcon.className = "shop-play-icon";
-    const playLabel = document.createElement("span");
-    playLabel.className = "shop-play-label";
-    playLabel.textContent = "Start Mission";
-    playButton.appendChild(playIcon);
-    playButton.appendChild(playLabel);
-
-    const ctaMeta = document.createElement("div");
-    ctaMeta.className = "shop-cta-meta";
-    const goldFooter = document.createElement("span");
-    goldFooter.className = "shop-cta-gold";
-    goldFooter.textContent = "Gold: 0";
-    const hint = document.createElement("span");
-    hint.className = "shop-cta-hint";
-    hint.textContent = "Configure mounts before deploying.";
-    ctaMeta.appendChild(goldFooter);
-    ctaMeta.appendChild(hint);
-
-    cta.appendChild(playButton);
-    cta.appendChild(ctaMeta);
-
-    left.appendChild(previewCard);
-    left.appendChild(stats);
-    left.appendChild(cta);
-
-    const right = document.createElement("div");
-    right.className = "shop-right";
-
-    const tabs = document.createElement("div");
-    tabs.className = "shop-tabs";
-    const shipsTab = this.createTabButton("Ships", "show-ships", "ship");
-    const armoryTab = this.createTabButton("Armory", "show-armory", "weapon");
-    const loadoutTab = this.createTabButton("Loadout", "show-loadout", "mount");
-    tabs.appendChild(shipsTab);
-    tabs.appendChild(armoryTab);
-    tabs.appendChild(loadoutTab);
-
-    const content = document.createElement("div");
-    content.className = "shop-content";
-    const contentHeader = document.createElement("div");
-    contentHeader.className = "shop-content-header";
-    const catalogTitle = document.createElement("div");
-    catalogTitle.className = "shop-section-title";
-    const contentNote = document.createElement("div");
-    contentNote.className = "shop-content-note";
-    contentNote.textContent = "Equip anything you own at no cost.";
-    contentHeader.appendChild(catalogTitle);
-    contentHeader.appendChild(contentNote);
-
-    const catalogGrid = document.createElement("div");
-    catalogGrid.className = "shop-grid";
-
-    content.appendChild(contentHeader);
-    content.appendChild(catalogGrid);
-
-    right.appendChild(tabs);
-    right.appendChild(content);
-
-    deck.appendChild(left);
-    deck.appendChild(right);
-
-    panel.appendChild(header);
-    panel.appendChild(deck);
-
-    overlay.appendChild(panel);
-
-    this.goldText = gold;
-    this.goldFooterText = goldFooter;
-    this.catalogTitle = catalogTitle;
-    this.catalogNote = contentNote;
-    this.catalogGrid = catalogGrid;
-    this.missionText = mission;
-    this.previewRoot = previewRoot;
-    this.tabButtons = {
-      armory: armoryTab,
-      loadout: loadoutTab,
-      ships: shipsTab,
-    };
-    this.statHull = hullValue;
-    this.statSpeed = speedValue;
-    this.statMagnet = magnetValue;
-
-    return overlay;
-  }
-
-  private createStat(label: string): {
-    stat: HTMLDivElement;
-    value: HTMLSpanElement;
-  } {
-    const stat = document.createElement("div");
-    stat.className = "shop-stat";
-    const strong = document.createElement("strong");
-    strong.textContent = label;
-    const value = document.createElement("span");
-    value.textContent = "--";
-    stat.appendChild(strong);
-    stat.appendChild(value);
-    return { stat, value };
-  }
-
-  private createTabButton(
-    label: string,
-    action: string,
-    icon: TabIcon,
-  ): HTMLButtonElement {
-    const button = document.createElement("button");
-    button.className = "shop-tab";
-    button.type = "button";
-    button.dataset.action = action;
-
-    const iconSpan = document.createElement("span");
-    iconSpan.className = `shop-tab-icon shop-tab-icon--${icon}`;
-    if (icon === "ship") {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", "0 0 24 24");
-      svg.classList.add("shop-tab-icon-svg");
-      const path = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "path",
-      );
-      path.setAttribute(
-        "d",
-        "M12 2 L17.5 8.5 L21 7.8 L21 18.8 L12 17 L3 18.8 L3 7.8 L6.5 8.5 Z",
-      );
-      svg.appendChild(path);
-      iconSpan.appendChild(svg);
-    }
-
-    const labelSpan = document.createElement("span");
-    labelSpan.className = "shop-tab-label";
-    labelSpan.textContent = label;
-
-    button.appendChild(iconSpan);
-    button.appendChild(labelSpan);
-    return button;
+  private renderOverlay(overlay: HTMLDivElement): void {
+    render(
+      <ShopOverlayView
+        onCatalogGridRef={(element) => {
+          this.catalogGrid = element ?? undefined;
+        }}
+        onPreviewRootRef={(element) => {
+          this.previewRoot = element ?? undefined;
+        }}
+        signals={{
+          catalogNote: this.catalogNoteSignal,
+          catalogTitle: this.catalogTitleSignal,
+          category: this.categorySignal,
+          gold: this.goldSignal,
+          missionActive: this.missionActiveSignal,
+          missionText: this.missionTextSignal,
+          stats: this.statsSignal,
+        }}
+      />,
+      overlay,
+    );
   }
 
   private refreshOverlay(): void {
-    if (
-      !this.overlay ||
-      !this.catalogGrid ||
-      !this.catalogTitle ||
-      !this.goldText
-    )
-      return;
+    if (!this.overlay || !this.catalogGrid) return;
     this.syncShopRules();
     this.ensureAllowedSelections();
     const goldValue = `Gold: ${Math.round(
       getResourceAmount(this.save, PRIMARY_RESOURCE_ID),
     )}`;
-    this.goldText.textContent = goldValue;
-    if (this.goldFooterText) this.goldFooterText.textContent = goldValue;
+    this.goldSignal.value = goldValue;
+    this.categorySignal.value = this.currentCategory;
 
-    for (const [key, button] of Object.entries(this.tabButtons)) {
-      button?.classList.toggle("is-active", key === this.currentCategory);
-    }
-
-    const { cards, title } = this.buildCategoryCards(this.currentCategory);
-    this.catalogTitle.textContent = title;
-    this.catalogGrid.replaceChildren(...cards);
+    const { content, title } = this.buildCategoryContent(this.currentCategory);
+    this.catalogTitleSignal.value = title;
+    render(<>{content}</>, this.catalogGrid);
     this.updateCatalogNote(this.currentCategory);
     this.updateStats();
     this.applyPreviewLoadout();
     if (this.currentCategory !== "loadout") {
       this.mountVisual = undefined;
-      this.mountCanvas = undefined;
       this.mountDots.clear();
       this.mountCallouts.clear();
       this.mountCalloutLines.clear();
@@ -403,55 +385,46 @@ export class ShopScene extends Phaser.Scene {
 
   private updateStats(): void {
     const ship = this.getSelectedShip();
-    if (this.statHull) this.statHull.textContent = `${ship.maxHp}`;
-    if (this.statSpeed)
-      this.statSpeed.textContent = `${ship.moveSpeed.toFixed(1)}`;
-    if (this.statMagnet) {
-      const magnet = Math.round((ship.magnetMultiplier ?? 1) * 100);
-      this.statMagnet.textContent = `${magnet}%`;
-    }
+    const magnet = Math.round((ship.magnetMultiplier ?? 1) * 100);
+    this.statsSignal.value = {
+      hull: `${ship.maxHp}`,
+      magnet: `${magnet}%`,
+      speed: `${ship.moveSpeed.toFixed(1)}`,
+    };
   }
 
   private syncShopRules(): void {
     const session = getActiveLevelSession();
     const level = session?.level;
     this.shopRules = level?.shopRules ?? null;
-    if (this.missionText) {
-      if (level) {
-        this.missionText.textContent = `Mission: ${level.title}`;
-        this.missionText.classList.add("is-active");
-      } else {
-        this.missionText.textContent = "";
-        this.missionText.classList.remove("is-active");
-      }
+    if (level) {
+      this.missionTextSignal.value = `Mission: ${level.title}`;
+      this.missionActiveSignal.value = true;
+    } else {
+      this.missionTextSignal.value = "";
+      this.missionActiveSignal.value = false;
     }
   }
 
   private updateCatalogNote(category: ShopCategory): void {
-    if (!this.catalogNote) return;
     const level = getActiveLevelSession()?.level;
     const restriction = level ? "Mission-approved gear for purchase." : "";
     if (category === "ships") {
-      this.catalogNote.textContent = level
+      this.catalogNoteSignal.value = level
         ? "Mission-approved hulls for purchase. Owned ships stay available."
         : "Select a ship to equip.";
       return;
     }
     if (category === "armory") {
-      this.catalogNote.textContent = [
-        "Click a weapon to purchase another copy.",
+      this.catalogNoteSignal.value = [
+        "Each weapon type is single-ownership. Buy once, equip anywhere.",
         restriction,
       ]
         .filter(Boolean)
         .join(" ");
       return;
     }
-    this.catalogNote.textContent = [
-      "Drag weapons onto mounts to equip. Drop back to inventory to detach.",
-      level ? "Owned gear is always available." : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    this.catalogNoteSignal.value = "";
   }
 
   private ensureAllowedSelections(): void {
@@ -493,24 +466,21 @@ export class ShopScene extends Phaser.Scene {
     );
   }
 
-  private buildCategoryCards(category: ShopCategory): {
-    cards: HTMLElement[];
-    title: string;
-  } {
+  private buildCategoryContent(category: ShopCategory) {
     switch (category) {
       case "armory":
         return {
-          cards: this.buildArmoryCards(),
+          content: this.buildArmoryCards(),
           title: "Armory",
         };
       case "loadout":
         return {
-          cards: [this.buildLoadoutView()],
+          content: this.buildLoadoutView(),
           title: "Loadout",
         };
       case "ships":
       default:
-        return { cards: this.buildShipCards(), title: "Ships" };
+        return { content: this.buildShipCards(), title: "Ships" };
     }
   }
 
@@ -593,7 +563,7 @@ export class ShopScene extends Phaser.Scene {
     );
   }
 
-  private buildShipCards(): HTMLElement[] {
+  private buildShipCards() {
     const allowedIds = new Set(this.getFilteredShips().map((ship) => ship.id));
     return this.getVisibleShips()
       .sort((a, b) => a.cost - b.cost)
@@ -627,36 +597,40 @@ export class ShopScene extends Phaser.Scene {
           accent: formatColor(ship.color),
           accentColor: ship.color,
           description: ship.description,
+          gunId: undefined,
           iconKind: "ship",
           id: ship.id,
+          key: `ship-${ship.id}`,
+          modIcon: undefined,
           name: ship.name,
           shipShape: ship.vector,
           state,
           status,
           type: "ship",
+          weaponSize: undefined,
         });
       });
   }
 
-  private buildArmoryCards(): HTMLElement[] {
+  private buildArmoryCards() {
     const weaponCards = this.getFilteredWeapons()
       .sort((a, b) => a.cost - b.cost)
       .map((weapon) => {
-        const ownedCount = this.save.ownedWeapons.filter(
+        const owned = this.save.ownedWeapons.some(
           (instance) => instance.weaponId === weapon.id,
-        ).length;
+        );
         const missingUnlocks = getMissingUnlocks(
           this.save,
           weapon.requiresUnlocks,
         );
-        const unlockBlocked = ownedCount === 0 && missingUnlocks.length > 0;
+        const unlockBlocked = !owned && missingUnlocks.length > 0;
         const status = unlockBlocked
           ? `Blueprint Required · ${formatCost(
               weapon.cost,
               weapon.costResource ?? PRIMARY_RESOURCE_ID,
             )}`
-          : ownedCount > 0
-            ? `Owned x${ownedCount} · ${formatCost(
+          : owned
+            ? `Owned · ${formatCost(
                 weapon.cost,
                 weapon.costResource ?? PRIMARY_RESOURCE_ID,
               )}`
@@ -664,7 +638,7 @@ export class ShopScene extends Phaser.Scene {
                 weapon.cost,
                 weapon.costResource ?? PRIMARY_RESOURCE_ID,
               );
-        const state: ShopCardState = ownedCount > 0 ? "owned" : "locked";
+        const state: ShopCardState = owned ? "owned" : "locked";
         return this.buildCard({
           accent: formatColor(weapon.stats.bullet.color ?? 0x7df9ff),
           accentColor: weapon.stats.bullet.color ?? 0x7df9ff,
@@ -672,13 +646,17 @@ export class ShopScene extends Phaser.Scene {
           gunId: weapon.gunId,
           iconKind: "gun",
           id: weapon.id,
+          key: `weapon-${weapon.id}`,
+          modIcon: undefined,
           name: weapon.name,
+          shipShape: undefined,
           state,
           status,
           type: "weapon",
           weaponSize: weapon.size,
         });
       });
+
     const modCards = this.getFilteredMods()
       .sort((a, b) => a.cost - b.cost)
       .map((mod) => {
@@ -707,80 +685,21 @@ export class ShopScene extends Phaser.Scene {
           accent: formatColor(accentColor),
           accentColor,
           description: mod.description,
+          gunId: undefined,
           iconKind: "mod",
           id: mod.id,
+          key: `mod-${mod.id}`,
           modIcon: mod.iconKind,
           name: mod.name,
+          shipShape: undefined,
           state,
           status,
           type: "mod",
+          weaponSize: undefined,
         });
       });
+
     return [...weaponCards, ...modCards];
-  }
-
-  private createCardBase(data: {
-    accent: string;
-    accentColor: number;
-    description: string;
-    gunId?: string;
-    iconKind: CardIconKind;
-    modIcon?: ModIconKind;
-    name: string;
-    shipShape?: ShipVector;
-    weaponSize?: WeaponSize;
-    state: ShopCardState;
-    status: string;
-    tag: "button" | "div";
-  }): { card: HTMLElement; inner: HTMLDivElement } {
-    const card = document.createElement(data.tag);
-    if (data.tag === "button") {
-      (card as HTMLButtonElement).type = "button";
-    }
-    card.className = "shop-card";
-    card.dataset.state = data.state;
-    card.style.setProperty("--accent", data.accent);
-
-    const inner = document.createElement("div");
-    inner.className = "shop-card-inner";
-
-    const iconWrap = document.createElement("div");
-    iconWrap.className = "card-icon";
-    const iconCanvas = document.createElement("canvas");
-    iconCanvas.className = "card-icon-canvas";
-    iconCanvas.width = 52;
-    iconCanvas.height = 52;
-    iconWrap.appendChild(iconCanvas);
-    this.drawIcon(
-      iconCanvas,
-      data.iconKind,
-      data.accent,
-      data.accentColor,
-      data.shipShape ?? DEFAULT_SHIP_VECTOR,
-      data.gunId,
-      data.modIcon,
-      data.weaponSize,
-    );
-
-    const title = document.createElement("div");
-    title.className = "card-title";
-    title.textContent = data.name;
-
-    const desc = document.createElement("div");
-    desc.className = "card-desc";
-    desc.textContent = data.description;
-
-    const status = document.createElement("div");
-    status.className = "card-status";
-    status.textContent = data.status;
-
-    inner.appendChild(iconWrap);
-    inner.appendChild(title);
-    inner.appendChild(desc);
-    inner.appendChild(status);
-
-    card.appendChild(inner);
-    return { card, inner };
   }
 
   private buildCard(data: {
@@ -790,18 +709,44 @@ export class ShopScene extends Phaser.Scene {
     gunId?: string;
     iconKind: CardIconKind;
     id: string;
+    key: string;
     modIcon?: ModIconKind;
     name: string;
     shipShape?: ShipVector;
-    weaponSize?: WeaponSize;
     state: ShopCardState;
     status: string;
     type: ShopItemType;
-  }): HTMLElement {
-    const { card } = this.createCardBase({ ...data, tag: "button" });
-    card.dataset.type = data.type;
-    card.dataset.id = data.id;
-    return card;
+    weaponSize?: WeaponSize;
+  }) {
+    const cardStyle = { "--accent": data.accent } as Record<string, string>;
+    return (
+      <button
+        className="shop-card"
+        data-id={data.id}
+        data-state={data.state}
+        data-type={data.type}
+        key={data.key}
+        style={cardStyle}
+        type="button"
+      >
+        <div className="shop-card-inner">
+          <div className="card-icon">
+            {this.buildNodeIcon(data.iconKind, {
+              accentColor: data.accentColor,
+              className: "card-icon-canvas",
+              gunId: data.gunId,
+              modIcon: data.modIcon,
+              shipShape: data.shipShape ?? DEFAULT_SHIP_VECTOR,
+              size: 52,
+              weaponSize: data.weaponSize,
+            })}
+          </div>
+          <div className="card-title">{data.name}</div>
+          <div className="card-desc">{data.description}</div>
+          <div className="card-status">{data.status}</div>
+        </div>
+      </button>
+    );
   }
 
   private getAssignmentsForShip(ship: ShipDefinition): MountAssignment[] {
@@ -816,308 +761,586 @@ export class ShopScene extends Phaser.Scene {
     );
   }
 
-  private buildLoadoutView(): HTMLElement {
-    const wrapper = document.createElement("div");
-    wrapper.className = "shop-loadout";
-
+  private buildLoadoutView() {
     const ship = this.getSelectedShip();
     const assignments = this.getAssignmentsForShip(ship);
-    const mountedWeaponIds = new Set<WeaponInstanceId>();
-    const mountedModIds = new Set<ModInstanceId>();
-    for (const entry of assignments) {
-      if (entry.weaponInstanceId) mountedWeaponIds.add(entry.weaponInstanceId);
-      for (const modId of entry.modInstanceIds) {
-        mountedModIds.add(modId);
-      }
-    }
+    const selection = this.resolveLoadoutSelection(ship, assignments);
+    this.loadoutSelection = selection;
 
-    const mountSection = document.createElement("div");
-    mountSection.className = "shop-loadout-section";
-    const mountTitle = document.createElement("div");
-    mountTitle.className = "shop-section-title";
-    mountTitle.textContent = "Mounts";
-    mountSection.appendChild(mountTitle);
-    mountSection.appendChild(this.buildMountVisual(ship, assignments));
-
-    const weaponInventorySection = document.createElement("div");
-    weaponInventorySection.className = "shop-loadout-section";
-    const weaponInventoryTitle = document.createElement("div");
-    weaponInventoryTitle.className = "shop-section-title";
-    weaponInventoryTitle.textContent = "Weapon Inventory";
-    const weaponInventoryGrid = document.createElement("div");
-    weaponInventoryGrid.className = "shop-inventory-grid";
-    weaponInventoryGrid.dataset.drop = "inventory";
-    weaponInventoryGrid.dataset.dropKind = "weapon";
-
-    const weaponInventory = this.save.ownedWeapons.filter(
-      (instance) => !mountedWeaponIds.has(instance.id),
+    return (
+      <div className="shop-loadout">
+        <div className="shop-loadout-section">
+          <div className="shop-section-title">Loadout Matrix</div>
+          <div className="shop-loadout-workbench">
+            {this.buildLoadoutNodeGraph(ship, assignments)}
+            {this.buildLoadoutSelectionPanel(ship, assignments, selection)}
+          </div>
+        </div>
+      </div>
     );
-    if (weaponInventory.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "shop-empty";
-      empty.textContent = "No spare weapons. Buy more in the Armory.";
-      weaponInventoryGrid.appendChild(empty);
-    } else {
-      for (const instance of weaponInventory) {
-        const weapon = WEAPONS[instance.weaponId];
-        if (!weapon) continue;
-        weaponInventoryGrid.appendChild(
-          this.buildInventoryCard(instance.id, weapon),
-        );
-      }
-    }
-
-    weaponInventorySection.appendChild(weaponInventoryTitle);
-    weaponInventorySection.appendChild(weaponInventoryGrid);
-
-    const modInventorySection = document.createElement("div");
-    modInventorySection.className = "shop-loadout-section";
-    const modInventoryTitle = document.createElement("div");
-    modInventoryTitle.className = "shop-section-title";
-    modInventoryTitle.textContent = "Mod Inventory";
-    const modInventoryGrid = document.createElement("div");
-    modInventoryGrid.className = "shop-inventory-grid";
-    modInventoryGrid.dataset.drop = "inventory";
-    modInventoryGrid.dataset.dropKind = "mod";
-
-    const modInventory = this.save.ownedMods.filter(
-      (instance) => !mountedModIds.has(instance.id),
-    );
-    if (modInventory.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "shop-empty";
-      empty.textContent = "No spare mods. Buy more in the Armory.";
-      modInventoryGrid.appendChild(empty);
-    } else {
-      for (const instance of modInventory) {
-        const mod = MODS[instance.modId];
-        if (!mod) continue;
-        modInventoryGrid.appendChild(
-          this.buildModInventoryCard(instance.id, mod),
-        );
-      }
-    }
-
-    modInventorySection.appendChild(modInventoryTitle);
-    modInventorySection.appendChild(modInventoryGrid);
-
-    wrapper.appendChild(mountSection);
-    wrapper.appendChild(weaponInventorySection);
-    wrapper.appendChild(modInventorySection);
-    return wrapper;
   }
 
-  private buildMountVisual(
+  private resolveLoadoutSelection(
     ship: ShipDefinition,
     assignments: MountAssignment[],
-  ): HTMLDivElement {
-    const wrapper = document.createElement("div");
-    wrapper.className = "shop-mount-visual";
+  ): LoadoutNodeSelection | null {
+    if (ship.mounts.length === 0) return null;
+    const selection = this.loadoutSelection;
+    if (!selection) {
+      return { kind: "mount", mountId: ship.mounts[0].id };
+    }
+    const mount = ship.mounts.find((entry) => entry.id === selection.mountId);
+    if (!mount) {
+      return { kind: "mount", mountId: ship.mounts[0].id };
+    }
+    if (selection.kind === "mount") {
+      return selection;
+    }
+    const assignment = assignments.find(
+      (entry) => entry.mountId === selection.mountId,
+    );
+    if (!assignment?.weaponInstanceId) {
+      return { kind: "mount", mountId: selection.mountId };
+    }
+    const slotIndex = Math.max(
+      0,
+      Math.min(selection.slotIndex, Math.max(0, mount.modSlots - 1)),
+    );
+    return {
+      kind: "mod",
+      mountId: selection.mountId,
+      slotIndex,
+    };
+  }
 
-    const canvas = document.createElement("canvas");
-
-    const points = document.createElement("div");
-    points.className = "shop-mount-points";
-
-    const callouts = document.createElement("div");
-    callouts.className = "shop-mount-callouts";
-
-    const detachZone = document.createElement("div");
-    detachZone.className = "shop-mount-detach";
-    detachZone.dataset.drop = "detach";
-    detachZone.title = "Detach";
-
-    wrapper.appendChild(canvas);
-    wrapper.appendChild(points);
-    wrapper.appendChild(callouts);
-    wrapper.appendChild(detachZone);
-
-    this.mountVisual = wrapper;
-    this.mountCanvas = canvas;
-    this.mountDots.clear();
-    this.mountCallouts.clear();
-    this.mountCalloutLines.clear();
-
+  private buildLoadoutNodeGraph(
+    ship: ShipDefinition,
+    assignments: MountAssignment[],
+  ) {
+    const center = { x: 50, y: 54 };
     const assignmentById = new Map(
       assignments.map((entry) => [entry.mountId, entry]),
     );
+    const mountPositions = new Map<string, { x: number; y: number }>();
 
     for (const mount of ship.mounts) {
-      const dot = document.createElement("div");
-      dot.className = `shop-mount-dot shop-mount-dot--${mount.size}`;
-      dot.dataset.drop = "mount";
-      dot.dataset.mountId = mount.id;
-      dot.title = `${mount.size} · ${mount.modSlots} mod`;
+      const x = this.clampPercent(50 + mount.offset.x * 44, 8, 92);
+      const y = this.clampPercent(54 + mount.offset.y * 38, 10, 92);
+      mountPositions.set(mount.id, { x, y });
+    }
+
+    const nodes: ReturnType<typeof this.buildNodeIcon>[] = [];
+    nodes.push(
+      <div
+        className="shop-node shop-node--hull"
+        key="node-hull"
+        style={{ left: `${center.x}%`, top: `${center.y}%` }}
+      >
+        {this.buildNodeIcon("ship", {
+          accentColor: ship.color,
+          className: "shop-node-icon shop-node-icon--hull",
+          shipShape: ship.vector,
+          size: 140,
+        })}
+      </div>,
+    );
+
+    for (const mount of ship.mounts) {
+      const mountPos = mountPositions.get(mount.id);
+      if (!mountPos) continue;
       const assignment = assignmentById.get(mount.id);
-      const instanceId = assignment?.weaponInstanceId ?? null;
-      const instance = instanceId
-        ? (this.save.ownedWeapons.find((item) => item.id === instanceId) ??
-          null)
+      const instance = assignment?.weaponInstanceId
+        ? this.save.ownedWeapons.find(
+            (entry) => entry.id === assignment.weaponInstanceId,
+          )
         : null;
       const weapon = instance ? WEAPONS[instance.weaponId] : null;
-      const mountedMods = (assignment?.modInstanceIds ?? [])
-        .map((modInstanceId) =>
-          this.save.ownedMods.find((entry) => entry.id === modInstanceId),
-        )
-        .filter((modInstance): modInstance is { id: string; modId: string } =>
-          Boolean(modInstance),
-        )
-        .map((modInstance) => ({
-          definition: MODS[modInstance.modId],
-          instanceId: modInstance.id,
-        }))
-        .filter(
-          (
-            entry,
-          ): entry is {
-            definition: ModDefinition;
-            instanceId: ModInstanceId;
-          } => Boolean(entry.definition),
-        );
-      if (assignment?.weaponInstanceId) {
-        dot.classList.add("is-occupied");
-      }
-      points.appendChild(dot);
-      this.mountDots.set(mount.id, dot);
+      const selected =
+        this.loadoutSelection?.kind === "mount" &&
+        this.loadoutSelection.mountId === mount.id;
+      const mountSurge = this.activeEnergySurge?.mountId === mount.id;
 
-      if (weapon) {
-        const callout = document.createElement("div");
-        callout.className = "shop-mount-callout";
-        const side =
-          mount.offset.y > 0.35
-            ? "down"
-            : mount.offset.x < -0.15
-              ? "left"
-              : mount.offset.x > 0.15
-                ? "right"
-                : "center";
-        callout.dataset.side = side;
-        callout.dataset.instanceId = instance?.id;
-        callout.dataset.mountId = mount.id;
-        callout.dataset.kind = "weapon";
-        callout.setAttribute("draggable", "true");
-        callout.addEventListener("dragstart", this.handleDragStartBound);
-        callout.addEventListener("dragend", this.handleDragEndBound);
-        const weaponName = document.createElement("div");
-        weaponName.textContent = weapon.name;
-        callout.appendChild(weaponName);
-        if (mountedMods.length > 0) {
-          const modRow = document.createElement("div");
-          modRow.className = "shop-mount-mod-row";
-          for (const mod of mountedMods) {
-            const chip = document.createElement("div");
-            chip.className = "shop-mount-mod-chip";
-            chip.dataset.instanceId = mod.instanceId;
-            chip.dataset.kind = "mod";
-            chip.dataset.modId = mod.definition.id;
-            chip.dataset.mountId = mount.id;
-            chip.setAttribute("draggable", "true");
-            chip.addEventListener("dragstart", this.handleDragStartBound);
-            chip.addEventListener("dragend", this.handleDragEndBound);
-            chip.textContent = mod.definition.name;
-            modRow.appendChild(chip);
-          }
-          callout.appendChild(modRow);
-        }
-        const line = document.createElement("div");
-        line.className = "shop-mount-callout-line";
-        callouts.appendChild(line);
-        callouts.appendChild(callout);
-        this.mountCallouts.set(mount.id, callout);
-        this.mountCalloutLines.set(mount.id, line);
+      nodes.push(
+        this.createNodeLink(
+          mountPos,
+          center,
+          Boolean(weapon),
+          selected,
+          mountSurge,
+          `link-hull-${mount.id}`,
+        ),
+      );
+
+      const mountClass = `shop-node shop-node--weapon${
+        weapon ? "" : " is-empty"
+      }${selected ? " is-selected" : ""}${mountSurge ? " is-surge" : ""}`;
+
+      nodes.push(
+        <button
+          className={mountClass}
+          data-action="select-loadout-mount"
+          data-drop="mount"
+          data-mount-id={mount.id}
+          data-type="mount"
+          key={`node-mount-${mount.id}`}
+          onMouseEnter={() => {
+            this.dragHoverMountId = mount.id;
+            this.updateMountVisualHighlights();
+          }}
+          onMouseLeave={() => {
+            if (this.dragHoverMountId === mount.id) {
+              this.dragHoverMountId = null;
+              this.updateMountVisualHighlights();
+            }
+          }}
+          ref={(element) => {
+            if (element) {
+              this.mountDots.set(mount.id, element);
+            } else {
+              this.mountDots.delete(mount.id);
+            }
+          }}
+          style={{ left: `${mountPos.x}%`, top: `${mountPos.y}%` }}
+          type="button"
+        >
+          {this.buildNodeIcon("gun", {
+            accentColor: weapon?.stats.bullet.color ?? 0x7df9ff,
+            gunId: weapon?.gunId,
+            weaponSize: weapon?.size,
+          })}
+          <div className="shop-node-name">{weapon?.name ?? "Select"}</div>
+        </button>,
+      );
+
+      if (!weapon || mount.modSlots <= 0) continue;
+
+      const mountVectorX = mountPos.x - center.x;
+      const mountVectorY = mountPos.y - center.y;
+      const vectorLength = Math.hypot(mountVectorX, mountVectorY) || 1;
+      const dirX = mountVectorX / vectorLength;
+      const dirY = mountVectorY / vectorLength;
+      const tangentX = -dirY;
+      const tangentY = dirX;
+
+      for (let slotIndex = 0; slotIndex < mount.modSlots; slotIndex += 1) {
+        const modDistance = 11 + slotIndex * 8;
+        const lateral =
+          mount.modSlots > 1 ? (slotIndex - (mount.modSlots - 1) / 2) * 4.4 : 0;
+        const modPos = {
+          x: this.clampPercent(
+            mountPos.x + dirX * modDistance + tangentX * lateral,
+            7,
+            93,
+          ),
+          y: this.clampPercent(
+            mountPos.y + dirY * modDistance + tangentY * lateral,
+            9,
+            92,
+          ),
+        };
+        const modInstanceId = assignment?.modInstanceIds[slotIndex] ?? null;
+        const modInstance = modInstanceId
+          ? this.save.ownedMods.find((entry) => entry.id === modInstanceId)
+          : null;
+        const mod = modInstance ? MODS[modInstance.modId] : null;
+        const modSelected =
+          this.loadoutSelection?.kind === "mod" &&
+          this.loadoutSelection.mountId === mount.id &&
+          this.loadoutSelection.slotIndex === slotIndex;
+        const modSurge =
+          this.activeEnergySurge?.mountId === mount.id &&
+          this.activeEnergySurge.slotIndex === slotIndex;
+
+        nodes.push(
+          this.createNodeLink(
+            modPos,
+            mountPos,
+            Boolean(mod),
+            modSelected,
+            modSurge,
+            `link-mod-${mount.id}-${slotIndex}`,
+          ),
+        );
+
+        const modClass = `shop-node shop-node--mod${mod ? "" : " is-empty"}${
+          modSelected ? " is-selected" : ""
+        }${modSurge ? " is-surge" : ""}`;
+
+        nodes.push(
+          <button
+            className={modClass}
+            data-action="select-loadout-mod"
+            data-mount-id={mount.id}
+            data-slot-index={slotIndex}
+            key={`node-mod-${mount.id}-${slotIndex}`}
+            style={{ left: `${modPos.x}%`, top: `${modPos.y}%` }}
+            type="button"
+          >
+            {this.buildNodeIcon("mod", {
+              accentColor: mod
+                ? this.getModAccentColor(mod.iconKind)
+                : 0x6a7a90,
+              modIcon: mod?.iconKind,
+            })}
+            <div className="shop-node-slot">{`M${slotIndex + 1}`}</div>
+            <div className="shop-node-name">{mod?.name ?? "Select"}</div>
+          </button>,
+        );
       }
     }
 
-    window.requestAnimationFrame(() => {
-      this.renderMountVisual(ship);
-      this.updateMountVisualHighlights();
-    });
-
-    return wrapper;
+    return (
+      <div
+        className="shop-node-graph"
+        ref={(element) => {
+          this.mountVisual = element ?? undefined;
+        }}
+      >
+        {nodes}
+      </div>
+    );
   }
 
-  private renderMountVisual(ship: ShipDefinition): void {
-    if (!this.mountVisual || !this.mountCanvas) return;
-    const rect = this.mountVisual.getBoundingClientRect();
-    const cssWidth = Math.max(1, Math.round(rect.width));
-    const cssHeight = Math.max(1, Math.round(rect.height));
-    const resolution = Math.min(window.devicePixelRatio || 1, 2);
-    this.mountCanvas.width = Math.floor(cssWidth * resolution);
-    this.mountCanvas.height = Math.floor(cssHeight * resolution);
-    this.mountCanvas.style.width = `${cssWidth}px`;
-    this.mountCanvas.style.height = `${cssHeight}px`;
+  private buildNodeIcon(
+    kind: CardIconKind,
+    options: {
+      accentColor: number;
+      className?: string;
+      gunId?: string;
+      modIcon?: ModIconKind;
+      size?: number;
+      shipShape?: ShipVector;
+      weaponSize?: WeaponSize;
+    },
+  ) {
+    const size = Math.max(24, Math.round(options.size ?? 100));
+    return (
+      <canvas
+        className={options.className ?? "shop-node-icon"}
+        height={size}
+        ref={(canvas) => {
+          if (!canvas) return;
+          this.drawIcon(
+            canvas,
+            kind,
+            formatColor(options.accentColor),
+            options.accentColor,
+            options.shipShape ?? this.getSelectedShip().vector,
+            options.gunId,
+            options.modIcon,
+            options.weaponSize,
+          );
+        }}
+        width={size}
+      />
+    );
+  }
 
-    const ctx = this.mountCanvas.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(resolution, 0, 0, resolution, 0, 0);
-    ctx.clearRect(0, 0, cssWidth, cssHeight);
-
-    const centerX = cssWidth * 0.5;
-    const centerY = cssHeight * 0.55;
-    const minDim = Math.min(cssWidth, cssHeight);
-    const baseRadius = minDim * 0.32;
-    const radiusMultiplier = ship.radiusMultiplier ?? 1;
-    const radius = Math.min(baseRadius * radiusMultiplier, minDim * 0.42);
-
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.fillStyle = "rgba(15, 24, 38, 0.9)";
-    ctx.strokeStyle = "rgba(125, 249, 255, 0.6)";
-    ctx.lineWidth = Math.max(1.5, minDim * 0.008);
-    drawShipToCanvas(ctx, ship.vector, radius);
-    ctx.restore();
-
-    for (const mount of ship.mounts) {
-      const dot = this.mountDots.get(mount.id);
-      if (!dot) continue;
-      const x = centerX + mount.offset.x * radius;
-      const y = centerY + mount.offset.y * radius;
-      dot.style.left = `${x}px`;
-      dot.style.top = `${y}px`;
-      const callout = this.mountCallouts.get(mount.id);
-      const line = this.mountCalloutLines.get(mount.id);
-      if (!callout || !line) continue;
-      const side = callout.dataset.side ?? "center";
-      const lineLength = side === "down" ? 24 : 34;
-      const angle = Math.PI / 6;
-      let anchorX = x;
-      let anchorY = y;
-      if (side === "left") {
-        anchorX = x - Math.cos(angle) * lineLength;
-        anchorY = y - Math.sin(angle) * lineLength;
-      } else if (side === "right") {
-        anchorX = x + Math.cos(angle) * lineLength;
-        anchorY = y - Math.sin(angle) * lineLength;
-      } else if (side === "down") {
-        anchorY = y + lineLength;
-      } else {
-        anchorY = y - lineLength;
-      }
-
-      const calloutWidth = callout.offsetWidth || 0;
-      const calloutHeight = callout.offsetHeight || 0;
-      if (side === "left") {
-        callout.style.left = `${anchorX - calloutWidth}px`;
-        callout.style.top = `${anchorY - calloutHeight / 2}px`;
-      } else if (side === "right") {
-        callout.style.left = `${anchorX}px`;
-        callout.style.top = `${anchorY - calloutHeight / 2}px`;
-      } else if (side === "down") {
-        callout.style.left = `${anchorX - calloutWidth / 2}px`;
-        callout.style.top = `${anchorY}px`;
-      } else {
-        callout.style.left = `${anchorX - calloutWidth / 2}px`;
-        callout.style.top = `${anchorY - calloutHeight}px`;
-      }
-
-      const lineDx = anchorX - x;
-      const lineDy = anchorY - y;
-      const lineWidth = Math.hypot(lineDx, lineDy);
-      line.style.left = `${x}px`;
-      line.style.top = `${y}px`;
-      line.style.width = `${lineWidth}px`;
-      line.style.transform = `rotate(${Math.atan2(lineDy, lineDx)}rad)`;
+  private buildLoadoutSelectionPanel(
+    ship: ShipDefinition,
+    assignments: MountAssignment[],
+    selection: LoadoutNodeSelection | null,
+  ) {
+    if (!selection) {
+      return (
+        <div className="shop-node-panel">
+          <div className="shop-node-panel-title">Select a node</div>
+          <div className="shop-node-panel-hint">
+            Tap any node to route gear.
+          </div>
+        </div>
+      );
     }
+
+    const assignment = assignments.find(
+      (entry) => entry.mountId === selection.mountId,
+    );
+    const mount = ship.mounts.find((entry) => entry.id === selection.mountId);
+    if (!assignment || !mount) {
+      return (
+        <div className="shop-node-panel">
+          <div className="shop-node-panel-title">Node unavailable</div>
+          <div className="shop-node-panel-hint">Select another node.</div>
+        </div>
+      );
+    }
+
+    if (selection.kind === "mount") {
+      const currentInstance = assignment.weaponInstanceId
+        ? this.save.ownedWeapons.find(
+            (item) => item.id === assignment.weaponInstanceId,
+          )
+        : null;
+
+      const compatible = this.save.ownedWeapons
+        .filter((instance) => {
+          const weapon = WEAPONS[instance.weaponId];
+          return Boolean(weapon && canMountWeapon(weapon, mount));
+        })
+        .sort((a, b) => {
+          const weaponA = WEAPONS[a.weaponId];
+          const weaponB = WEAPONS[b.weaponId];
+          if (!weaponA && !weaponB) return 0;
+          if (!weaponA) return 1;
+          if (!weaponB) return -1;
+          if (weaponB.cost !== weaponA.cost) return weaponB.cost - weaponA.cost;
+          return weaponA.name.localeCompare(weaponB.name);
+        });
+
+      const optionsContent =
+        compatible.length === 0 ? (
+          <div className="shop-empty">
+            No compatible weapons owned. Buy in Armory.
+          </div>
+        ) : (
+          compatible.map((instance) => {
+            const weapon = WEAPONS[instance.weaponId];
+            if (!weapon) return null;
+            return this.buildNodeOptionButton({
+              action: "equip-weapon-node",
+              current: currentInstance?.id === instance.id,
+              icon: {
+                accentColor: weapon.stats.bullet.color ?? 0x7df9ff,
+                gunId: weapon.gunId,
+                iconKind: "gun",
+                weaponSize: weapon.size,
+              },
+              instanceId: instance.id,
+              key: `weapon-node-option-${instance.id}`,
+              label: weapon.name,
+              meta: this.describeWeaponNodeMeta(weapon, assignment),
+              mountId: mount.id,
+            });
+          })
+        );
+
+      return (
+        <div className="shop-node-panel">
+          <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} weapon`}</div>
+          <div className="shop-node-panel-options">{optionsContent}</div>
+          <div className="shop-node-panel-footer">
+            <button
+              className="shop-node-clear"
+              data-action="clear-mount-weapon"
+              data-mount-id={mount.id}
+              disabled={!currentInstance}
+              type="button"
+            >
+              Unequip Weapon
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const currentModId = assignment.modInstanceIds[selection.slotIndex] ?? null;
+    const currentModInstance = currentModId
+      ? this.save.ownedMods.find((item) => item.id === currentModId)
+      : null;
+    const currentMod = currentModInstance
+      ? MODS[currentModInstance.modId]
+      : null;
+
+    if (!assignment.weaponInstanceId) {
+      return (
+        <div className="shop-node-panel">
+          <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} mod ${
+            selection.slotIndex + 1
+          }`}</div>
+          <div className="shop-node-panel-hint">Mount a weapon first.</div>
+        </div>
+      );
+    }
+
+    const reservedKinds = new Set(
+      assignment.modInstanceIds
+        .filter((_instanceId, index) => index !== selection.slotIndex)
+        .map((instanceId) =>
+          this.save.ownedMods.find((entry) => entry.id === instanceId),
+        )
+        .map((instance) => (instance ? MODS[instance.modId] : null))
+        .filter((mod): mod is ModDefinition => Boolean(mod))
+        .map((mod) => mod.iconKind),
+    );
+
+    const candidates = this.save.ownedMods.filter((instance) => {
+      if (instance.id === currentModId) return true;
+      const mod = MODS[instance.modId];
+      if (!mod) return false;
+      return !reservedKinds.has(mod.iconKind);
+    });
+
+    const optionContent =
+      candidates.length === 0 ? (
+        <div className="shop-empty">No compatible mods available.</div>
+      ) : (
+        candidates.map((instance) => {
+          const mod = MODS[instance.modId];
+          if (!mod) return null;
+          return this.buildNodeOptionButton({
+            action: "equip-mod-node",
+            current: currentModId === instance.id,
+            icon: {
+              accentColor: this.getModAccentColor(mod.iconKind),
+              iconKind: "mod",
+              modIcon: mod.iconKind,
+            },
+            instanceId: instance.id,
+            key: `mod-node-option-${instance.id}`,
+            label: mod.name,
+            meta: this.describeModEffects(mod),
+            mountId: mount.id,
+            slotIndex: selection.slotIndex,
+          });
+        })
+      );
+
+    return (
+      <div className="shop-node-panel">
+        <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} mod ${
+          selection.slotIndex + 1
+        }`}</div>
+        <div className="shop-node-panel-options">{optionContent}</div>
+        <div className="shop-node-panel-footer">
+          <button
+            className="shop-node-clear"
+            data-action="clear-mod-slot"
+            data-mount-id={mount.id}
+            data-slot-index={selection.slotIndex}
+            disabled={!currentMod}
+            type="button"
+          >
+            Unequip Mod
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  private buildNodeOptionButton(data: {
+    action: "equip-mod-node" | "equip-weapon-node";
+    current: boolean;
+    icon: NodeOptionIcon;
+    instanceId: string;
+    key: string;
+    label: string;
+    meta?: string;
+    mountId: string;
+    slotIndex?: number;
+  }) {
+    const className = `shop-node-option${data.current ? " is-current" : ""}`;
+    return (
+      <button
+        className={className}
+        data-action={data.action}
+        data-instance-id={data.instanceId}
+        data-mount-id={data.mountId}
+        data-slot-index={
+          Number.isInteger(data.slotIndex) ? data.slotIndex : undefined
+        }
+        key={data.key}
+        type="button"
+      >
+        {this.buildNodeIcon(data.icon.iconKind, {
+          accentColor: data.icon.accentColor,
+          className: "shop-node-option-icon",
+          gunId: data.icon.gunId,
+          modIcon: data.icon.modIcon,
+          size: 100,
+          weaponSize: data.icon.weaponSize,
+        })}
+        <span className="shop-node-option-label">{data.label}</span>
+        {data.meta ? (
+          <span className="shop-node-option-meta">{data.meta}</span>
+        ) : null}
+      </button>
+    );
+  }
+
+  private createNodeLink(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    active: boolean,
+    selected: boolean,
+    surge: boolean,
+    key: string,
+  ) {
+    const className = `shop-node-link${active ? " is-active" : ""}${
+      selected ? " is-selected" : ""
+    }${surge ? " is-surge" : ""}`;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const width = Math.hypot(dx, dy);
+    return (
+      <div
+        className={className}
+        key={key}
+        style={{
+          left: `${from.x}%`,
+          top: `${from.y}%`,
+          transform: `rotate(${Math.atan2(dy, dx)}rad)`,
+          width: `${width}%`,
+        }}
+      />
+    );
+  }
+  private queueEnergySurge(mountId: string, slotIndex?: number): void {
+    this.activeEnergySurge = { mountId, slotIndex };
+    if (this.energySurgeTimeout !== null) {
+      window.clearTimeout(this.energySurgeTimeout);
+    }
+    this.energySurgeTimeout = window.setTimeout(() => {
+      this.activeEnergySurge = null;
+      this.energySurgeTimeout = null;
+      if (this.currentCategory === "loadout") {
+        this.refreshOverlay();
+      }
+    }, 420);
+  }
+
+  private describeWeaponNodeMeta(
+    weapon: WeaponDefinition,
+    assignment: MountAssignment | undefined,
+  ): string {
+    const fireRate = Math.max(0.05, weapon.stats.fireRate);
+    const damage = Math.max(0, weapon.stats.bullet.damage);
+    const core = `${fireRate.toFixed(1)}/s · ${damage.toFixed(1)} dmg`;
+    const modEffects = (assignment?.modInstanceIds ?? [])
+      .map((instanceId) =>
+        this.save.ownedMods.find((entry) => entry.id === instanceId),
+      )
+      .map((instance) => (instance ? MODS[instance.modId] : null))
+      .filter((mod): mod is ModDefinition => Boolean(mod))
+      .map((mod) => this.describeModEffects(mod))
+      .filter(Boolean);
+    const overlay = modEffects[0];
+    return overlay ? `${core} | ${overlay}` : core;
+  }
+
+  private describeModEffects(mod: ModDefinition): string {
+    const pieces: string[] = [];
+    if (mod.effects.multi) {
+      const extra = Math.max(0, mod.effects.multi.count - 1);
+      const damageDelta = Math.round(
+        (mod.effects.multi.projectileDamageMultiplier - 1) * 100,
+      );
+      const damageLabel =
+        damageDelta >= 0 ? `+${damageDelta}% dmg` : `${damageDelta}% dmg`;
+      pieces.push(`+${extra} proj`, damageLabel);
+    }
+    if (mod.effects.damageMultiplier) {
+      const delta = Math.round((mod.effects.damageMultiplier - 1) * 100);
+      const label = delta >= 0 ? `+${delta}% dmg` : `${delta}% dmg`;
+      pieces.push(label);
+    }
+    if (mod.effects.homing) pieces.push("+homing");
+    if (mod.effects.aoe) pieces.push("+aoe");
+    if (mod.effects.bounce) pieces.push("+ricochet");
+    return pieces.slice(0, 2).join(" | ") || "No stat shift";
+  }
+
+  private clampPercent(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
   }
 
   private updateMountVisualHighlights(): void {
@@ -1186,97 +1409,6 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
-  private buildInventoryCard(
-    instanceId: WeaponInstanceId,
-    weapon: WeaponDefinition,
-  ): HTMLElement {
-    const accentColor = weapon.stats.bullet.color ?? 0x7df9ff;
-    const accent = formatColor(accentColor);
-    const status = "Drag to mount";
-    const state: ShopCardState = "owned";
-    const { card, inner } = this.createCardBase({
-      accent,
-      accentColor,
-      description: weapon.description,
-      gunId: weapon.gunId,
-      iconKind: "gun",
-      name: weapon.name,
-      state,
-      status,
-      tag: "div",
-      weaponSize: weapon.size,
-    });
-
-    card.dataset.type = "inventory";
-    card.dataset.kind = "weapon";
-    card.dataset.instanceId = instanceId;
-    card.dataset.weaponId = weapon.id;
-    card.setAttribute("draggable", "true");
-    card.addEventListener("dragstart", this.handleDragStartBound);
-    card.addEventListener("dragend", this.handleDragEndBound);
-
-    const actions = document.createElement("div");
-    actions.className = "shop-card-actions";
-    const sell = document.createElement("button");
-    sell.type = "button";
-    sell.className = "shop-card-action";
-    sell.dataset.action = "sell-weapon";
-    sell.dataset.instanceId = instanceId;
-    const payout = Math.max(0, Math.round(weapon.cost * SELL_RATIO));
-    sell.textContent = `Sell +${formatCost(
-      payout,
-      weapon.costResource ?? PRIMARY_RESOURCE_ID,
-    )}`;
-    actions.appendChild(sell);
-    inner.appendChild(actions);
-    return card;
-  }
-
-  private buildModInventoryCard(
-    instanceId: ModInstanceId,
-    mod: ModDefinition,
-  ): HTMLElement {
-    const accentColor = this.getModAccentColor(mod.iconKind);
-    const accent = formatColor(accentColor);
-    const status = "Drag to mount";
-    const state: ShopCardState = "owned";
-    const { card, inner } = this.createCardBase({
-      accent,
-      accentColor,
-      description: mod.description,
-      iconKind: "mod",
-      modIcon: mod.iconKind,
-      name: mod.name,
-      state,
-      status,
-      tag: "div",
-    });
-
-    card.dataset.type = "inventory";
-    card.dataset.kind = "mod";
-    card.dataset.instanceId = instanceId;
-    card.dataset.modId = mod.id;
-    card.setAttribute("draggable", "true");
-    card.addEventListener("dragstart", this.handleDragStartBound);
-    card.addEventListener("dragend", this.handleDragEndBound);
-
-    const actions = document.createElement("div");
-    actions.className = "shop-card-actions";
-    const sell = document.createElement("button");
-    sell.type = "button";
-    sell.className = "shop-card-action";
-    sell.dataset.action = "sell-mod";
-    sell.dataset.instanceId = instanceId;
-    const payout = Math.max(0, Math.round(mod.cost * SELL_RATIO));
-    sell.textContent = `Sell +${formatCost(
-      payout,
-      mod.costResource ?? PRIMARY_RESOURCE_ID,
-    )}`;
-    actions.appendChild(sell);
-    inner.appendChild(actions);
-    return card;
-  }
-
   private handleOverlayClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target || !this.overlay) return;
@@ -1316,6 +1448,53 @@ export class ShopScene extends Phaser.Scene {
       if (mountId) this.detachWeaponFromMount(mountId);
       return;
     }
+    if (action?.dataset.action === "select-loadout-mount") {
+      const mountId = action.dataset.mountId;
+      if (!mountId) return;
+      this.loadoutSelection = { kind: "mount", mountId };
+      this.refreshOverlay();
+      return;
+    }
+    if (action?.dataset.action === "select-loadout-mod") {
+      const mountId = action.dataset.mountId;
+      const slotIndex = Number.parseInt(action.dataset.slotIndex ?? "", 10);
+      if (!mountId || Number.isNaN(slotIndex)) return;
+      this.loadoutSelection = { kind: "mod", mountId, slotIndex };
+      this.refreshOverlay();
+      return;
+    }
+    if (action?.dataset.action === "clear-mount-weapon") {
+      const mountId = action.dataset.mountId;
+      if (!mountId) return;
+      this.detachWeaponFromMount(mountId);
+      this.loadoutSelection = { kind: "mount", mountId };
+      return;
+    }
+    if (action?.dataset.action === "equip-weapon-node") {
+      const mountId = action.dataset.mountId;
+      const instanceId = action.dataset.instanceId;
+      if (!mountId || !instanceId) return;
+      this.assignWeaponToMount({ instanceId, kind: "weapon" }, mountId);
+      this.loadoutSelection = { kind: "mount", mountId };
+      return;
+    }
+    if (action?.dataset.action === "clear-mod-slot") {
+      const mountId = action.dataset.mountId;
+      const slotIndex = Number.parseInt(action.dataset.slotIndex ?? "", 10);
+      if (!mountId || Number.isNaN(slotIndex)) return;
+      this.clearModSlot(mountId, slotIndex);
+      this.loadoutSelection = { kind: "mod", mountId, slotIndex };
+      return;
+    }
+    if (action?.dataset.action === "equip-mod-node") {
+      const mountId = action.dataset.mountId;
+      const slotIndex = Number.parseInt(action.dataset.slotIndex ?? "", 10);
+      const instanceId = action.dataset.instanceId;
+      if (!mountId || Number.isNaN(slotIndex) || !instanceId) return;
+      this.assignModToSlot(mountId, slotIndex, instanceId);
+      this.loadoutSelection = { kind: "mod", mountId, slotIndex };
+      return;
+    }
 
     const card = target.closest<HTMLElement>("[data-type][data-id]");
     if (!card) return;
@@ -1332,15 +1511,26 @@ export class ShopScene extends Phaser.Scene {
       if (!owned && (!canPurchase || !canUnlock)) return;
       this.updateSave((data) => {
         const unlocked = data.unlockedShips.includes(id);
+        const selectedShip = SHIPS[data.selectedShipId];
+        const selectedAssignments = selectedShip
+          ? this.ensureMountAssignments(data, selectedShip)
+          : [];
+        const preferredWeaponIds = selectedAssignments
+          .map((entry) => entry.weaponInstanceId)
+          .filter((instanceId): instanceId is WeaponInstanceId =>
+            Boolean(instanceId),
+          );
         if (!unlocked) {
           if (!hasRequiredUnlocks(data, ship.requiresUnlocks)) return;
           if (!canPurchase) return;
           const resourceId = ship.costResource ?? PRIMARY_RESOURCE_ID;
           if (!spendResourceInSave(data, resourceId, ship.cost)) return;
           data.unlockedShips = [...data.unlockedShips, id];
+          autoAttachWeaponsForShipInSave(data, ship, preferredWeaponIds);
         }
         data.selectedShipId = id;
       });
+      this.loadoutSelection = null;
       this.refreshOverlay();
       return;
     }
@@ -1348,9 +1538,17 @@ export class ShopScene extends Phaser.Scene {
     if (type === "weapon") {
       const weapon = WEAPONS[id];
       if (!weapon) return;
+      const alreadyOwned = this.save.ownedWeapons.some(
+        (instance) => instance.weaponId === weapon.id,
+      );
+      if (alreadyOwned) return;
       if (!this.isWeaponAllowed(weapon)) return;
       if (!hasRequiredUnlocks(this.save, weapon.requiresUnlocks)) return;
       this.updateSave((data) => {
+        const owned = data.ownedWeapons.some(
+          (instance) => instance.weaponId === weapon.id,
+        );
+        if (owned) return;
         if (!hasRequiredUnlocks(data, weapon.requiresUnlocks)) return;
         const resourceId = weapon.costResource ?? PRIMARY_RESOURCE_ID;
         if (!spendResourceInSave(data, resourceId, weapon.cost)) return;
@@ -1493,6 +1691,7 @@ export class ShopScene extends Phaser.Scene {
       },
       { allowEmptyLoadout: true },
     );
+    this.queueEnergySurge(mountId);
     this.refreshOverlay();
   }
 
@@ -1518,6 +1717,7 @@ export class ShopScene extends Phaser.Scene {
 
   private assignModToMount(payload: DragPayload, mountId: string): void {
     if (payload.kind !== "mod") return;
+    let appliedSlotIndex: null | number = null;
     this.updateSave(
       (data) => {
         const ship = SHIPS[data.selectedShipId];
@@ -1551,9 +1751,87 @@ export class ShopScene extends Phaser.Scene {
           );
         }
         target.modInstanceIds = [...target.modInstanceIds, payload.instanceId];
+        appliedSlotIndex = Math.max(0, target.modInstanceIds.length - 1);
       },
       { allowEmptyLoadout: true },
     );
+    if (appliedSlotIndex !== null) {
+      this.queueEnergySurge(mountId, appliedSlotIndex);
+    }
+    this.refreshOverlay();
+  }
+
+  private clearModSlot(mountId: string, slotIndex: number): void {
+    this.updateSave(
+      (data) => {
+        const ship = SHIPS[data.selectedShipId];
+        if (!ship) return;
+        const mount = ship.mounts.find((entry) => entry.id === mountId);
+        if (!mount) return;
+        const assignments = this.ensureMountAssignments(data, ship);
+        const entry = assignments.find((item) => item.mountId === mountId);
+        if (!entry) return;
+        if (slotIndex < 0 || slotIndex >= entry.modInstanceIds.length) return;
+        entry.modInstanceIds.splice(slotIndex, 1);
+        entry.modInstanceIds = entry.modInstanceIds.slice(0, mount.modSlots);
+      },
+      { allowEmptyLoadout: true },
+    );
+    this.refreshOverlay();
+  }
+
+  private assignModToSlot(
+    mountId: string,
+    slotIndex: number,
+    modInstanceId: ModInstanceId,
+  ): void {
+    this.updateSave(
+      (data) => {
+        const ship = SHIPS[data.selectedShipId];
+        if (!ship) return;
+        const mount = ship.mounts.find((entry) => entry.id === mountId);
+        if (!mount || mount.modSlots <= 0) return;
+        const assignments = this.ensureMountAssignments(data, ship);
+        const entry = assignments.find((item) => item.mountId === mountId);
+        if (!entry?.weaponInstanceId) return;
+        const modInstance = data.ownedMods.find(
+          (item) => item.id === modInstanceId,
+        );
+        const mod = modInstance ? MODS[modInstance.modId] : null;
+        if (!mod) return;
+
+        for (const assignment of assignments) {
+          assignment.modInstanceIds = assignment.modInstanceIds.filter(
+            (instanceId) => instanceId !== modInstanceId,
+          );
+        }
+
+        const maxSlots = Math.max(0, mount.modSlots);
+        const targetIndex = Math.min(
+          Math.max(0, slotIndex),
+          Math.max(0, maxSlots - 1),
+        );
+        const current = [...entry.modInstanceIds].slice(0, maxSlots);
+        if (targetIndex < current.length) {
+          current.splice(targetIndex, 1);
+        }
+        const sameTypeIndex = current.findIndex((instanceId) => {
+          const existing = data.ownedMods.find(
+            (item) => item.id === instanceId,
+          );
+          const existingMod = existing ? MODS[existing.modId] : null;
+          return existingMod?.iconKind === mod.iconKind;
+        });
+        if (sameTypeIndex >= 0) {
+          current.splice(sameTypeIndex, 1);
+        }
+        const insertIndex = Math.min(targetIndex, current.length);
+        current.splice(insertIndex, 0, modInstanceId);
+        entry.modInstanceIds = current.slice(0, maxSlots);
+      },
+      { allowEmptyLoadout: true },
+    );
+    this.queueEnergySurge(mountId, slotIndex);
     this.refreshOverlay();
   }
 
@@ -1679,8 +1957,7 @@ export class ShopScene extends Phaser.Scene {
   private handleDragEnd(): void {
     this.dragPayload = null;
     this.dragHoverMountId = null;
-    this.dragPreviewEl?.remove();
-    this.dragPreviewEl = undefined;
+    this.clearDragPreview();
     this.updateMountVisualHighlights();
   }
 
@@ -1706,59 +1983,94 @@ export class ShopScene extends Phaser.Scene {
     return MODS[instance.modId] ?? null;
   }
 
+  private getDragPreviewHost(): HTMLDivElement | null {
+    const host = document.getElementById("shop-drag-preview-root");
+    return host instanceof HTMLDivElement ? host : null;
+  }
+
+  private clearDragPreview(): void {
+    const host = this.getDragPreviewHost();
+    if (host) {
+      render(null, host);
+    }
+    this.dragPreviewEl = undefined;
+  }
+
+  private mountDragPreview(
+    onCanvasReady: (canvas: HTMLCanvasElement) => void,
+  ): HTMLDivElement | null {
+    const host = this.getDragPreviewHost();
+    if (!host) return null;
+    let previewRef: HTMLDivElement | null = null;
+    let canvasRef: HTMLCanvasElement | null = null;
+    render(
+      <div
+        className="shop-drag-preview"
+        ref={(element) => {
+          previewRef = element;
+        }}
+      >
+        <canvas
+          className="shop-drag-preview-icon"
+          height={36}
+          ref={(element) => {
+            canvasRef = element;
+          }}
+          width={36}
+        />
+      </div>,
+      host,
+    );
+    if (!previewRef || !canvasRef) {
+      render(null, host);
+      return null;
+    }
+    onCanvasReady(canvasRef);
+    this.dragPreviewEl = previewRef;
+    return previewRef;
+  }
+
   private setDragPreview(event: DragEvent, weapon: WeaponDefinition): void {
     const transfer = event.dataTransfer;
     if (!transfer) return;
-    this.dragPreviewEl?.remove();
-    const preview = document.createElement("div");
-    preview.className = "shop-drag-preview";
-    const canvas = document.createElement("canvas");
-    canvas.className = "shop-drag-preview-icon";
-    canvas.width = 36;
-    canvas.height = 36;
-    preview.appendChild(canvas);
+    this.clearDragPreview();
     const color = formatColor(weapon.stats.bullet.color ?? 0x7df9ff);
-    this.drawIcon(
-      canvas,
-      "gun",
-      color,
-      weapon.stats.bullet.color ?? 0x7df9ff,
-      this.getSelectedShip().vector,
-      weapon.gunId,
-      undefined,
-      weapon.size,
-    );
-    document.body.appendChild(preview);
+    const preview = this.mountDragPreview((canvas) => {
+      this.drawIcon(
+        canvas,
+        "gun",
+        color,
+        weapon.stats.bullet.color ?? 0x7df9ff,
+        this.getSelectedShip().vector,
+        weapon.gunId,
+        undefined,
+        weapon.size,
+      );
+    });
+    if (!preview) return;
     transfer.setDragImage(preview, 22, 22);
-    this.dragPreviewEl = preview;
   }
 
   private setModDragPreview(event: DragEvent, mod: ModDefinition): void {
     const transfer = event.dataTransfer;
     if (!transfer) return;
-    this.dragPreviewEl?.remove();
-    const preview = document.createElement("div");
-    preview.className = "shop-drag-preview";
-    const canvas = document.createElement("canvas");
-    canvas.className = "shop-drag-preview-icon";
-    canvas.width = 36;
-    canvas.height = 36;
-    preview.appendChild(canvas);
+    this.clearDragPreview();
     const colorValue = this.getModAccentColor(mod.iconKind);
     const color = formatColor(colorValue);
-    this.drawIcon(
-      canvas,
-      "mod",
-      color,
-      colorValue,
-      this.getSelectedShip().vector,
-      undefined,
-      mod.iconKind,
-      undefined,
-    );
-    document.body.appendChild(preview);
+    const preview = this.mountDragPreview((canvas) => {
+      this.drawIcon(
+        canvas,
+        "mod",
+        color,
+        colorValue,
+        this.getSelectedShip().vector,
+        undefined,
+        mod.iconKind,
+        undefined,
+      );
+    });
+    if (!preview) return;
     transfer.setDragImage(preview, 22, 22);
-    this.dragPreviewEl = preview;
   }
 
   private readDragPayload(event: DragEvent): DragPayload | null {

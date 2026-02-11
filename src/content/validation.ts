@@ -11,6 +11,7 @@ import type {
   BulletAoe,
   BulletHoming,
   BulletSpec,
+  BulletVfxSpec,
   FireScript,
   FireStep,
 } from "../game/data/scripts";
@@ -116,6 +117,28 @@ interface BulletVisualsInput {
   speed?: number;
   thickness?: number;
   trail?: BulletTrailInput;
+  vfx?: {
+    muzzle?: {
+      burstCount?: number;
+      radius?: number;
+      lifeMs?: number;
+      color?: number | string;
+    };
+    trail?: {
+      kind?: "dot" | "spark";
+    };
+    impact?: {
+      sparkCount?: number;
+      ringRadius?: number;
+      ringLifeMs?: number;
+      color?: number | string;
+    };
+    detonation?: {
+      burstCount?: number;
+      ringThickness?: number;
+      ringLifeMs?: number;
+    };
+  };
 }
 
 type BulletEffectsInput = Partial<
@@ -171,6 +194,26 @@ const coerceBulletSpec = (
     Number.isFinite(requestedSpeed) && requestedSpeed > 0
       ? requestedSpeed
       : DEFAULT_BULLET_SPEED_BY_KIND[visuals.kind];
+  const vfx: BulletVfxSpec | undefined = visuals.vfx
+    ? {
+        detonation: visuals.vfx.detonation
+          ? { ...visuals.vfx.detonation }
+          : undefined,
+        impact: visuals.vfx.impact
+          ? {
+              ...visuals.vfx.impact,
+              color: resolveColor(visuals.vfx.impact.color),
+            }
+          : undefined,
+        muzzle: visuals.vfx.muzzle
+          ? {
+              ...visuals.vfx.muzzle,
+              color: resolveColor(visuals.vfx.muzzle.color),
+            }
+          : undefined,
+        trail: visuals.vfx.trail ? { ...visuals.vfx.trail } : undefined,
+      }
+    : undefined;
   return {
     aoe: effects?.aoe ?? visuals.aoe,
     color: resolveColor(rawColor),
@@ -183,6 +226,34 @@ const coerceBulletSpec = (
     speed: normalizedSpeed,
     thickness: visuals.thickness,
     trail,
+    vfx,
+  };
+};
+
+const coerceEnemyStyle = (
+  style: EnemyContent["style"] | EnemyDef["style"] | undefined,
+): EnemyDef["style"] | undefined => {
+  if (!style) return undefined;
+  return {
+    ...style,
+    fillColor: resolveColor(style.fillColor),
+    fx: style.fx
+      ? {
+          charge: style.fx.charge
+            ? {
+                ...style.fx.charge,
+                inwardCountMinMax: style.fx.charge.inwardCountMinMax
+                  ? [
+                      style.fx.charge.inwardCountMinMax[0],
+                      style.fx.charge.inwardCountMinMax[1],
+                    ]
+                  : undefined,
+              }
+            : undefined,
+          death: style.fx.death ? { ...style.fx.death } : undefined,
+        }
+      : undefined,
+    lineColor: resolveColor(style.lineColor),
   };
 };
 
@@ -536,13 +607,7 @@ export const buildContentRegistry = (
             )
           : undefined,
       })),
-      style: enemy.style
-        ? {
-            ...enemy.style,
-            fillColor: resolveColor(enemy.style.fillColor),
-            lineColor: resolveColor(enemy.style.lineColor),
-          }
-        : undefined,
+      style: coerceEnemyStyle(enemy.style),
     };
   }
 
@@ -645,7 +710,11 @@ export const buildContentRegistry = (
       ...wave,
       spawns: wave.spawns.map((spawn) => {
         if (!spawn.overrides) return spawn as WaveDefinition["spawns"][number];
-        const overrides = { ...spawn.overrides };
+        const overrides = {
+          ...spawn.overrides,
+        } as unknown as NonNullable<
+          WaveDefinition["spawns"][number]["overrides"]
+        >;
         if (overrides.fire) {
           overrides.fire = coerceFireScript(
             overrides.fire as FireScriptInput,
@@ -666,6 +735,9 @@ export const buildContentRegistry = (
                 )
               : undefined,
           }));
+        }
+        if (overrides.style) {
+          overrides.style = coerceEnemyStyle(overrides.style);
         }
         return {
           ...spawn,

@@ -27,11 +27,7 @@ import {
   updateEnemyBulletsRuntime,
   updatePlayerBulletsRuntime,
 } from "../systems/play/BulletRuntime";
-import {
-  getBulletExplosionInfo,
-  spawnBulletExplosionFx,
-  spawnBulletTrail,
-} from "../systems/play/BulletVisualFx";
+import { CombatVfxDispatcher } from "../systems/play/CombatVfxDispatcher";
 import {
   spawnEnemyRuntime,
   updateEnemiesRuntime,
@@ -55,7 +51,9 @@ const MAGNET_RADIUS = 120;
 const FINISH_LINGER_MS = 2400;
 const EXIT_DASH_MS = 700;
 const ENEMY_MARGIN = 120;
-const SHIP_REGEN_PER_SEC = 0.1;
+const SHIP_REGEN_PER_SEC = 0.05;
+const PLAYER_DEATH_HIDE_SHIP_MS = 180;
+const PLAYER_DEATH_RETURN_DELAY_MS = 3200;
 const PLAYER_DAMAGE_MULTIPLIER = 1.2;
 const HIT_COOLDOWN_SEC = 0.5;
 const BUMP_FX = {
@@ -84,6 +82,22 @@ const DAMAGE_FX = {
 };
 const LOW_HEALTH_THRESHOLD = 0.25;
 const CRITICAL_HEALTH_THRESHOLD = 0.1;
+const FRAME_PULSE_COLOR = 0x7df9ff;
+const FRAME_WARNING_COLOR = 0xff3b3b;
+const FRAME_SUCCESS_COLOR = 0x4dffb6;
+const SHAKE_COOLDOWN_MS = 80;
+const DAMAGE_JOLT_WIDTH_SCALE = 0.11;
+const DAMAGE_JOLT_MIN_ADD = 0.06;
+const DAMAGE_JOLT_MAX_ADD = 3.4;
+const DAMAGE_JOLT_MAX_AMP = 5.8;
+const DAMAGE_JOLT_STOP_EPS = 0.008;
+const DAMAGE_JOLT_DECAY = 9.5;
+const DAMAGE_JOLT_FREQ_MIN = 9;
+const DAMAGE_JOLT_FREQ_MAX = 17;
+const DAMAGE_JOLT_FREQ_BLEND = 0.45;
+const DAMAGE_JOLT_Y_RATIO = 0.14;
+const CHARGE_CUE_COOLDOWN_MIN_MS = 34;
+const CHARGE_CUE_COOLDOWN_MAX_MS = 165;
 
 export class PlayScene extends Phaser.Scene {
   private hud!: HUD;
@@ -91,6 +105,7 @@ export class PlayScene extends Phaser.Scene {
   private playArea = new Phaser.Geom.Rectangle();
   private playAreaFrame?: Phaser.GameObjects.Graphics;
   private pointerActive = false;
+  private firingInputActive = false;
   private target = new Phaser.Math.Vector2();
   private defaultTarget = new Phaser.Math.Vector2();
   private playerBullets!: ObjectPool<Bullet>;
@@ -116,9 +131,16 @@ export class PlayScene extends Phaser.Scene {
   private bossTimerMs = 0;
   private bossActive = false;
   private enemyEntered = new WeakMap<Enemy, boolean>();
-  private chargeRingCooldownMs = new WeakMap<Enemy, number>();
-  private healthPulseTime = 0;
   private healthPulseStrength = 0;
+  private framePulseBoost = 0;
+  private framePulseColor = FRAME_PULSE_COLOR;
+  private shakeCooldownMs = 0;
+  private damageJoltAmplitude = 0;
+  private damageJoltPhase = 0;
+  private damageJoltFreqHz = 12;
+  private damageJoltX = 0;
+  private damageJoltY = 0;
+  private chargeCueCooldownMs: Record<string, number> = {};
   private touchOffsetY = 0;
   private collisionPush = { nx: 0, ny: 0, x: 0, y: 0 };
   private collisionResolver?: PlayerCollisionResolver;
@@ -130,21 +152,24 @@ export class PlayScene extends Phaser.Scene {
     playerX: 0,
     playerY: 0,
   };
+  private vfx!: CombatVfxDispatcher;
   private emitPlayerBullet: EmitBullet = (x, y, angleRad, bullet) => {
+    this.vfx.onShotEmit("player", x, y, bullet);
     const playerBullet = this.playerBullets.acquire();
     playerBullet.spawn(x, y, angleRad, bullet);
   };
   private emitEnemyBullet: EmitBullet = (x, y, angleRad, bullet) => {
+    this.vfx.onShotEmit("enemy", x, y, bullet);
     const enemyBullet = this.enemyBullets.acquire();
     enemyBullet.spawn(x, y, angleRad, bullet);
   };
   private emitMissileTrail = (
     x: number,
     y: number,
-    _angleRad: number,
+    angleRad: number,
     spec: BulletSpec,
   ): void => {
-    spawnBulletTrail(this.particles, x, y, spec);
+    this.vfx.onBulletTrail(x, y, angleRad, spec);
   };
   private handleBulletExplosion = (
     x: number,
@@ -152,8 +177,7 @@ export class PlayScene extends Phaser.Scene {
     spec: BulletSpec,
     owner: "enemy" | "player",
   ): void => {
-    const explosion = getBulletExplosionInfo(spec, owner);
-    spawnBulletExplosionFx(this.particles, x, y, explosion, 24);
+    const explosion = this.vfx.onBulletExplosion(x, y, spec, owner);
     if (owner === "player") {
       for (const enemy of this.enemies) {
         if (!enemy.active) continue;
@@ -189,6 +213,7 @@ export class PlayScene extends Phaser.Scene {
 
   private resetState(): void {
     this.pointerActive = false;
+    this.firingInputActive = false;
     this.target.set(0, 0);
     this.defaultTarget.set(0, 0);
     this.enemies.length = 0;
@@ -208,7 +233,18 @@ export class PlayScene extends Phaser.Scene {
     this.bossTimerMs = 0;
     this.bossActive = false;
     this.enemyEntered = new WeakMap();
-    this.chargeRingCooldownMs = new WeakMap();
+    this.framePulseBoost = 0;
+    this.framePulseColor = FRAME_PULSE_COLOR;
+    this.shakeCooldownMs = 0;
+    this.damageJoltAmplitude = 0;
+    this.damageJoltPhase = 0;
+    this.damageJoltFreqHz = 12;
+    this.damageJoltX = 0;
+    this.damageJoltY = 0;
+    this.chargeCueCooldownMs = {};
+    if (this.vfx) {
+      this.vfx.reset();
+    }
     if (this.levelRunner) {
       this.levelRunner.destroy();
       this.levelRunner = undefined;
@@ -231,6 +267,7 @@ export class PlayScene extends Phaser.Scene {
     this.updatePlayArea();
     this.parallax = new ParallaxBackground(this, this.playArea);
     this.particles = new ParticleSystem(this);
+    this.vfx = new CombatVfxDispatcher(this.particles);
     this.setupInput();
     this.scale.off("resize", this.onResize, this);
     this.scale.on("resize", this.onResize, this);
@@ -283,6 +320,7 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(1, 0)
       .setDepth(40);
+    this.fpsText.setVisible(Boolean(import.meta.env.DEV));
     this.positionFpsText();
 
     this.playerBullets = new ObjectPool(
@@ -346,6 +384,10 @@ export class PlayScene extends Phaser.Scene {
     const delta = deltaMs / 1000;
     this.parallax.update(delta);
     this.particles.update(delta);
+    this.vfx.update(deltaMs);
+    this.decayChargeCueCooldowns(deltaMs);
+    this.shakeCooldownMs = Math.max(0, this.shakeCooldownMs - deltaMs);
+    this.updateDamageJolt(delta);
     this.updateFps(deltaMs);
     if (this.overlayShown) return;
     this.runElapsedMs += deltaMs;
@@ -363,7 +405,10 @@ export class PlayScene extends Phaser.Scene {
     const boss = this.getActiveBoss();
     const bossActiveNow = Boolean(boss);
     if (bossActiveNow) {
-      if (!this.bossActive) this.bossTimerMs = 0;
+      if (!this.bossActive) {
+        this.bossTimerMs = 0;
+        this.triggerFramePulse(0.8, 0x5bd7ff);
+      }
       this.bossTimerMs += deltaMs;
     } else {
       this.bossTimerMs = 0;
@@ -380,6 +425,7 @@ export class PlayScene extends Phaser.Scene {
         : undefined,
       gold: this.gold,
       hp: this.ship.hp,
+      lowHealthState: this.getLowHealthState(),
       maxHp: this.ship.maxHp,
       wave: this.getWaveDisplay(),
     });
@@ -392,10 +438,6 @@ export class PlayScene extends Phaser.Scene {
         this.ship.maxHp,
         this.ship.hp + SHIP_REGEN_PER_SEC * delta,
       );
-    }
-    if (!this.pointerActive) {
-      // Ease back toward a relaxed position near the bottom center.
-      this.target.lerp(this.defaultTarget, 0.02);
     }
     this.ship.update(
       delta,
@@ -415,6 +457,16 @@ export class PlayScene extends Phaser.Scene {
       this.ship.radius,
       this.mountedWeapons,
       this.emitPlayerBullet,
+      this.firingInputActive,
+      (cue) =>
+        this.emitChargeCue(
+          cue.weaponId,
+          cue.x,
+          cue.y,
+          cue.progress,
+          cue.ready,
+          cue.color,
+        ),
       this.debugBulletSpec,
     );
   }
@@ -426,6 +478,8 @@ export class PlayScene extends Phaser.Scene {
       enemies: this.enemies,
       enemyBullets: this.enemyBullets,
       handleExplosion: this.handleBulletExplosion,
+      onBulletImpact: (x, y, spec, owner) =>
+        this.vfx.onBulletImpact(x, y, spec, owner),
       onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
       onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
       playArea: this.playArea,
@@ -453,54 +507,22 @@ export class PlayScene extends Phaser.Scene {
       markEnemyEntered: (enemy) => {
         this.enemyEntered.set(enemy, true);
       },
-      onEnemyCharging: (enemy) => {
-        const progress = Phaser.Math.Clamp(enemy.chargeProgress, 0, 1);
-        const color = enemy.def.style?.lineColor ?? 0xff6b6b;
-        const inwardCount = Phaser.Math.Clamp(
-          Math.round(2 + progress * 4),
-          2,
-          6,
-        );
-        this.particles.spawnInward(
-          enemy.x,
-          enemy.y,
-          inwardCount,
-          color,
-          enemy.radius * (2.3 + progress * 0.9),
-        );
-
-        const ringCooldown = this.chargeRingCooldownMs.get(enemy) ?? 0;
-        const remaining = ringCooldown - deltaMs;
-        if (remaining <= 0) {
-          this.particles.spawnRing(
-            enemy.x,
-            enemy.y,
-            enemy.radius * (1.4 + progress * 1.2),
-            color,
-            2,
-            0.22,
-          );
-          this.chargeRingCooldownMs.set(
-            enemy,
-            Phaser.Math.Linear(220, 70, progress),
-          );
-        } else {
-          this.chargeRingCooldownMs.set(enemy, remaining);
-        }
-        enemy.glow(0.12 + progress * 0.32);
-      },
+      onEnemyCharging: (enemy) => this.vfx.onEnemyCharging(enemy, deltaMs),
       onEnemyContact: (index, enemy, push, contactDamage) => {
         const fxColor =
           enemy.def.style?.lineColor ?? enemy.def.style?.fillColor ?? 0xff6b6b;
         const contactX = this.ship.x - push.nx * this.ship.radius;
         const contactY = this.ship.y - push.ny * this.ship.radius;
+        this.vfx.onPlayerContact(contactX, contactY, fxColor);
         this.applyPlayerPush(push.x, push.y, fxColor, contactX, contactY);
         this.applyContactDamage(contactDamage, contactX, contactY);
+        if (!this.shipAlive || this.isGameOver) return;
         enemy.takeDamage(contactDamage * 2);
         if (!enemy.active) {
           this.releaseEnemy(index, true);
         }
       },
+      onEnemyDying: (enemy) => this.vfx.onEnemyDying(enemy, deltaMs),
       onReleaseEnemy: (index, dropGold) => this.releaseEnemy(index, dropGold),
       playerAlive: this.shipAlive,
       playerX: this.ship.x,
@@ -548,7 +570,10 @@ export class PlayScene extends Phaser.Scene {
     this.collisionResolver?.applyContactDamage(amount, fxX, fxY);
     const afterHp = this.ship?.hp ?? beforeHp;
     if (beforeHp > afterHp) {
-      this.runDamageTaken += beforeHp - afterHp;
+      const damageTaken = beforeHp - afterHp;
+      this.runDamageTaken += damageTaken;
+      this.vfx.onPlayerDamage(fxX ?? this.ship.x, fxY ?? this.ship.y);
+      this.registerDamageJolt(damageTaken);
     }
   }
 
@@ -559,6 +584,8 @@ export class PlayScene extends Phaser.Scene {
       enemies: this.enemies,
       enemyBullets: this.enemyBullets,
       handleExplosion: this.handleBulletExplosion,
+      onBulletImpact: (x, y, spec, owner) =>
+        this.vfx.onBulletImpact(x, y, spec, owner),
       onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
       onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
       playArea: this.playArea,
@@ -607,41 +634,25 @@ export class PlayScene extends Phaser.Scene {
     const spawned = this.enemies[this.enemies.length - 1];
     if (spawned) {
       this.enemyEntered.set(spawned, false);
+      this.vfx.onEnemySpawn(spawned);
     }
   }
 
   private releaseEnemy(index: number, dropGold: boolean): void {
     const enemy = this.enemies[index];
+    if (!enemy) return;
+    this.vfx.onEnemyDeath(enemy, dropGold);
     if (dropGold) {
       this.runEnemiesDefeated += 1;
       if (enemy.def.id === "boss") {
-        this.particles.spawnBurst(enemy.x, enemy.y, 40, 0xff6b6b);
-        this.particles.spawnBurst(enemy.x, enemy.y, 30, 0xff9fae);
-        this.particles.spawnRing(
-          enemy.x,
-          enemy.y,
-          enemy.radius * 6,
-          0xff6b6b,
-          5,
-          0.8,
-        );
-        this.particles.spawnRing(
-          enemy.x,
-          enemy.y,
-          enemy.radius * 3.5,
-          0xffa3b8,
-          3,
-          0.6,
-        );
-      } else {
-        this.particles.spawnBurst(enemy.x, enemy.y, 18, 0xff6b6b);
+        this.triggerFramePulse(0.95, FRAME_SUCCESS_COLOR);
+        this.triggerImpactShake(0.0032, 140);
       }
       this.dropGold(enemy);
-    } else {
-      this.particles.spawnBurst(enemy.x, enemy.y, 6, 0x1f3c5e);
     }
     enemy.deactivate();
     this.enemyEntered.delete(enemy);
+    this.vfx.onEnemyReleased(enemy);
     this.enemies.splice(index, 1);
     this.enemyPool.push(enemy);
   }
@@ -651,7 +662,10 @@ export class PlayScene extends Phaser.Scene {
     this.collisionResolver?.applyHitDamage(amount, fxX, fxY);
     const afterHp = this.ship?.hp ?? beforeHp;
     if (beforeHp > afterHp) {
-      this.runDamageTaken += beforeHp - afterHp;
+      const damageTaken = beforeHp - afterHp;
+      this.runDamageTaken += damageTaken;
+      this.vfx.onPlayerDamage(fxX ?? this.ship.x, fxY ?? this.ship.y);
+      this.registerDamageJolt(damageTaken);
     }
   }
 
@@ -698,16 +712,92 @@ export class PlayScene extends Phaser.Scene {
     this.isGameOver = true;
     this.shipAlive = false;
     this.pointerActive = false;
+    const deathX = this.ship.x;
+    const deathY = this.ship.y;
     this.bankRunGold();
-    this.ship.graphics.setVisible(false);
-    this.particles.spawnBurst(this.ship.x, this.ship.y, 80, 0xff8ba0);
-    this.gameOverTimer = this.time.delayedCall(1000, () => {
-      this.overlayShown = true;
-      emitGameOverEvent(this.game, {
-        gold: this.gold,
-        wave: this.getWaveDisplay(),
+    this.clearWaveEntities();
+    this.ship.flash(0.32);
+    this.particles.spawnRing(
+      deathX,
+      deathY,
+      this.ship.radius * 2.2,
+      0xffffff,
+      3.2,
+      0.36,
+      true,
+    );
+    this.particles.spawnSparks(deathX, deathY, 22, {
+      colors: [0xffffff, 0xfff0cc, 0xff8ba0],
+      drag: 0.9,
+      lengthMax: 16,
+      lengthMin: 8,
+      lifeMax: 0.45,
+      lifeMin: 0.2,
+      priority: true,
+      speedMax: 360,
+      speedMin: 140,
+      thicknessMax: 2,
+      thicknessMin: 1.2,
+    });
+    this.particles.spawnDebris(deathX, deathY, 18, 0xffc477, {
+      drag: 0.95,
+      lifeMax: 1.2,
+      lifeMin: 0.55,
+      priority: true,
+      sizeMax: 4.8,
+      sizeMin: 1.8,
+      speedMax: 290,
+      speedMin: 110,
+    });
+    this.triggerFramePulse(1, FRAME_WARNING_COLOR);
+    this.triggerImpactShake(0.0072, 460);
+    this.registerDamageJolt(this.ship.maxHp * 0.75);
+    this.time.delayedCall(PLAYER_DEATH_HIDE_SHIP_MS, () => {
+      this.ship.graphics.setVisible(false);
+      this.particles.spawnBurst(deathX, deathY, 92, 0xff8ba0, true);
+      this.particles.spawnRing(
+        deathX,
+        deathY,
+        this.ship.radius * 4.6,
+        0xff8ba0,
+        4.2,
+        0.78,
+        true,
+      );
+    });
+    this.time.delayedCall(650, () => {
+      this.particles.spawnDebris(deathX, deathY, 14, 0xffd59f, {
+        drag: 0.96,
+        lifeMax: 1.25,
+        lifeMin: 0.65,
+        priority: true,
+        sizeMax: 4.1,
+        sizeMin: 1.6,
+        speedMax: 240,
+        speedMin: 90,
+      });
+      this.particles.spawnSparks(deathX, deathY, 12, {
+        colors: [0xffd59f, 0xffffff, 0xff8ba0],
+        drag: 0.92,
+        lengthMax: 11,
+        lengthMin: 5,
+        lifeMax: 0.36,
+        lifeMin: 0.18,
+        priority: true,
+        speedMax: 220,
+        speedMin: 80,
       });
     });
+    this.gameOverTimer = this.time.delayedCall(
+      PLAYER_DEATH_RETURN_DELAY_MS,
+      () => {
+        this.overlayShown = true;
+        emitGameOverEvent(this.game, {
+          gold: this.gold,
+          wave: this.getWaveDisplay(),
+        });
+      },
+    );
   }
 
   private clearWaveEntities(): void {
@@ -735,20 +825,29 @@ export class PlayScene extends Phaser.Scene {
   private setupInput(): void {
     this.input.addPointer(2);
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      this.pointerActive = true;
+      const touch = this.isTouchPointer(pointer);
+      if (touch) {
+        this.pointerActive = true;
+      }
+      this.firingInputActive = true;
       this.setTargetFromPointer(pointer);
     });
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      if (!this.pointerActive) return;
+      const touch = this.isTouchPointer(pointer);
+      if (touch && !this.pointerActive) return;
       this.setTargetFromPointer(pointer);
     });
-    this.input.on("pointerup", () => {
-      this.pointerActive = false;
-      this.target.copy(this.defaultTarget);
+    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (this.isTouchPointer(pointer)) {
+        this.pointerActive = false;
+      }
+      this.firingInputActive = false;
     });
-    this.input.on("pointerupoutside", () => {
-      this.pointerActive = false;
-      this.target.copy(this.defaultTarget);
+    this.input.on("pointerupoutside", (pointer: Phaser.Input.Pointer) => {
+      if (this.isTouchPointer(pointer)) {
+        this.pointerActive = false;
+      }
+      this.firingInputActive = false;
     });
 
     const keyboard = this.input.keyboard;
@@ -762,10 +861,7 @@ export class PlayScene extends Phaser.Scene {
 
   private setTargetFromPointer(pointer: Phaser.Input.Pointer): void {
     const nativeEvent = pointer.event as PointerEvent | TouchEvent;
-    const isTouchEvent =
-      (typeof TouchEvent !== "undefined" &&
-        nativeEvent instanceof TouchEvent) ||
-      (nativeEvent as PointerEvent).pointerType === "touch";
+    const isTouchEvent = this.isTouchPointer(pointer);
     const targetY = isTouchEvent
       ? pointer.worldY - this.touchOffsetY
       : pointer.worldY;
@@ -800,9 +896,8 @@ export class PlayScene extends Phaser.Scene {
       this.playArea.x + this.playArea.width * 0.5,
       this.playArea.y + this.playArea.height * 0.8,
     );
-    if (!this.pointerActive) {
-      this.target.copy(this.defaultTarget);
-    }
+    this.damageJoltX = 0;
+    this.damageJoltY = 0;
     this.drawPlayAreaFrame(this.healthPulseStrength);
     this.updateOuterFrameVars();
     this.touchOffsetY = Math.round(
@@ -819,6 +914,7 @@ export class PlayScene extends Phaser.Scene {
 
   private updateFps(deltaMs: number): void {
     if (!this.fpsText) return;
+    if (!import.meta.env.DEV) return;
     this.fpsTimerMs += deltaMs;
     if (this.fpsTimerMs < 250) return;
     this.fpsTimerMs = 0;
@@ -842,7 +938,7 @@ export class PlayScene extends Phaser.Scene {
     this.playAreaFrame.clear();
     if (pulseStrength > 0) {
       const glowAlpha = 0.12 + pulseStrength * 0.35;
-      this.playAreaFrame.lineStyle(7, 0xff3b3b, glowAlpha);
+      this.playAreaFrame.lineStyle(7, this.framePulseColor, glowAlpha);
       this.playAreaFrame.strokeRoundedRect(
         this.playArea.x + inset - 2,
         this.playArea.y + inset - 2,
@@ -862,24 +958,8 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateLowHealthEffect(delta: number): void {
-    if (!this.shipAlive) return;
-    const ratio = this.ship.maxHp > 0 ? this.ship.hp / this.ship.maxHp : 1;
-    let targetStrength = 0;
-    if (ratio <= CRITICAL_HEALTH_THRESHOLD) targetStrength = 1;
-    else if (ratio <= LOW_HEALTH_THRESHOLD) targetStrength = 0.5;
-
-    if (targetStrength <= 0) {
-      if (this.healthPulseStrength !== 0) {
-        this.healthPulseStrength = 0;
-        this.drawPlayAreaFrame(this.healthPulseStrength);
-      }
-      this.healthPulseTime = 0;
-      return;
-    }
-
-    this.healthPulseTime += delta;
-    const pulse = 0.5 + 0.5 * Math.sin(this.healthPulseTime * 3.2);
-    const strength = targetStrength * pulse;
+    this.framePulseBoost = Math.max(0, this.framePulseBoost - delta * 0.65);
+    const strength = this.framePulseBoost;
     if (Math.abs(strength - this.healthPulseStrength) > 0.02) {
       this.healthPulseStrength = strength;
       this.drawPlayAreaFrame(this.healthPulseStrength);
@@ -910,6 +990,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.isGameOver || this.overlayShown) return;
     this.overlayShown = true;
     this.pointerActive = false;
+    this.triggerFramePulse(0.9, FRAME_SUCCESS_COLOR);
     this.clearWaveEntities();
     this.bankRunGold();
     const activeSession = getActiveLevelSession();
@@ -929,8 +1010,164 @@ export class PlayScene extends Phaser.Scene {
     });
   }
 
+  private triggerFramePulse(strength: number, color: number): void {
+    this.framePulseBoost = Math.max(
+      this.framePulseBoost,
+      Phaser.Math.Clamp(strength, 0, 1),
+    );
+    this.framePulseColor = color;
+    this.drawPlayAreaFrame(
+      Math.max(this.healthPulseStrength, this.framePulseBoost),
+    );
+  }
+
+  private triggerImpactShake(intensity: number, durationMs: number): void {
+    if (this.shakeCooldownMs > 0) return;
+    this.shakeCooldownMs = SHAKE_COOLDOWN_MS;
+    this.cameras.main.shake(durationMs, intensity, true);
+  }
+
+  private registerDamageJolt(damageTaken: number): void {
+    if (!this.ship || damageTaken <= 0) return;
+    const maxHp = Math.max(this.ship.maxHp, 1);
+    const ratio = Phaser.Math.Clamp(damageTaken / maxHp, 0, 1);
+    const rawAdd = Phaser.Math.Clamp(
+      this.playArea.width * ratio * DAMAGE_JOLT_WIDTH_SCALE,
+      DAMAGE_JOLT_MIN_ADD,
+      DAMAGE_JOLT_MAX_ADD,
+    );
+    const headroom = Math.max(
+      0,
+      DAMAGE_JOLT_MAX_AMP - this.damageJoltAmplitude,
+    );
+    const ampAdd = Math.min(rawAdd, headroom * 0.65 + DAMAGE_JOLT_MIN_ADD);
+    this.damageJoltAmplitude = Math.min(
+      DAMAGE_JOLT_MAX_AMP,
+      this.damageJoltAmplitude + ampAdd,
+    );
+    const targetFreq = Phaser.Math.Linear(
+      DAMAGE_JOLT_FREQ_MIN,
+      DAMAGE_JOLT_FREQ_MAX,
+      Phaser.Math.Clamp(ratio * 6, 0, 1),
+    );
+    this.damageJoltFreqHz = Phaser.Math.Linear(
+      this.damageJoltFreqHz,
+      targetFreq,
+      DAMAGE_JOLT_FREQ_BLEND,
+    );
+  }
+
+  private updateDamageJolt(delta: number): void {
+    const camera = this.cameras.main;
+    if (this.damageJoltAmplitude <= DAMAGE_JOLT_STOP_EPS) {
+      if (this.damageJoltX !== 0 || this.damageJoltY !== 0) {
+        this.damageJoltX = 0;
+        this.damageJoltY = 0;
+        camera.setScroll(this.playArea.x, this.playArea.y);
+      }
+      return;
+    }
+
+    this.damageJoltPhase += delta * this.damageJoltFreqHz * Math.PI * 2;
+    this.damageJoltX =
+      Math.sin(this.damageJoltPhase) * this.damageJoltAmplitude;
+    this.damageJoltY =
+      Math.sin(this.damageJoltPhase * 0.5 + 0.7) *
+      this.damageJoltAmplitude *
+      DAMAGE_JOLT_Y_RATIO;
+    camera.setScroll(
+      this.playArea.x + this.damageJoltX,
+      this.playArea.y + this.damageJoltY,
+    );
+    this.damageJoltAmplitude *= Math.exp(-delta * DAMAGE_JOLT_DECAY);
+  }
+
+  private getLowHealthState(): "critical" | "warning" | undefined {
+    if (!this.shipAlive || this.ship.maxHp <= 0) return undefined;
+    const ratio = this.ship.hp / this.ship.maxHp;
+    if (ratio <= CRITICAL_HEALTH_THRESHOLD) return "critical";
+    if (ratio <= LOW_HEALTH_THRESHOLD) return "warning";
+    return undefined;
+  }
+
   private getWaveDisplay(): number {
     if (this.levelRunner) return this.levelRunner.getWaveNumber();
     return 0;
+  }
+
+  private isTouchPointer(pointer: Phaser.Input.Pointer): boolean {
+    const nativeEvent = pointer.event as PointerEvent | TouchEvent | undefined;
+    if (
+      typeof TouchEvent !== "undefined" &&
+      nativeEvent instanceof TouchEvent
+    ) {
+      return true;
+    }
+    return (nativeEvent as PointerEvent | undefined)?.pointerType === "touch";
+  }
+
+  private decayChargeCueCooldowns(deltaMs: number): void {
+    for (const weaponId of Object.keys(this.chargeCueCooldownMs)) {
+      const next = this.chargeCueCooldownMs[weaponId] - deltaMs;
+      if (next <= 0) {
+        delete this.chargeCueCooldownMs[weaponId];
+      } else {
+        this.chargeCueCooldownMs[weaponId] = next;
+      }
+    }
+  }
+
+  private emitChargeCue(
+    weaponId: string,
+    x: number,
+    y: number,
+    progress: number,
+    ready: boolean,
+    color: number,
+  ): void {
+    if (progress <= 0) return;
+    const cooldown = this.chargeCueCooldownMs[weaponId] ?? 0;
+    if (cooldown > 0) return;
+    this.chargeCueCooldownMs[weaponId] = Phaser.Math.Linear(
+      CHARGE_CUE_COOLDOWN_MAX_MS,
+      CHARGE_CUE_COOLDOWN_MIN_MS,
+      Phaser.Math.Clamp(progress, 0, 1),
+    );
+
+    const cueColor = ready ? 0xc4f7ff : color;
+    const pullRadius = this.ship.radius * (0.6 + progress * 0.7);
+    const inwardCount = Math.round(1 + progress * 4 + (ready ? 1 : 0));
+    this.particles.spawnInward(x, y, inwardCount, cueColor, pullRadius);
+    if (ready) {
+      this.particles.spawnRing(
+        x,
+        y,
+        this.ship.radius * 0.58,
+        cueColor,
+        1.8,
+        0.23,
+      );
+      this.particles.spawnSparks(x, y, 2, {
+        colors: [cueColor, 0xffffff],
+        drag: 0.9,
+        lengthMax: 7,
+        lengthMin: 3,
+        lifeMax: 0.2,
+        lifeMin: 0.11,
+        speedMax: 110,
+        speedMin: 45,
+      });
+      return;
+    }
+    if (progress >= 0.45) {
+      this.particles.spawnRing(
+        x,
+        y,
+        this.ship.radius * (0.28 + progress * 0.16),
+        cueColor,
+        1.2,
+        0.12,
+      );
+    }
   }
 }

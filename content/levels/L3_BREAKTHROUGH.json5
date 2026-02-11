@@ -8,7 +8,12 @@
   "objectiveSetId": "obj_s1_l3",
   "preBeatId": "beat_s1_l3_pre",
   "postBeatId": "beat_s1_l3_post",
-  "waveIds": ["breakthrough-storm", "breakthrough-surge", "breakthrough-push", "breakthrough-weave"],
+  "waveIds": [
+    "breakthrough-storm",
+    "breakthrough-surge",
+    "breakthrough-push",
+    "breakthrough-weave"
+  ],
   "shopId": "shop_breakthrough",
   "winCondition": {
     "kind": "clearWaves"

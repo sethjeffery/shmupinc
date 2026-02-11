@@ -56,6 +56,7 @@ export interface BulletTrail {
   sizeMin?: number;
   sizeMax?: number;
   count?: number;
+  kind?: "dot" | "spark";
 }
 
 export interface BulletRicochet {
@@ -63,6 +64,29 @@ export interface BulletRicochet {
   speedRetention: number;
   damageRetention: number;
   sameTargetCooldownMs: number;
+}
+
+export interface BulletVfxSpec {
+  muzzle?: {
+    burstCount?: number;
+    radius?: number;
+    lifeMs?: number;
+    color?: number;
+  };
+  trail?: {
+    kind?: "dot" | "spark";
+  };
+  impact?: {
+    sparkCount?: number;
+    ringRadius?: number;
+    ringLifeMs?: number;
+    color?: number;
+  };
+  detonation?: {
+    burstCount?: number;
+    ringThickness?: number;
+    ringLifeMs?: number;
+  };
 }
 
 export interface BulletSpec {
@@ -78,6 +102,7 @@ export interface BulletSpec {
   length?: number;
   thickness?: number;
   ricochet?: BulletRicochet;
+  vfx?: BulletVfxSpec;
 }
 
 // originOffsets are local offsets from the emitter position (no rotation applied).

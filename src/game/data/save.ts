@@ -80,6 +80,10 @@ const createWeaponInstance = (
   save: SaveData,
   weaponId: WeaponId,
 ): WeaponInstance => {
+  const existing = save.ownedWeapons.find(
+    (instance) => instance.weaponId === weaponId,
+  );
+  if (existing) return existing;
   const id = `w${save.nextWeaponInstanceId}`;
   save.nextWeaponInstanceId += 1;
   const instance = { id, weaponId };
@@ -107,6 +111,20 @@ const getWeaponDefinition = (weaponId: WeaponId): null | WeaponDefinition =>
 
 const getModDefinition = (modId: ModId): ModDefinition | null =>
   MODS[modId] ?? null;
+
+const normalizeOwnedWeapons = (save: SaveData): void => {
+  const seenInstances = new Set<WeaponInstanceId>();
+  const seenWeapons = new Set<WeaponId>();
+  const unique: WeaponInstance[] = [];
+  for (const instance of save.ownedWeapons) {
+    if (seenInstances.has(instance.id)) continue;
+    if (seenWeapons.has(instance.weaponId)) continue;
+    seenInstances.add(instance.id);
+    seenWeapons.add(instance.weaponId);
+    unique.push(instance);
+  }
+  save.ownedWeapons = unique;
+};
 
 const normalizeNextWeaponInstanceId = (save: SaveData): void => {
   let maxId = 0;
@@ -281,6 +299,19 @@ const normalizeLevelStars = (save: SaveData): void => {
   save.levelStars = normalized;
 };
 
+const compareWeaponInstancesByPower = (
+  a: WeaponInstance,
+  b: WeaponInstance,
+): number => {
+  const aWeapon = getWeaponDefinition(a.weaponId);
+  const bWeapon = getWeaponDefinition(b.weaponId);
+  if (!aWeapon && !bWeapon) return 0;
+  if (!aWeapon) return 1;
+  if (!bWeapon) return -1;
+  if (bWeapon.cost !== aWeapon.cost) return bWeapon.cost - aWeapon.cost;
+  return aWeapon.name.localeCompare(bWeapon.name);
+};
+
 export function loadSave(): SaveData {
   if (cached) return { ...cached };
   const storage = getStorage();
@@ -307,6 +338,7 @@ export function loadSave(): SaveData {
   cached.ownedWeapons = cached.ownedWeapons.filter(
     (item) => WEAPONS[item.weaponId],
   );
+  normalizeOwnedWeapons(cached);
   cached.ownedMods = cached.ownedMods.filter((item) => MODS[item.modId]);
   if (cached.ownedWeapons.length === 0 && WEAPONS[STARTER_WEAPON_ID]) {
     createWeaponInstance(cached, STARTER_WEAPON_ID);
@@ -333,6 +365,7 @@ export function mutateSave(
 ): SaveData {
   const save = loadSave();
   mutator(save);
+  normalizeOwnedWeapons(save);
   normalizeResources(save);
   normalizeUnlocks(save);
   normalizeClaimedObjectives(save);
@@ -475,6 +508,67 @@ export function buildMountedWeapons(
   }
   return mounted;
 }
+
+export const autoAttachWeaponsForShipInSave = (
+  save: SaveData,
+  ship: ShipDefinition,
+  preferredWeaponInstanceIds: WeaponInstanceId[] = [],
+): void => {
+  const assignments =
+    save.mountedWeapons[ship.id] ?? buildMountAssignments(ship);
+  save.mountedWeapons[ship.id] = assignments;
+
+  const assignmentByMountId = new Map(
+    assignments.map((entry) => [entry.mountId, entry]),
+  );
+  for (const mount of ship.mounts) {
+    if (assignmentByMountId.has(mount.id)) continue;
+    const entry: MountAssignment = {
+      modInstanceIds: [],
+      mountId: mount.id,
+      weaponInstanceId: null,
+    };
+    assignments.push(entry);
+    assignmentByMountId.set(mount.id, entry);
+  }
+
+  const instanceById = new Map(
+    save.ownedWeapons.map((instance) => [instance.id, instance]),
+  );
+  const orderedIds: WeaponInstanceId[] = [];
+  const usedOrderIds = new Set<WeaponInstanceId>();
+  for (const preferredId of preferredWeaponInstanceIds) {
+    if (usedOrderIds.has(preferredId)) continue;
+    if (!instanceById.has(preferredId)) continue;
+    usedOrderIds.add(preferredId);
+    orderedIds.push(preferredId);
+  }
+
+  const ranked = [...save.ownedWeapons].sort(compareWeaponInstancesByPower);
+  for (const instance of ranked) {
+    if (usedOrderIds.has(instance.id)) continue;
+    usedOrderIds.add(instance.id);
+    orderedIds.push(instance.id);
+  }
+
+  const assignedWeaponIds = new Set<WeaponInstanceId>();
+  for (const mount of ship.mounts) {
+    const entry = assignmentByMountId.get(mount.id);
+    if (!entry) continue;
+    entry.weaponInstanceId = null;
+    entry.modInstanceIds = [];
+    for (const instanceId of orderedIds) {
+      if (assignedWeaponIds.has(instanceId)) continue;
+      const instance = instanceById.get(instanceId);
+      if (!instance) continue;
+      const weapon = getWeaponDefinition(instance.weaponId);
+      if (!weapon || !canMountWeapon(weapon, mount)) continue;
+      entry.weaponInstanceId = instance.id;
+      assignedWeaponIds.add(instance.id);
+      break;
+    }
+  }
+};
 
 export const createModInstanceInSave = (
   save: SaveData,

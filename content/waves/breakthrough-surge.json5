@@ -1,10 +1,34 @@
 {
   "id": "breakthrough-surge",
   "spawns": [
-    { "atMs": 0, "enemyId": "snake", "x": -0.32, "y": -0.1, "overrides": { "hp": 2 } },
-    { "atMs": 500, "enemyId": "snake", "x": -0.12, "y": -0.1, "overrides": { "hp": 2 } },
-    { "atMs": 1000, "enemyId": "snake", "x": 0.12, "y": -0.1, "overrides": { "hp": 2 } },
-    { "atMs": 1500, "enemyId": "snake", "x": 0.32, "y": -0.1, "overrides": { "hp": 2 } },
+    {
+      "atMs": 0,
+      "enemyId": "snake",
+      "x": -0.32,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
+    {
+      "atMs": 500,
+      "enemyId": "snake",
+      "x": -0.12,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
+    {
+      "atMs": 1000,
+      "enemyId": "snake",
+      "x": 0.12,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
+    {
+      "atMs": 1500,
+      "enemyId": "snake",
+      "x": 0.32,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
 
     {
       "atMs": 2500,
@@ -67,8 +91,20 @@
       }
     },
 
-    { "atMs": 7900, "enemyId": "crossfire", "x": -0.24, "y": -0.12, "overrides": { "hp": 3, "fire": { "steps": [] } } },
-    { "atMs": 8600, "enemyId": "crossfire", "x": 0.24, "y": -0.12, "overrides": { "hp": 3, "fire": { "steps": [] } } },
+    {
+      "atMs": 7900,
+      "enemyId": "crossfire",
+      "x": -0.24,
+      "y": -0.12,
+      "overrides": { "hp": 3, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 8600,
+      "enemyId": "crossfire",
+      "x": 0.24,
+      "y": -0.12,
+      "overrides": { "hp": 3, "fire": { "steps": [] } }
+    },
     {
       "atMs": 9400,
       "enemyId": "sniper",
@@ -93,9 +129,27 @@
       }
     },
 
-    { "atMs": 11100, "enemyId": "swooper", "x": -0.28, "y": -0.14, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 11600, "enemyId": "swooper", "x": 0.28, "y": -0.14, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 12400, "enemyId": "swooper", "x": 0, "y": -0.14, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 11100,
+      "enemyId": "swooper",
+      "x": -0.28,
+      "y": -0.14,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 11600,
+      "enemyId": "swooper",
+      "x": 0.28,
+      "y": -0.14,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 12400,
+      "enemyId": "swooper",
+      "x": 0,
+      "y": -0.14,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
 
     {
       "atMs": 13800,
@@ -184,9 +238,27 @@
       }
     },
 
-    { "atMs": 17800, "enemyId": "crossfire", "x": -0.22, "y": -0.12, "overrides": { "hp": 3 } },
-    { "atMs": 18600, "enemyId": "crossfire", "x": 0.22, "y": -0.12, "overrides": { "hp": 3 } },
-    { "atMs": 19800, "enemyId": "bomber", "x": 0, "y": -0.12, "overrides": { "hp": 4 } },
+    {
+      "atMs": 17800,
+      "enemyId": "crossfire",
+      "x": -0.22,
+      "y": -0.12,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 18600,
+      "enemyId": "crossfire",
+      "x": 0.22,
+      "y": -0.12,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 19800,
+      "enemyId": "bomber",
+      "x": 0,
+      "y": -0.12,
+      "overrides": { "hp": 4 }
+    },
     { "atMs": 21400, "enemyId": "asteroid", "x": 0, "y": -0.1 }
   ]
 }

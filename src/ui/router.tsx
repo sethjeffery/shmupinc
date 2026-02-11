@@ -1,5 +1,8 @@
 import type Phaser from "phaser";
 
+import { signal, type Signal } from "@preact/signals";
+import { render } from "preact";
+
 import {
   getFirstUnlockedLevelId,
   getLevelStarCap,
@@ -33,61 +36,193 @@ interface PanelAction {
   primary: boolean;
 }
 
+interface StoryBeatView {
+  lines: string[];
+  title: string;
+}
+
+interface UiViewSignals {
+  gameOver: Signal<GameOverStats>;
+  menuActions: Signal<PanelAction[]>;
+  route: Signal<UiRoute>;
+  storyBeat: Signal<StoryBeatView>;
+}
+
 const isTextTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLInputElement ||
   target instanceof HTMLTextAreaElement ||
   target instanceof HTMLSelectElement ||
   (target instanceof HTMLElement && target.isContentEditable);
 
+const panelButtonClass = (item: PanelAction): string =>
+  `ui-button${item.primary ? " ui-button--primary" : ""}${
+    item.disabled ? " ui-button--locked" : ""
+  }`;
+
+const UiPanel = (props: {
+  actions: PanelAction[];
+  hint?: string;
+  onAction: (action: string, levelId?: string) => void;
+  statsText?: string;
+  title: string;
+}) => (
+  <div className="ui-panel">
+    <div className="ui-title">{props.title}</div>
+    {props.statsText ? <div className="ui-stats">{props.statsText}</div> : null}
+    <div className="ui-actions">
+      {props.actions.map((item) => (
+        <button
+          className={panelButtonClass(item)}
+          disabled={Boolean(item.disabled)}
+          onClick={() => props.onAction(item.action, item.levelId)}
+          type="button"
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+    {props.hint ? <div className="ui-hint">{props.hint}</div> : null}
+  </div>
+);
+
+const UiRoot = (props: {
+  onAction: (action: string, levelId?: string) => void;
+  signals: UiViewSignals;
+}) => {
+  const route = props.signals.route.value;
+  const uiOpen =
+    route === "menu" ||
+    route === "pause" ||
+    route === "gameover" ||
+    route === "story";
+  const gameOverStats = props.signals.gameOver.value;
+  const storyBeat = props.signals.storyBeat.value;
+
+  return (
+    <div className={`ui-root${uiOpen ? " is-active" : ""}`}>
+      <div
+        className={`ui-overlay ui-overlay--menu${route === "menu" ? " is-active" : ""}`}
+      >
+        <UiPanel
+          actions={props.signals.menuActions.value}
+          hint="How to play: Drag to move, auto-fire."
+          onAction={props.onAction}
+          title="Shmup Inc"
+        />
+      </div>
+
+      <div
+        className={`ui-overlay ui-overlay--pause${route === "pause" ? " is-active" : ""}`}
+      >
+        <UiPanel
+          actions={[
+            { action: "resume", label: "Resume", primary: true },
+            { action: "restart", label: "Restart", primary: false },
+            { action: "hangar", label: "Hangar", primary: false },
+            { action: "quit", label: "Quit to Menu", primary: false },
+          ]}
+          onAction={props.onAction}
+          title="Paused"
+        />
+      </div>
+
+      <div
+        className={`ui-overlay ui-overlay--gameover${route === "gameover" ? " is-active" : ""}`}
+      >
+        <UiPanel
+          actions={[
+            { action: "retry", label: "Retry", primary: true },
+            { action: "hangar", label: "Hangar", primary: false },
+            { action: "menu", label: "Main Menu", primary: false },
+          ]}
+          onAction={props.onAction}
+          statsText={`Wave ${gameOverStats.wave}\nGold earned: ${gameOverStats.gold}`}
+          title="Game Over"
+        />
+      </div>
+
+      <div
+        className={`ui-overlay ui-overlay--story${route === "story" ? " is-active" : ""}`}
+      >
+        <div className="story-panel">
+          <div className="story-title">{storyBeat.title}</div>
+          <div className="story-lines">
+            {storyBeat.lines.map((line, index) => (
+              <p key={`${index}-${line}`}>{line}</p>
+            ))}
+          </div>
+          <div className="story-actions">
+            <button
+              className="story-button"
+              onClick={() => props.onAction("story-continue")}
+              type="button"
+            >
+              Continue
+            </button>
+            <button
+              className="story-skip"
+              onClick={() => props.onAction("story-skip")}
+              type="button"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export class UiRouter {
   private game: Phaser.Game;
   private route: UiRoute = "menu";
-  private root: HTMLDivElement;
-  private menuOverlay: HTMLDivElement;
-  private pauseOverlay: HTMLDivElement;
-  private gameOverOverlay: HTMLDivElement;
-  private storyOverlay: HTMLDivElement;
-  private storyTitle!: HTMLDivElement;
-  private storyLines!: HTMLDivElement;
+  private root: HTMLElement;
   private storyNextRoute: UiRoute = "menu";
   private storyClearLevelOnExit = false;
-  private gameOverStatsText: HTMLDivElement;
-  private lastGameOver: GameOverStats = { gold: 0, wave: 0 };
-  private menuStartButton?: HTMLButtonElement;
-  private storyLevelButtons = new Map<string, HTMLButtonElement>();
   private transitionToken = 0;
+  private readonly routeSignal = signal<UiRoute>("menu");
+  private readonly menuActionsSignal = signal<PanelAction[]>([]);
+  private readonly gameOverSignal = signal<GameOverStats>({ gold: 0, wave: 0 });
+  private readonly storyBeatSignal = signal<StoryBeatView>({
+    lines: ["Awaiting mission data."],
+    title: "Mission Brief",
+  });
 
   constructor(game: Phaser.Game) {
     this.game = game;
-    this.root = document.createElement("div");
-    this.root.className = "ui-root";
-    this.menuOverlay = this.buildMenuOverlay();
-    this.pauseOverlay = this.buildPauseOverlay();
-    this.gameOverOverlay = this.buildGameOverOverlay();
-    this.storyOverlay = this.buildStoryOverlay();
-    this.gameOverStatsText = this.gameOverOverlay.querySelector(".ui-stats")!;
-    this.root.append(
-      this.menuOverlay,
-      this.pauseOverlay,
-      this.gameOverOverlay,
-      this.storyOverlay,
-    );
-    document.body.appendChild(this.root);
+    const root = document.getElementById("ui-root");
+    if (!root) {
+      throw new Error("Missing #ui-root host.");
+    }
+    this.root = root;
 
-    this.root.addEventListener("click", (event) => this.handleClick(event));
+    this.refreshMenuActions();
+    render(
+      <UiRoot
+        onAction={(action, levelId) => this.handleAction(action, levelId)}
+        signals={{
+          gameOver: this.gameOverSignal,
+          menuActions: this.menuActionsSignal,
+          route: this.routeSignal,
+          storyBeat: this.storyBeatSignal,
+        }}
+      />,
+      this.root,
+    );
+
     window.addEventListener("keydown", (event) => this.handleKeyDown(event));
 
     this.game.events.on("ui:route", (route: UiRoute) => this.setRoute(route));
     this.game.events.on("ui:gameover", (stats: GameOverStats) => {
-      this.lastGameOver = stats;
+      this.gameOverSignal.value = stats;
       this.setRoute("gameover");
     });
     this.game.events.on(
       "ui:story",
       (payload: {
         beatId: string;
-        nextRoute?: UiRoute;
         clearLevelOnExit?: boolean;
+        nextRoute?: UiRoute;
       }) => {
         this.openStoryBeat(payload.beatId, payload.nextRoute ?? "menu", {
           clearLevelOnExit: payload.clearLevelOnExit,
@@ -101,12 +236,13 @@ export class UiRouter {
 
   setRoute(
     route: UiRoute,
-    options?: { restart?: boolean; force?: boolean },
+    options?: { force?: boolean; restart?: boolean },
   ): void {
     if (this.route === route && !options?.force) return;
     const token = ++this.transitionToken;
     const previous = this.route;
     this.route = route;
+    this.routeSignal.value = route;
 
     const uiOpen =
       route === "menu" ||
@@ -118,16 +254,6 @@ export class UiRouter {
       "game-locked",
       route === "play" || route === "pause",
     );
-    this.root.classList.toggle("is-active", uiOpen);
-
-    this.menuOverlay.classList.toggle("is-active", route === "menu");
-    this.pauseOverlay.classList.toggle("is-active", route === "pause");
-    this.gameOverOverlay.classList.toggle("is-active", route === "gameover");
-    this.storyOverlay.classList.toggle("is-active", route === "story");
-
-    if (route === "gameover") {
-      this.updateGameOverStats();
-    }
 
     if (route === "play") {
       void this.startOrResume(previous, options?.restart ?? false, token);
@@ -155,7 +281,7 @@ export class UiRouter {
       this.stopPlayScene();
       this.stopShopScene();
       clearActiveLevel();
-      this.refreshStoryLevelButtons();
+      this.refreshMenuActions();
     }
   }
 
@@ -246,10 +372,6 @@ export class UiRouter {
     if (input) input.enabled = enabled;
   }
 
-  private updateGameOverStats(): void {
-    this.gameOverStatsText.textContent = `Wave ${this.lastGameOver.wave}\nGold earned: ${this.lastGameOver.gold}`;
-  }
-
   private startStoryLevel(levelId: string): void {
     const session = startLevelSession(levelId);
     const level = session?.level;
@@ -264,12 +386,8 @@ export class UiRouter {
     }
   }
 
-  private handleClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement | null;
-    if (!target) return;
-    const action = target.closest<HTMLElement>("[data-action]");
-    if (!action) return;
-    switch (action.dataset.action) {
+  private handleAction(action: string, levelId?: string): void {
+    switch (action) {
       case "start": {
         const firstUnlocked = getFirstUnlockedLevelId();
         if (firstUnlocked) this.startStoryLevel(firstUnlocked);
@@ -295,7 +413,6 @@ export class UiRouter {
         this.setRoute("menu");
         break;
       case "story-level": {
-        const levelId = action.dataset.level;
         if (!levelId) break;
         if (!isLevelUnlocked(levelId)) break;
         this.startStoryLevel(levelId);
@@ -343,9 +460,10 @@ export class UiRouter {
     window.history.replaceState({}, "", window.location.pathname);
   }
 
-  private buildMenuOverlay(): HTMLDivElement {
+  private buildMenuActions(): PanelAction[] {
     const levels = getLevels();
     const save = loadSave();
+    const firstUnlocked = getFirstUnlockedLevelId(save);
     const storyActions = getStoryLevelOrder().map((levelId) => {
       const title = levels[levelId]?.title ?? levelId;
       const unlocked = isLevelUnlocked(levelId, save);
@@ -361,141 +479,17 @@ export class UiRouter {
         primary: false,
       } satisfies PanelAction;
     });
-    const overlay = document.createElement("div");
-    overlay.className = "ui-overlay ui-overlay--menu";
-    overlay.appendChild(
-      this.buildPanel({
-        actions: [
-          { action: "start", label: "Start Mission", primary: true },
-          ...storyActions,
-          { action: "hangar", label: "Hangar", primary: false },
-        ],
-        hint: "How to play: Drag to move, auto-fire.",
-        title: "Shmup Inc",
-      }),
-    );
-    return overlay;
-  }
 
-  private buildStoryOverlay(): HTMLDivElement {
-    const overlay = document.createElement("div");
-    overlay.className = "ui-overlay ui-overlay--story";
-
-    const panel = document.createElement("div");
-    panel.className = "story-panel";
-
-    const title = document.createElement("div");
-    title.className = "story-title";
-    title.textContent = "Mission Brief";
-
-    const lines = document.createElement("div");
-    lines.className = "story-lines";
-
-    const actions = document.createElement("div");
-    actions.className = "story-actions";
-    const continueButton = document.createElement("button");
-    continueButton.className = "story-button";
-    continueButton.dataset.action = "story-continue";
-    continueButton.type = "button";
-    continueButton.textContent = "Continue";
-    const skipButton = document.createElement("button");
-    skipButton.className = "story-skip";
-    skipButton.dataset.action = "story-skip";
-    skipButton.type = "button";
-    skipButton.textContent = "Skip";
-    actions.appendChild(continueButton);
-    actions.appendChild(skipButton);
-
-    panel.appendChild(title);
-    panel.appendChild(lines);
-    panel.appendChild(actions);
-    overlay.appendChild(panel);
-
-    this.storyTitle = title;
-    this.storyLines = lines;
-    return overlay;
-  }
-
-  private buildPauseOverlay(): HTMLDivElement {
-    const overlay = document.createElement("div");
-    overlay.className = "ui-overlay ui-overlay--pause";
-    overlay.appendChild(
-      this.buildPanel({
-        actions: [
-          { action: "resume", label: "Resume", primary: true },
-          { action: "restart", label: "Restart", primary: false },
-          { action: "hangar", label: "Hangar", primary: false },
-          { action: "quit", label: "Quit to Menu", primary: false },
-        ],
-        title: "Paused",
-      }),
-    );
-    return overlay;
-  }
-
-  private buildGameOverOverlay(): HTMLDivElement {
-    const overlay = document.createElement("div");
-    overlay.className = "ui-overlay ui-overlay--gameover";
-    const panel = this.buildPanel({
-      actions: [
-        { action: "retry", label: "Retry", primary: true },
-        { action: "hangar", label: "Hangar", primary: false },
-        { action: "menu", label: "Main Menu", primary: false },
-      ],
-      title: "Game Over",
-    });
-    const stats = panel.querySelector(".ui-stats");
-    if (stats) stats.textContent = "Wave 0\nGold earned: 0";
-    overlay.appendChild(panel);
-    return overlay;
-  }
-
-  private buildPanel(config: {
-    title: string;
-    hint?: string;
-    actions: PanelAction[];
-  }): HTMLDivElement {
-    const panel = document.createElement("div");
-    panel.className = "ui-panel";
-
-    const title = document.createElement("div");
-    title.className = "ui-title";
-    title.textContent = config.title;
-
-    const actions = document.createElement("div");
-    actions.className = "ui-actions";
-
-    for (const item of config.actions) {
-      const button = document.createElement("button");
-      button.className = `ui-button${item.primary ? " ui-button--primary" : ""}${
-        item.disabled ? " ui-button--locked" : ""
-      }`;
-      button.type = "button";
-      button.dataset.action = item.action;
-      if (item.levelId) button.dataset.level = item.levelId;
-      button.disabled = Boolean(item.disabled);
-      button.textContent = item.label;
-      if (item.action === "start") this.menuStartButton = button;
-      if (item.levelId) this.storyLevelButtons.set(item.levelId, button);
-      actions.appendChild(button);
-    }
-
-    const stats = document.createElement("div");
-    stats.className = "ui-stats";
-    stats.textContent = "";
-
-    panel.appendChild(title);
-    if (config.title === "Game Over") panel.appendChild(stats);
-    panel.appendChild(actions);
-
-    if (config.hint) {
-      const hint = document.createElement("div");
-      hint.className = "ui-hint";
-      hint.textContent = config.hint;
-      panel.appendChild(hint);
-    }
-
-    return panel;
+    return [
+      {
+        action: "start",
+        disabled: !firstUnlocked,
+        label: "Start Mission",
+        primary: true,
+      },
+      ...storyActions,
+      { action: "hangar", label: "Hangar", primary: false },
+    ];
   }
 
   private openStoryBeat(
@@ -504,14 +498,10 @@ export class UiRouter {
     options?: { clearLevelOnExit?: boolean },
   ): void {
     const beat = STORY_BEATS[beatId];
-    this.storyTitle.textContent = beat?.title ?? "Mission Brief";
-    const lines = beat?.lines?.length ? beat.lines : ["Awaiting mission data."];
-    const children = lines.map((line) => {
-      const node = document.createElement("p");
-      node.textContent = line;
-      return node;
-    });
-    this.storyLines.replaceChildren(...children);
+    this.storyBeatSignal.value = {
+      lines: beat?.lines?.length ? beat.lines : ["Awaiting mission data."],
+      title: beat?.title ?? "Mission Brief",
+    };
     this.storyNextRoute = nextRoute;
     this.storyClearLevelOnExit = options?.clearLevelOnExit ?? false;
     this.setRoute("story", { force: true });
@@ -524,26 +514,7 @@ export class UiRouter {
     this.setRoute(this.storyNextRoute, { force: true });
   }
 
-  private refreshStoryLevelButtons(): void {
-    const levels = getLevels();
-    const save = loadSave();
-    for (const levelId of getStoryLevelOrder()) {
-      const button = this.storyLevelButtons.get(levelId);
-      if (!button) continue;
-      const unlocked = isLevelUnlocked(levelId, save);
-      const title = levels[levelId]?.title ?? levelId;
-      const stars = getLevelStars(levelId, save);
-      const starCap = getLevelStarCap(levelId);
-      button.disabled = !unlocked;
-      button.classList.toggle("ui-button--locked", !unlocked);
-      button.textContent = unlocked
-        ? `Story: ${title} (★${stars}/${starCap})`
-        : `Story: ${title} (★${stars}/${starCap}) (Locked · Need 1★ prev)`;
-    }
-
-    const firstUnlocked = getFirstUnlockedLevelId(save);
-    if (!this.menuStartButton) return;
-    this.menuStartButton.disabled = !firstUnlocked;
-    this.menuStartButton.classList.toggle("ui-button--locked", !firstUnlocked);
+  private refreshMenuActions(): void {
+    this.menuActionsSignal.value = this.buildMenuActions();
   }
 }

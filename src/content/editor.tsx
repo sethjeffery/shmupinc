@@ -30,6 +30,7 @@ import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import Phaser from "phaser";
+import { type ComponentChildren, render } from "preact";
 
 import { canMountWeapon } from "../game/data/weaponMounts";
 import { drawEnemyToCanvas } from "../game/render/enemyShapes";
@@ -135,66 +136,227 @@ const debounce = (callback: () => void, delayMs: number): (() => void) => {
   };
 };
 
-export const initContentEditor = (): void => {
-  document.body.classList.add("content-editor-mode");
-  const root = document.createElement("div");
-  root.className = "content-editor";
-  root.innerHTML = `
-    <aside class="content-editor__sidebar">
-      <div class="content-editor__title">Content</div>
-      <div class="content-editor__tree"></div>
+interface EditorShellRefs {
+  bezierCanvas: HTMLCanvasElement;
+  bezierInfo: HTMLDivElement;
+  bezierPanel: HTMLDivElement;
+  bezierSection: HTMLElement;
+  bezierStage: HTMLDivElement;
+  editorContainer: HTMLDivElement;
+  fileLabel: HTMLDivElement;
+  hazardToggle: HTMLInputElement;
+  playButton: HTMLButtonElement;
+  previewCanvasHost: HTMLDivElement;
+  previewPanel: HTMLDivElement;
+  previewSection: HTMLElement;
+  previewTabs: HTMLDivElement;
+  previewText: HTMLDivElement;
+  referencePanel: HTMLDivElement;
+  referenceSection: HTMLElement;
+  restartButton: HTMLButtonElement;
+  saveButton: HTMLButtonElement;
+  schemaPanel: HTMLDivElement;
+  spawnToggle: HTMLInputElement;
+  treeContainer: HTMLDivElement;
+  validationStatus: HTMLDivElement;
+}
+
+const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
+  <>
+    <aside className="content-editor__sidebar">
+      <div className="content-editor__title">Content</div>
+      <div
+        className="content-editor__tree"
+        ref={(element) => {
+          props.refs.treeContainer = element ?? undefined;
+        }}
+      />
     </aside>
-    <main class="content-editor__main">
-      <div class="content-editor__toolbar">
-        <div class="content-editor__file">No file selected</div>
-        <div class="content-editor__toolbar-right">
-          <div class="content-editor__status" data-status="validation" title="Waiting for validation.">
-            <span aria-hidden="true">●</span>
+    <main className="content-editor__main">
+      <div className="content-editor__toolbar">
+        <div
+          className="content-editor__file"
+          ref={(element) => {
+            props.refs.fileLabel = element ?? undefined;
+          }}
+        >
+          No file selected
+        </div>
+        <div className="content-editor__toolbar-right">
+          <div
+            className="content-editor__status"
+            data-status="validation"
+            ref={(element) => {
+              props.refs.validationStatus = element ?? undefined;
+            }}
+            title="Waiting for validation."
+          >
+            <span aria-hidden="true">{"\u25cf"}</span>
           </div>
-          <div class="content-editor__actions">
-            <button class="content-editor__button" data-action="save" type="button" disabled>Save</button>
-            <button class="content-editor__button" data-action="play" type="button" disabled>Play Level</button>
-            <button class="content-editor__button" data-action="restart" type="button" disabled>Restart Level</button>
+          <div className="content-editor__actions">
+            <button
+              className="content-editor__button"
+              data-action="save"
+              disabled
+              ref={(element) => {
+                props.refs.saveButton = element ?? undefined;
+              }}
+              type="button"
+            >
+              Save
+            </button>
+            <button
+              className="content-editor__button"
+              data-action="play"
+              disabled
+              ref={(element) => {
+                props.refs.playButton = element ?? undefined;
+              }}
+              type="button"
+            >
+              Play Level
+            </button>
+            <button
+              className="content-editor__button"
+              data-action="restart"
+              disabled
+              ref={(element) => {
+                props.refs.restartButton = element ?? undefined;
+              }}
+              type="button"
+            >
+              Restart Level
+            </button>
           </div>
         </div>
       </div>
-      <div class="content-editor__body">
-        <div class="content-editor__editor"></div>
-        <div class="content-editor__side">
-          <section class="content-editor__panel">
-            <div class="content-editor__panel-title">Preview</div>
-            <div class="content-editor__panel-body" data-panel="preview">
-            <div class="content-editor__preview-text" data-preview="text"></div>
-            <div class="content-editor__preview-tabs" data-preview="tabs"></div>
-            <div class="content-editor__preview-canvas" data-preview="canvas"></div>
+      <div className="content-editor__body">
+        <div
+          className="content-editor__editor"
+          ref={(element) => {
+            props.refs.editorContainer = element ?? undefined;
+          }}
+        />
+        <div className="content-editor__side">
+          <section
+            className="content-editor__panel"
+            ref={(element) => {
+              props.refs.previewSection = element ?? undefined;
+            }}
+          >
+            <div className="content-editor__panel-title">Preview</div>
+            <div
+              className="content-editor__panel-body"
+              data-panel="preview"
+              ref={(element) => {
+                props.refs.previewPanel = element ?? undefined;
+              }}
+            >
+              <div
+                className="content-editor__preview-text"
+                data-preview="text"
+                ref={(element) => {
+                  props.refs.previewText = element ?? undefined;
+                }}
+              />
+              <div
+                className="content-editor__preview-tabs"
+                data-preview="tabs"
+                ref={(element) => {
+                  props.refs.previewTabs = element ?? undefined;
+                }}
+              />
+              <div
+                className="content-editor__preview-canvas"
+                data-preview="canvas"
+                ref={(element) => {
+                  props.refs.previewCanvasHost = element ?? undefined;
+                }}
+              />
             </div>
           </section>
-          <section class="content-editor__panel content-editor__panel--schema">
-            <div class="content-editor__panel-title">Schema</div>
-            <div class="content-editor__panel-body content-editor__schema" data-panel="schema"></div>
+          <section className="content-editor__panel content-editor__panel--schema">
+            <div className="content-editor__panel-title">Schema</div>
+            <div
+              className="content-editor__panel-body content-editor__schema"
+              data-panel="schema"
+              ref={(element) => {
+                props.refs.schemaPanel = element ?? undefined;
+              }}
+            />
           </section>
-          <section class="content-editor__panel">
-            <div class="content-editor__panel-title">References</div>
-            <div class="content-editor__panel-body content-editor__references" data-panel="references"></div>
+          <section
+            className="content-editor__panel"
+            ref={(element) => {
+              props.refs.referenceSection = element ?? undefined;
+            }}
+          >
+            <div className="content-editor__panel-title">References</div>
+            <div
+              className="content-editor__panel-body content-editor__references"
+              data-panel="references"
+              ref={(element) => {
+                props.refs.referencePanel = element ?? undefined;
+              }}
+            />
           </section>
-          <section class="content-editor__panel content-editor__panel--bezier">
-            <div class="content-editor__panel-title">Bezier</div>
-            <div class="content-editor__panel-body content-editor__bezier" data-panel="bezier">
-              <div class="content-editor__bezier-stage">
-                <canvas class="content-editor__bezier-canvas"></canvas>
+          <section
+            className="content-editor__panel content-editor__panel--bezier"
+            ref={(element) => {
+              props.refs.bezierSection = element ?? undefined;
+            }}
+          >
+            <div className="content-editor__panel-title">Bezier</div>
+            <div
+              className="content-editor__panel-body content-editor__bezier"
+              data-panel="bezier"
+              ref={(element) => {
+                props.refs.bezierPanel = element ?? undefined;
+              }}
+            >
+              <div
+                className="content-editor__bezier-stage"
+                ref={(element) => {
+                  props.refs.bezierStage = element ?? undefined;
+                }}
+              >
+                <canvas
+                  className="content-editor__bezier-canvas"
+                  ref={(element) => {
+                    props.refs.bezierCanvas = element ?? undefined;
+                  }}
+                />
               </div>
-              <div class="content-editor__bezier-info" data-bezier="info"></div>
+              <div
+                className="content-editor__bezier-info"
+                data-bezier="info"
+                ref={(element) => {
+                  props.refs.bezierInfo = element ?? undefined;
+                }}
+              />
             </div>
           </section>
-          <section class="content-editor__panel">
-            <div class="content-editor__panel-title">Debug</div>
-            <div class="content-editor__panel-body content-editor__debug">
+          <section className="content-editor__panel">
+            <div className="content-editor__panel-title">Debug</div>
+            <div className="content-editor__panel-body content-editor__debug">
               <label>
-                <input type="checkbox" data-debug="hazards" />
+                <input
+                  data-debug="hazards"
+                  ref={(element) => {
+                    props.refs.hazardToggle = element ?? undefined;
+                  }}
+                  type="checkbox"
+                />
                 <span>Hazard bounds</span>
               </label>
               <label>
-                <input type="checkbox" data-debug="spawns" />
+                <input
+                  data-debug="spawns"
+                  ref={(element) => {
+                    props.refs.spawnToggle = element ?? undefined;
+                  }}
+                  type="checkbox"
+                />
                 <span>Spawn points</span>
               </label>
             </div>
@@ -202,75 +364,49 @@ export const initContentEditor = (): void => {
         </div>
       </div>
     </main>
-  `;
-  document.body.appendChild(root);
+  </>
+);
 
-  const treeContainer = root.querySelector<HTMLDivElement>(
-    ".content-editor__tree",
-  )!;
-  const editorContainer = root.querySelector<HTMLDivElement>(
-    ".content-editor__editor",
-  )!;
-  const validationStatus = root.querySelector<HTMLDivElement>(
-    '[data-status="validation"]',
-  )!;
-  const schemaPanel = root.querySelector<HTMLDivElement>(
-    '[data-panel="schema"]',
-  )!;
-  const referencePanel = root.querySelector<HTMLDivElement>(
-    '[data-panel="references"]',
-  )!;
-  const referenceSection = referencePanel.closest<HTMLElement>(
-    ".content-editor__panel",
-  )!;
-  const bezierPanel = root.querySelector<HTMLDivElement>(
-    '[data-panel="bezier"]',
-  )!;
-  const bezierSection = bezierPanel.closest<HTMLElement>(
-    ".content-editor__panel",
-  )!;
-  const bezierCanvas = bezierPanel.querySelector<HTMLCanvasElement>(
-    ".content-editor__bezier-canvas",
-  )!;
-  const bezierInfo = bezierPanel.querySelector<HTMLDivElement>(
-    '[data-bezier="info"]',
-  )!;
-  const bezierStage = bezierPanel.querySelector<HTMLDivElement>(
-    ".content-editor__bezier-stage",
-  )!;
-  const previewPanel = root.querySelector<HTMLDivElement>(
-    '[data-panel="preview"]',
-  )!;
-  const previewText = previewPanel.querySelector<HTMLDivElement>(
-    '[data-preview="text"]',
-  )!;
-  const previewCanvasHost = previewPanel.querySelector<HTMLDivElement>(
-    '[data-preview="canvas"]',
-  )!;
-  const previewTabs = previewPanel.querySelector<HTMLDivElement>(
-    '[data-preview="tabs"]',
-  )!;
-  const previewSection = previewPanel.closest<HTMLElement>(
-    ".content-editor__panel",
-  )!;
-  const fileLabel = root.querySelector<HTMLDivElement>(
-    ".content-editor__file",
-  )!;
-  const saveButton = root.querySelector<HTMLButtonElement>(
-    '[data-action="save"]',
-  )!;
-  const playButton = root.querySelector<HTMLButtonElement>(
-    '[data-action="play"]',
-  )!;
-  const restartButton = root.querySelector<HTMLButtonElement>(
-    '[data-action="restart"]',
-  )!;
-  const hazardToggle = root.querySelector<HTMLInputElement>(
-    '[data-debug="hazards"]',
-  )!;
-  const spawnToggle = root.querySelector<HTMLInputElement>(
-    '[data-debug="spawns"]',
-  )!;
+export const initContentEditor = (): void => {
+  const requireRef = <T extends HTMLElement>(
+    element: null | T | undefined,
+    name: string,
+  ): T => {
+    if (!element) {
+      throw new Error(`Content editor missing required ref: ${name}`);
+    }
+    return element;
+  };
+
+  document.body.classList.add("content-editor-mode");
+  const root = document.getElementById("content-root");
+  if (!(root instanceof HTMLDivElement)) {
+    throw new Error("Content editor missing #content-root host.");
+  }
+  root.className = "content-editor";
+  const refs: Partial<EditorShellRefs> = {};
+  render(<ContentEditorShell refs={refs} />, root);
+
+  const treeContainer = requireRef(refs.treeContainer, "treeContainer");
+  const editorContainer = requireRef(refs.editorContainer, "editorContainer");
+  const validationStatus = requireRef(refs.validationStatus, "validationStatus");
+  const schemaPanel = requireRef(refs.schemaPanel, "schemaPanel");
+  const referencePanel = requireRef(refs.referencePanel, "referencePanel");
+  const referenceSection = requireRef(refs.referenceSection, "referenceSection");
+  const bezierSection = requireRef(refs.bezierSection, "bezierSection");
+  const bezierCanvas = requireRef(refs.bezierCanvas, "bezierCanvas");
+  const bezierInfo = requireRef(refs.bezierInfo, "bezierInfo");
+  const bezierStage = requireRef(refs.bezierStage, "bezierStage");
+  const previewText = requireRef(refs.previewText, "previewText");
+  const previewCanvasHost = requireRef(refs.previewCanvasHost, "previewCanvasHost");
+  const previewTabs = requireRef(refs.previewTabs, "previewTabs");
+  const previewSection = requireRef(refs.previewSection, "previewSection");
+  const fileLabel = requireRef(refs.fileLabel, "fileLabel");
+  const saveButton = requireRef(refs.saveButton, "saveButton");
+  const playButton = requireRef(refs.playButton, "playButton");
+  const restartButton = requireRef(refs.restartButton, "restartButton");
+  const hazardToggle = requireRef(refs.hazardToggle, "hazardToggle");
+  const spawnToggle = requireRef(refs.spawnToggle, "spawnToggle");
 
   (
     self as {
@@ -332,9 +468,6 @@ export const initContentEditor = (): void => {
   let previewGame: null | Phaser.Game = null;
   let previewScene: ContentPreviewScene | null = null;
   let previewResizeObserver: null | ResizeObserver = null;
-  let gunPreviewCanvas: HTMLCanvasElement | null = null;
-  let shipPreviewCanvas: HTMLCanvasElement | null = null;
-  let enemyPreviewCanvas: HTMLCanvasElement | null = null;
   let currentWeaponMountId: WeaponPreviewMountId = "";
   let currentWeaponPreviewModIds: string[] = [];
   let currentModPreviewShipId = "";
@@ -343,7 +476,7 @@ export const initContentEditor = (): void => {
   const loadTree = async (): Promise<void> => {
     try {
       const tree = await listContentTree();
-      treeContainer.innerHTML = "";
+      render(null, treeContainer);
       buildTree(tree);
       contentPathIndex = buildContentIndex(tree);
     } catch {
@@ -357,6 +490,34 @@ export const initContentEditor = (): void => {
 
   const setPreviewAspect = (aspect: string): void => {
     previewCanvasHost.style.aspectRatio = aspect;
+  };
+
+  const hidePreviewTabs = (): void => {
+    render(null, previewTabs);
+    previewTabs.style.display = "none";
+  };
+
+  const renderPreviewTabs = (groups: ComponentChildren[]): void => {
+    if (!groups.length) {
+      hidePreviewTabs();
+      return;
+    }
+    render(<>{groups}</>, previewTabs);
+    previewTabs.style.display = "";
+  };
+
+  const mountPreviewCanvas = (className: string): HTMLCanvasElement | null => {
+    let canvasRef: HTMLCanvasElement | null = null;
+    render(
+      <canvas
+        className={className}
+        ref={(element) => {
+          canvasRef = element;
+        }}
+      />,
+      previewCanvasHost,
+    );
+    return canvasRef;
   };
 
   const hasUnsavedChanges = (): boolean =>
@@ -401,6 +562,7 @@ export const initContentEditor = (): void => {
 
   const renderSchemaDocs = (kind: ContentKind | null): void => {
     if (!kind) {
+      render(null, schemaPanel);
       schemaPanel.textContent = "Open a content file to see its schema.";
       return;
     }
@@ -408,32 +570,31 @@ export const initContentEditor = (): void => {
       buildJsonSchemaForKind(kind, registryCache?.registry),
     );
     if (!docs.length) {
+      render(null, schemaPanel);
       schemaPanel.textContent = "No schema info available.";
       return;
     }
-    const list = document.createElement("div");
-    list.className = "content-editor__schema-list";
-    for (const doc of docs) {
-      const row = document.createElement("div");
-      row.className = "content-editor__schema-row";
-
-      const label = document.createElement("div");
-      label.className = "content-editor__schema-label";
-      label.textContent = `${doc.path} : ${doc.type}`;
-
-      const desc = document.createElement("div");
-      desc.className = "content-editor__schema-desc";
-      const description = doc.description ?? "No description.";
-      if (doc.defaultValue !== undefined) {
-        desc.textContent = `${description} (default: ${doc.defaultValue})`;
-      } else {
-        desc.textContent = description;
-      }
-
-      row.append(label, desc);
-      list.appendChild(row);
-    }
-    schemaPanel.replaceChildren(list);
+    render(
+      <div className="content-editor__schema-list">
+        {docs.map((doc) => {
+          const description = doc.description ?? "No description.";
+          const detail =
+            doc.defaultValue !== undefined
+              ? `${description} (default: ${doc.defaultValue})`
+              : description;
+          return (
+            <div
+              className="content-editor__schema-row"
+              key={`${doc.path}:${doc.type}:${doc.defaultValue ?? "none"}`}
+            >
+              <div className="content-editor__schema-label">{`${doc.path} : ${doc.type}`}</div>
+              <div className="content-editor__schema-desc">{detail}</div>
+            </div>
+          );
+        })}
+      </div>,
+      schemaPanel,
+    );
   };
 
   const getCursorPath = (): (number | string)[] | null => {
@@ -620,11 +781,13 @@ export const initContentEditor = (): void => {
 
   const renderReferencePanel = (path: (number | string)[] | null): void => {
     if (!currentPath) {
+      render(null, referencePanel);
       referencePanel.textContent = "";
       setPanelVisible(referenceSection, false);
       return;
     }
     if (!registryCache) {
+      render(null, referencePanel);
       referencePanel.textContent = "";
       setPanelVisible(referenceSection, false);
       return;
@@ -632,6 +795,7 @@ export const initContentEditor = (): void => {
 
     const picker = getReferencePicker(path);
     if (!picker) {
+      render(null, referencePanel);
       referencePanel.textContent = "";
       setPanelVisible(referenceSection, false);
       return;
@@ -639,72 +803,76 @@ export const initContentEditor = (): void => {
 
     const registry = getRegistry();
     if (!registry) {
+      render(null, referencePanel);
       referencePanel.textContent = "";
       setPanelVisible(referenceSection, false);
       return;
     }
     const ids = Object.keys(registry[picker.registryKey]);
     if (!ids.length) {
+      render(null, referencePanel);
       referencePanel.textContent = "";
       setPanelVisible(referenceSection, false);
       return;
     }
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "content-editor__reference-picker";
-
-    const label = document.createElement("div");
-    label.className = "content-editor__reference-label";
-    label.textContent = `Insert ${picker.label} id`;
-
-    const select = document.createElement("select");
-    select.className = "content-editor__select";
-    for (const id of ids) {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = id;
-      select.appendChild(option);
-    }
-
     const initialValue = getReferenceValue(picker, path);
-    if (initialValue && ids.includes(initialValue)) {
-      select.value = initialValue;
-    }
+    let selectedId =
+      initialValue && ids.includes(initialValue) ? initialValue : ids[0];
 
-    const button = document.createElement("button");
-    button.className = "content-editor__button";
-    button.textContent = picker.mode === "array" ? "Add" : "Set";
-    button.addEventListener("click", () =>
-      applyReferenceSelection(picker, path, select.value),
-    );
-
-    const gotoButton = document.createElement("button");
-    gotoButton.className = "content-editor__button";
-    gotoButton.textContent = "Go to";
-
-    const updateGotoState = (): void => {
-      const targetPath = resolveContentPath(picker.contentKind, select.value);
-      gotoButton.disabled = !targetPath;
-      gotoButton.title = targetPath
-        ? `Open ${targetPath}`
-        : `No ${picker.label} file found for "${select.value}".`;
+    const rerender = (): void => {
+      const targetPath = resolveContentPath(picker.contentKind, selectedId);
+      render(
+        <div className="content-editor__reference-picker">
+          <div className="content-editor__reference-label">{`Insert ${picker.label} id`}</div>
+          <select
+            className="content-editor__select"
+            onChange={(event) => {
+              selectedId = event.currentTarget.value;
+              rerender();
+            }}
+            value={selectedId}
+          >
+            {ids.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+          <div className="content-editor__reference-actions">
+            <button
+              className="content-editor__button"
+              onClick={() => applyReferenceSelection(picker, path, selectedId)}
+              type="button"
+            >
+              {picker.mode === "array" ? "Add" : "Set"}
+            </button>
+            <button
+              className="content-editor__button"
+              disabled={!targetPath}
+              onClick={() => {
+                const nextPath = resolveContentPath(
+                  picker.contentKind,
+                  selectedId,
+                );
+                if (!nextPath) return;
+                void requestOpenFile(nextPath);
+              }}
+              title={
+                targetPath
+                  ? `Open ${targetPath}`
+                  : `No ${picker.label} file found for "${selectedId}".`
+              }
+              type="button"
+            >
+              Go to
+            </button>
+          </div>
+        </div>,
+        referencePanel,
+      );
     };
 
-    gotoButton.addEventListener("click", () => {
-      const targetPath = resolveContentPath(picker.contentKind, select.value);
-      if (!targetPath) return;
-      void requestOpenFile(targetPath);
-    });
-
-    select.addEventListener("change", updateGotoState);
-    updateGotoState();
-
-    const actions = document.createElement("div");
-    actions.className = "content-editor__reference-actions";
-    actions.append(button, gotoButton);
-
-    wrapper.append(label, select, actions);
-    referencePanel.replaceChildren(wrapper);
+    rerender();
     setPanelVisible(referenceSection, true);
   };
 
@@ -954,7 +1122,7 @@ export const initContentEditor = (): void => {
 
   const ensurePreviewGame = (): void => {
     if (previewGame || !previewCanvasHost) return;
-    previewCanvasHost.textContent = "";
+    render(null, previewCanvasHost);
     const rect = previewCanvasHost.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
     const height = Math.max(1, Math.round(rect.height));
@@ -992,7 +1160,7 @@ export const initContentEditor = (): void => {
       previewGame = null;
       previewScene = null;
     }
-    previewCanvasHost.textContent = "";
+    render(null, previewCanvasHost);
   };
 
   const renderGunPreview = (
@@ -1001,11 +1169,8 @@ export const initContentEditor = (): void => {
   ): void => {
     teardownPreviewGame();
     setPreviewAspect("1 / 1");
-    if (!gunPreviewCanvas) {
-      gunPreviewCanvas = document.createElement("canvas");
-      gunPreviewCanvas.className = "content-editor__gun-preview";
-    }
-    previewCanvasHost.replaceChildren(gunPreviewCanvas);
+    const gunPreviewCanvas = mountPreviewCanvas("content-editor__gun-preview");
+    if (!gunPreviewCanvas) return;
     const rect = previewCanvasHost.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
     const height = Math.max(1, Math.round(rect.height));
@@ -1078,11 +1243,8 @@ export const initContentEditor = (): void => {
   const renderShipPreview = (ship: ShipDefinition): void => {
     teardownPreviewGame();
     setPreviewAspect("1 / 1");
-    if (!shipPreviewCanvas) {
-      shipPreviewCanvas = document.createElement("canvas");
-      shipPreviewCanvas.className = "content-editor__ship-preview";
-    }
-    previewCanvasHost.replaceChildren(shipPreviewCanvas);
+    const shipPreviewCanvas = mountPreviewCanvas("content-editor__ship-preview");
+    if (!shipPreviewCanvas) return;
     const rect = previewCanvasHost.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
     const height = Math.max(1, Math.round(rect.height));
@@ -1159,11 +1321,8 @@ export const initContentEditor = (): void => {
   const renderEnemyPreview = (enemy: EnemyDef): void => {
     teardownPreviewGame();
     setPreviewAspect("1 / 1");
-    if (!enemyPreviewCanvas) {
-      enemyPreviewCanvas = document.createElement("canvas");
-      enemyPreviewCanvas.className = "content-editor__enemy-preview";
-    }
-    previewCanvasHost.replaceChildren(enemyPreviewCanvas);
+    const enemyPreviewCanvas = mountPreviewCanvas("content-editor__enemy-preview");
+    if (!enemyPreviewCanvas) return;
     const rect = previewCanvasHost.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
     const height = Math.max(1, Math.round(rect.height));
@@ -1231,62 +1390,69 @@ export const initContentEditor = (): void => {
     ctx.restore();
   };
 
-  const createPreviewControlGroup = (label: string): HTMLDivElement => {
-    const group = document.createElement("div");
-    group.className = "content-editor__preview-group";
-    const labelEl = document.createElement("span");
-    labelEl.className = "content-editor__preview-group-label";
-    labelEl.textContent = label;
-    const controls = document.createElement("div");
-    controls.className = "content-editor__preview-group-controls";
-    group.appendChild(labelEl);
-    group.appendChild(controls);
-    previewTabs.appendChild(group);
-    return controls;
+  const getPreviewTabClassName = (
+    isActive: boolean,
+    isDisabled = false,
+  ): string => {
+    let className = "content-editor__preview-tab";
+    if (isActive) className += " is-active";
+    if (isDisabled) className += " is-disabled";
+    return className;
   };
 
-  const renderMountTabs = (
+  const buildPreviewControlGroup = (
+    label: string,
+    controls: ComponentChildren,
+  ): ComponentChildren => (
+    <div className="content-editor__preview-group" key={label}>
+      <span className="content-editor__preview-group-label">{label}</span>
+      <div className="content-editor__preview-group-controls">{controls}</div>
+    </div>
+  );
+
+  const buildMountTabsGroup = (
     mountIds: string[],
     activeMountId: string,
     onSelect: (mountId: string) => void,
-  ): void => {
-    const controls = createPreviewControlGroup("Mount");
-    mountIds.forEach((mountId) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "content-editor__preview-tab";
-      button.textContent = mountId;
-      if (mountId === activeMountId) {
-        button.classList.add("is-active");
-      }
-      button.addEventListener("click", () => {
-        onSelect(mountId);
-      });
-      controls.appendChild(button);
-    });
-  };
+  ): ComponentChildren =>
+    buildPreviewControlGroup(
+      "Mount",
+      mountIds.map((mountId) => (
+        <button
+          type="button"
+          className={getPreviewTabClassName(mountId === activeMountId)}
+          key={mountId}
+          onClick={() => {
+            onSelect(mountId);
+          }}
+        >
+          {mountId}
+        </button>
+      )),
+    );
 
-  const renderSelectControl = (
+  const buildSelectControlGroup = (
     label: string,
     options: { id: string; label: string }[],
     selectedId: string,
     onSelect: (id: string) => void,
-  ): void => {
-    const controls = createPreviewControlGroup(label);
-    const select = document.createElement("select");
-    select.className = "content-editor__preview-select";
-    for (const option of options) {
-      const node = document.createElement("option");
-      node.value = option.id;
-      node.textContent = option.label;
-      select.appendChild(node);
-    }
-    select.value = selectedId;
-    select.addEventListener("change", () => {
-      onSelect(select.value);
-    });
-    controls.appendChild(select);
-  };
+  ): ComponentChildren =>
+    buildPreviewControlGroup(
+      label,
+      <select
+        className="content-editor__preview-select"
+        value={selectedId}
+        onChange={(event) => {
+          onSelect(event.currentTarget.value);
+        }}
+      >
+        {options.map((option) => (
+          <option value={option.id} key={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>,
+    );
 
   const normalizePreviewModSelection = (
     requestedModIds: string[],
@@ -1307,21 +1473,20 @@ export const initContentEditor = (): void => {
     return selected;
   };
 
-  const renderModTabs = (
+  const buildModTabsGroup = (
     mods: ModDefinition[],
     selectedModIds: string[],
     maxSlots: number,
     onToggle: (modId: string) => void,
-  ): void => {
-    const controls = createPreviewControlGroup(
-      `Mods (${selectedModIds.length}/${maxSlots})`,
-    );
+  ): ComponentChildren => {
+    const label = `Mods (${selectedModIds.length}/${maxSlots})`;
     if (maxSlots <= 0) {
-      const message = document.createElement("span");
-      message.className = "content-editor__preview-empty";
-      message.textContent = "This mount has no mod slots.";
-      controls.appendChild(message);
-      return;
+      return buildPreviewControlGroup(
+        label,
+        <span className="content-editor__preview-empty">
+          This mount has no mod slots.
+        </span>,
+      );
     }
     const selectedKinds = new Set(
       selectedModIds
@@ -1329,32 +1494,34 @@ export const initContentEditor = (): void => {
         .filter((mod): mod is ModDefinition => Boolean(mod))
         .map((mod) => mod.iconKind),
     );
-    mods.forEach((mod) => {
-      const isSelected = selectedModIds.includes(mod.id);
-      const hasTypeConflict = selectedKinds.has(mod.iconKind) && !isSelected;
-      const limitReached = selectedModIds.length >= maxSlots && !isSelected;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "content-editor__preview-tab";
-      button.textContent = mod.id;
-      if (isSelected) {
-        button.classList.add("is-active");
-      }
-      if (hasTypeConflict || limitReached) {
-        button.disabled = true;
-        button.classList.add("is-disabled");
-      }
-      button.addEventListener("click", () => {
-        onToggle(mod.id);
-      });
-      controls.appendChild(button);
-    });
+    return buildPreviewControlGroup(
+      label,
+      mods.map((mod) => {
+        const isSelected = selectedModIds.includes(mod.id);
+        const hasTypeConflict = selectedKinds.has(mod.iconKind) && !isSelected;
+        const limitReached = selectedModIds.length >= maxSlots && !isSelected;
+        const isDisabled = hasTypeConflict || limitReached;
+        return (
+          <button
+            type="button"
+            className={getPreviewTabClassName(isSelected, isDisabled)}
+            key={mod.id}
+            disabled={isDisabled}
+            onClick={() => {
+              onToggle(mod.id);
+            }}
+          >
+            {mod.id}
+          </button>
+        );
+      }),
+    );
   };
 
   const renderPreview = (): void => {
     if (!currentPath) {
       previewText.textContent = "";
-      previewTabs.style.display = "none";
+      hidePreviewTabs();
       setPanelVisible(previewSection, false);
       teardownPreviewGame();
       return;
@@ -1366,7 +1533,7 @@ export const initContentEditor = (): void => {
       if (!registry) {
         previewText.textContent = "Preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
       }
@@ -1386,7 +1553,7 @@ export const initContentEditor = (): void => {
       ];
       previewText.textContent = lines.join("\n");
       previewCanvasHost.style.display = "none";
-      previewTabs.style.display = "none";
+      hidePreviewTabs();
       teardownPreviewGame();
       setPanelVisible(previewSection, true);
       return;
@@ -1397,21 +1564,21 @@ export const initContentEditor = (): void => {
         previewText.textContent = "";
         previewCanvasHost.style.display = "none";
         previewScene?.setMode(null);
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         setPanelVisible(previewSection, false);
         return;
       }
       if (!currentEnemyDef) {
         previewText.textContent = "Enemy preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
       }
       previewText.textContent = "";
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
-      previewTabs.style.display = "none";
+      hidePreviewTabs();
       renderEnemyPreview(currentEnemyDef);
       return;
     }
@@ -1422,7 +1589,7 @@ export const initContentEditor = (): void => {
         previewCanvasHost.style.display = "none";
         previewScene?.setMode(null);
         setPanelVisible(previewSection, false);
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         return;
       }
       setPreviewAspect(playfieldAspect);
@@ -1439,7 +1606,7 @@ export const initContentEditor = (): void => {
       setPanelVisible(previewSection, true);
       ensurePreviewGame();
       previewScene?.setWave(currentWaveDef, registry.enemiesById);
-      previewTabs.style.display = "none";
+      hidePreviewTabs();
       return;
     }
 
@@ -1447,14 +1614,14 @@ export const initContentEditor = (): void => {
       if (!currentShipDef) {
         previewText.textContent = "Ship preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
       }
       previewText.textContent = "";
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
-      previewTabs.style.display = "none";
+      hidePreviewTabs();
       renderShipPreview(currentShipDef);
       return;
     }
@@ -1463,14 +1630,14 @@ export const initContentEditor = (): void => {
       if (!currentGunDef) {
         previewText.textContent = "Gun preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
       }
       previewText.textContent = "";
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
-      previewTabs.style.display = "none";
+      hidePreviewTabs();
       renderGunPreview(currentGunDef, null);
       return;
     }
@@ -1482,7 +1649,7 @@ export const initContentEditor = (): void => {
       if (!registry || !currentWeaponDef || !ship) {
         previewText.textContent = "Weapon preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
         return;
@@ -1516,28 +1683,31 @@ export const initContentEditor = (): void => {
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       ensurePreviewGame();
-      previewTabs.replaceChildren();
-      renderMountTabs(mountIds, currentWeaponMountId, (mountId) => {
-        currentWeaponMountId = mountId;
-        currentWeaponPreviewModIds = [];
-        renderPreview();
-      });
-      renderModTabs(
-        availableMods,
-        currentWeaponPreviewModIds,
-        maxModSlots,
-        (modId) => {
-          if (currentWeaponPreviewModIds.includes(modId)) {
-            currentWeaponPreviewModIds = currentWeaponPreviewModIds.filter(
-              (id) => id !== modId,
-            );
-          } else {
-            currentWeaponPreviewModIds = [...currentWeaponPreviewModIds, modId];
-          }
+      renderPreviewTabs([
+        buildMountTabsGroup(mountIds, currentWeaponMountId, (mountId) => {
+          currentWeaponMountId = mountId;
+          currentWeaponPreviewModIds = [];
           renderPreview();
-        },
-      );
-      previewTabs.style.display = "";
+        }),
+        buildModTabsGroup(
+          availableMods,
+          currentWeaponPreviewModIds,
+          maxModSlots,
+          (modId) => {
+            if (currentWeaponPreviewModIds.includes(modId)) {
+              currentWeaponPreviewModIds = currentWeaponPreviewModIds.filter(
+                (id) => id !== modId,
+              );
+            } else {
+              currentWeaponPreviewModIds = [
+                ...currentWeaponPreviewModIds,
+                modId,
+              ];
+            }
+            renderPreview();
+          },
+        ),
+      ]);
       previewScene?.setWeapon(
         weaponDef,
         ship,
@@ -1553,7 +1723,7 @@ export const initContentEditor = (): void => {
       if (!registry || !currentModDef) {
         previewText.textContent = "Mod preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
         return;
@@ -1567,7 +1737,7 @@ export const initContentEditor = (): void => {
       if (ships.length === 0 || weapons.length === 0) {
         previewText.textContent = "Mod preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
         return;
@@ -1586,7 +1756,7 @@ export const initContentEditor = (): void => {
       if (!ship || !weapon) {
         previewText.textContent = "Mod preview unavailable.";
         previewCanvasHost.style.display = "none";
-        previewTabs.style.display = "none";
+        hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
         return;
@@ -1607,32 +1777,32 @@ export const initContentEditor = (): void => {
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       ensurePreviewGame();
-      previewTabs.replaceChildren();
-      renderSelectControl(
-        "Ship",
-        ships.map((entry) => ({ id: entry.id, label: entry.name })),
-        currentModPreviewShipId,
-        (shipId) => {
-          currentModPreviewShipId = shipId;
-          currentModPreviewMountId = "";
+      renderPreviewTabs([
+        buildSelectControlGroup(
+          "Ship",
+          ships.map((entry) => ({ id: entry.id, label: entry.name })),
+          currentModPreviewShipId,
+          (shipId) => {
+            currentModPreviewShipId = shipId;
+            currentModPreviewMountId = "";
+            renderPreview();
+          },
+        ),
+        buildSelectControlGroup(
+          "Weapon",
+          weapons.map((entry) => ({ id: entry.id, label: entry.name })),
+          currentModPreviewWeaponId,
+          (weaponId) => {
+            currentModPreviewWeaponId = weaponId;
+            currentModPreviewMountId = "";
+            renderPreview();
+          },
+        ),
+        buildMountTabsGroup(mountIds, currentModPreviewMountId, (mountId) => {
+          currentModPreviewMountId = mountId;
           renderPreview();
-        },
-      );
-      renderSelectControl(
-        "Weapon",
-        weapons.map((entry) => ({ id: entry.id, label: entry.name })),
-        currentModPreviewWeaponId,
-        (weaponId) => {
-          currentModPreviewWeaponId = weaponId;
-          currentModPreviewMountId = "";
-          renderPreview();
-        },
-      );
-      renderMountTabs(mountIds, currentModPreviewMountId, (mountId) => {
-        currentModPreviewMountId = mountId;
-        renderPreview();
-      });
-      previewTabs.style.display = "";
+        }),
+      ]);
       previewScene?.setWeapon(weapon, ship, currentModPreviewMountId, [
         currentModDef,
       ]);
@@ -1641,7 +1811,7 @@ export const initContentEditor = (): void => {
 
     previewText.textContent = "";
     previewCanvasHost.style.display = "none";
-    previewTabs.style.display = "none";
+    hidePreviewTabs();
     setPanelVisible(previewSection, false);
     teardownPreviewGame();
   };
@@ -1942,20 +2112,41 @@ export const initContentEditor = (): void => {
   };
 
   const buildTree = (nodes: ContentTreeNode[], depth = 0): void => {
-    for (const node of nodes) {
-      const row = document.createElement("div");
-      row.className = "content-editor__tree-row";
-      row.style.paddingLeft = `${depth * 12}px`;
-      row.textContent = node.name;
-      if (node.type === "file") {
-        row.classList.add("is-file");
-        row.addEventListener("click", () => void requestOpenFile(node.path));
+    const rows: { depth: number; node: ContentTreeNode }[] = [];
+    const visit = (entries: ContentTreeNode[], level: number): void => {
+      for (const node of entries) {
+        rows.push({ depth: level, node });
+        if (node.type === "dir" && node.children?.length) {
+          visit(node.children, level + 1);
+        }
       }
-      treeContainer.appendChild(row);
-      if (node.type === "dir" && node.children?.length) {
-        buildTree(node.children, depth + 1);
-      }
-    }
+    };
+    visit(nodes, depth);
+    render(
+      <>
+        {rows.map((entry) => {
+          const className =
+            entry.node.type === "file"
+              ? "content-editor__tree-row is-file"
+              : "content-editor__tree-row";
+          return (
+            <div
+              className={className}
+              key={entry.node.path}
+              onClick={
+                entry.node.type === "file"
+                  ? () => void requestOpenFile(entry.node.path)
+                  : undefined
+              }
+              style={{ paddingLeft: `${entry.depth * 12}px` }}
+            >
+              {entry.node.name}
+            </div>
+          );
+        })}
+      </>,
+      treeContainer,
+    );
   };
 
   const handleSave = async (): Promise<boolean> => {

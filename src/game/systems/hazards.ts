@@ -135,7 +135,8 @@ class LaneWallHazard implements Hazard {
     let offsetY = 0;
     if (motion) {
       if (motion.kind === "sine") {
-        const angle = (localElapsed / motion.periodMs) * Math.PI * 2 + motion.phase;
+        const angle =
+          (localElapsed / motion.periodMs) * Math.PI * 2 + motion.phase;
         const offset = Math.sin(angle) * motion.amplitudePx;
         if (motion.axis === "x") offsetX = offset;
         else offsetY = offset;
@@ -232,7 +233,8 @@ class LaneWallHazard implements Hazard {
     if (motion.kind === "sine") {
       return {
         amplitudePx:
-          motion.amplitude * (motion.axis === "x" ? bounds.width : bounds.height),
+          motion.amplitude *
+          (motion.axis === "x" ? bounds.width : bounds.height),
         axis: motion.axis,
         kind: motion.kind,
         periodMs: Math.max(motion.periodMs, 1),

@@ -66,6 +66,7 @@ export interface UpdateEnemiesRuntimeContext {
   margin: number;
   markEnemyEntered: (enemy: Enemy) => void;
   onEnemyCharging: (enemy: Enemy) => void;
+  onEnemyDying?: (enemy: Enemy) => void;
   onEnemyContact: (
     index: number,
     enemy: Enemy,
@@ -82,12 +83,14 @@ export const updateEnemiesRuntime = (
   context: UpdateEnemiesRuntimeContext,
 ): void => {
   const OFFSCREEN_EPSILON = 0.5;
+  const CONTACT_DAMAGE_SCALE = 9;
   const contactDamage = (context.contactDamagePerSec * context.deltaMs) / 1000;
   const bounds = context.bounds;
   const margin = context.margin;
 
   for (let i = context.enemies.length - 1; i >= 0; i -= 1) {
     const enemy = context.enemies[i];
+    if (!enemy) continue;
     if (!enemy.active) {
       context.onReleaseEnemy(i, true);
       continue;
@@ -103,6 +106,9 @@ export const updateEnemiesRuntime = (
 
     if (enemy.isCharging) {
       context.onEnemyCharging(enemy);
+    }
+    if (enemy.isDying) {
+      context.onEnemyDying?.(enemy);
     }
 
     const offscreen =
@@ -159,7 +165,12 @@ export const updateEnemiesRuntime = (
     if (context.playerAlive) {
       const push = context.getEnemyPush(enemy.x, enemy.y, enemy.hitbox);
       if (!push) continue;
-      context.onEnemyContact(i, enemy, push, contactDamage * 4);
+      context.onEnemyContact(
+        i,
+        enemy,
+        push,
+        contactDamage * CONTACT_DAMAGE_SCALE,
+      );
     }
   }
 };

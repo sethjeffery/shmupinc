@@ -15,6 +15,10 @@ export class PickupGold {
   gravity: number;
   lifetimeMs: number;
   lifeMs: number;
+  private bobPhase: number;
+  private bobSpeed: number;
+  private bobAmp: number;
+  private driftX: number;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -25,9 +29,13 @@ export class PickupGold {
     this.value = 1;
     this.radius = 6;
     this.active = false;
-    this.magnetSpeed = 220;
-    this.friction = 0.9;
-    this.gravity = 28;
+    this.magnetSpeed = 235;
+    this.friction = 0.965;
+    this.gravity = 7;
+    this.bobPhase = 0;
+    this.bobSpeed = 0;
+    this.bobAmp = 0;
+    this.driftX = 0;
 
     this.graphics = scene.add.graphics();
     this.graphics.setDepth(6);
@@ -40,12 +48,18 @@ export class PickupGold {
   spawn(x: number, y: number, value: number): void {
     this.x = x;
     this.y = y;
-    this.vx = 0;
+    this.vx = Phaser.Math.Between(-14, 14);
+    this.vy = Phaser.Math.Between(-12, 4);
     this.value = value;
     this.active = true;
     this.lifeMs = 0;
+    this.bobPhase = Math.random() * Math.PI * 2;
+    this.bobSpeed = Phaser.Math.FloatBetween(4.2, 6.4);
+    this.bobAmp = Phaser.Math.FloatBetween(1.8, 3.4);
+    this.driftX = Phaser.Math.FloatBetween(-8, 8);
     this.graphics.setVisible(true);
     this.graphics.setPosition(x, y);
+    this.graphics.setScale(1);
     this.graphics.setAlpha(1);
   }
 
@@ -77,7 +91,9 @@ export class PickupGold {
       this.vx += (dx / dist) * pull;
       this.vy += (dy / dist) * pull;
     }
-    this.vy += this.gravity * delta;
+    this.vx += this.driftX * delta;
+    this.vy +=
+      (this.gravity + Math.sin(this.bobPhase * 1.1 + 0.9) * 16) * delta;
 
     const damping = Math.pow(this.friction, delta * 60);
     this.vx *= damping;
@@ -85,7 +101,11 @@ export class PickupGold {
 
     this.x += this.vx * delta;
     this.y += this.vy * delta;
-    this.graphics.setPosition(this.x, this.y);
+    this.bobPhase += delta * this.bobSpeed;
+    const bobOffset = Math.sin(this.bobPhase) * this.bobAmp;
+    const scalePulse = 1 + Math.sin(this.bobPhase * 1.5 + 0.6) * 0.06;
+    this.graphics.setPosition(this.x, this.y + bobOffset);
+    this.graphics.setScale(scalePulse);
 
     if (this.y > bounds.y + bounds.height + 40) {
       this.deactivate();
@@ -94,6 +114,7 @@ export class PickupGold {
 
   deactivate(): void {
     this.active = false;
+    this.graphics.setScale(1);
     this.graphics.setVisible(false);
   }
 
@@ -103,9 +124,19 @@ export class PickupGold {
 
   private redraw(): void {
     this.graphics.clear();
-    this.graphics.lineStyle(2, 0xffd166, 1);
-    this.graphics.fillStyle(0x2b1c0e, 1);
+    this.graphics.fillStyle(0xffd166, 0.22);
+    this.graphics.fillCircle(0, 0, this.radius * 1.55);
+    this.graphics.lineStyle(1.5, 0xffe4a3, 0.95);
+    this.graphics.fillStyle(0x3a260f, 1);
     this.graphics.fillCircle(0, 0, this.radius);
     this.graphics.strokeCircle(0, 0, this.radius);
+    this.graphics.fillStyle(0xffd166, 0.9);
+    this.graphics.fillCircle(0, 0, this.radius * 0.5);
+    this.graphics.fillStyle(0xffffff, 0.5);
+    this.graphics.fillCircle(
+      -this.radius * 0.28,
+      -this.radius * 0.28,
+      this.radius * 0.2,
+    );
   }
 }

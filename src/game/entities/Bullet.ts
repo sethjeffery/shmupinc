@@ -142,10 +142,12 @@ export class Bullet {
       this.updateHoming(delta, deltaMs, context);
     }
 
+    const prevX = this.x;
+    const prevY = this.y;
     this.x += this.vx * delta;
     this.y += this.vy * delta;
     this.graphics.setPosition(this.x, this.y);
-    this.updateTrail(deltaMs, emitTrail);
+    this.updateTrail(deltaMs, prevX, prevY, emitTrail);
 
     const offscreen =
       this.y < bounds.y - 50 ||
@@ -237,13 +239,27 @@ export class Bullet {
 
     switch (this.spec.kind) {
       case "dart":
+        this.graphics.lineStyle(thickness + 2, color, 0.25);
+        this.graphics.beginPath();
+        this.graphics.moveTo(-length * 0.5, 0);
+        this.graphics.lineTo(length * 0.5, 0);
+        this.graphics.strokePath();
         this.graphics.lineStyle(thickness, color, 1);
         this.graphics.beginPath();
         this.graphics.moveTo(-length * 0.5, 0);
         this.graphics.lineTo(length * 0.5, 0);
         this.graphics.strokePath();
+        this.graphics.fillStyle(color, 0.6);
+        this.graphics.fillCircle(0, 0, Math.max(1, thickness * 0.75));
         break;
       case "missile":
+        this.graphics.fillStyle(color, 0.2);
+        this.graphics.fillRect(
+          -length * 0.65,
+          -thickness,
+          length * 1.3,
+          thickness * 2,
+        );
         this.graphics.lineStyle(1, color, 1);
         this.graphics.fillStyle(color, 1);
         this.graphics.fillRect(
@@ -260,15 +276,23 @@ export class Bullet {
         );
         break;
       case "bomb":
+        this.graphics.fillStyle(color, 0.22);
+        this.graphics.fillCircle(0, 0, this.radius * 1.7);
         this.graphics.lineStyle(2, color, 1);
         this.graphics.fillStyle(color, 0.7);
         this.graphics.fillCircle(0, 0, this.radius);
         this.graphics.strokeCircle(0, 0, this.radius);
+        this.graphics.lineStyle(1.2, color, 0.6);
+        this.graphics.strokeCircle(0, 0, this.radius * 1.28);
         break;
       case "orb":
       default:
+        this.graphics.fillStyle(color, 0.24);
+        this.graphics.fillCircle(0, 0, this.radius * 1.85);
         this.graphics.fillStyle(color, 1);
         this.graphics.fillCircle(0, 0, this.radius);
+        this.graphics.lineStyle(1, color, 0.72);
+        this.graphics.strokeCircle(0, 0, this.radius * 1.3);
         break;
     }
   }
@@ -316,14 +340,47 @@ export class Bullet {
     this.graphics.setRotation(this.angleRad);
   }
 
-  private updateTrail(deltaMs: number, emitTrail?: EmitBulletTrail): void {
+  private updateTrail(
+    deltaMs: number,
+    prevX: number,
+    prevY: number,
+    emitTrail?: EmitBulletTrail,
+  ): void {
+    if (!emitTrail) return;
+    if (deltaMs <= 0) return;
     const trail = this.spec.trail;
-    if (!trail || !emitTrail) return;
-    const intervalMs = Math.max(trail.intervalMs ?? 80, 10);
+    const intervalMs = Math.max(
+      trail?.intervalMs ?? this.getDefaultTrailIntervalMs(),
+      10,
+    );
+    const dx = this.x - prevX;
+    const dy = this.y - prevY;
     this.trailTimerMs -= deltaMs;
-    if (this.trailTimerMs <= 0) {
-      emitTrail(this.x, this.y, this.angleRad, this.spec);
-      this.trailTimerMs = intervalMs;
+    let safety = 0;
+    while (this.trailTimerMs <= 0 && safety < 10) {
+      const overshootMs = -this.trailTimerMs;
+      const t = Phaser.Math.Clamp(1 - overshootMs / deltaMs, 0, 1);
+      emitTrail(prevX + dx * t, prevY + dy * t, this.angleRad, this.spec);
+      this.trailTimerMs += intervalMs;
+      safety += 1;
+    }
+    if (safety >= 10 && this.trailTimerMs < 0) {
+      // Keep bounded during stalls to avoid a large burst next frame.
+      this.trailTimerMs = 0;
+    }
+  }
+
+  private getDefaultTrailIntervalMs(): number {
+    switch (this.spec.kind) {
+      case "dart":
+        return 42;
+      case "missile":
+        return 30;
+      case "bomb":
+        return 70;
+      case "orb":
+      default:
+        return 52;
     }
   }
 

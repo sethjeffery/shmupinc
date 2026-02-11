@@ -1,16 +1,64 @@
 {
   "id": "deadline-break",
   "spawns": [
-    { "atMs": 0, "enemyId": "swooper", "x": -0.3, "y": -0.14, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 450, "enemyId": "swooper", "x": 0.3, "y": -0.14, "overrides": { "hp": 2, "fire": { "steps": [] } } },
-    { "atMs": 900, "enemyId": "swooper", "x": 0, "y": -0.14, "overrides": { "hp": 2, "fire": { "steps": [] } } },
+    {
+      "atMs": 0,
+      "enemyId": "swooper",
+      "x": -0.3,
+      "y": -0.14,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 450,
+      "enemyId": "swooper",
+      "x": 0.3,
+      "y": -0.14,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
+    {
+      "atMs": 900,
+      "enemyId": "swooper",
+      "x": 0,
+      "y": -0.14,
+      "overrides": { "hp": 2, "fire": { "steps": [] } }
+    },
 
-    { "atMs": 2100, "enemyId": "crossfire", "x": -0.24, "y": -0.1, "overrides": { "hp": 3 } },
-    { "atMs": 2900, "enemyId": "crossfire", "x": 0.24, "y": -0.1, "overrides": { "hp": 3 } },
+    {
+      "atMs": 2100,
+      "enemyId": "crossfire",
+      "x": -0.24,
+      "y": -0.1,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 2900,
+      "enemyId": "crossfire",
+      "x": 0.24,
+      "y": -0.1,
+      "overrides": { "hp": 3 }
+    },
 
-    { "atMs": 4200, "enemyId": "snake", "x": -0.28, "y": -0.1, "overrides": { "hp": 2 } },
-    { "atMs": 4800, "enemyId": "snake", "x": 0, "y": -0.1, "overrides": { "hp": 2 } },
-    { "atMs": 5400, "enemyId": "snake", "x": 0.28, "y": -0.1, "overrides": { "hp": 2 } },
+    {
+      "atMs": 4200,
+      "enemyId": "snake",
+      "x": -0.28,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
+    {
+      "atMs": 4800,
+      "enemyId": "snake",
+      "x": 0,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
+    {
+      "atMs": 5400,
+      "enemyId": "snake",
+      "x": 0.28,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
 
     {
       "atMs": 6700,
@@ -139,8 +187,20 @@
       "overrides": { "hp": 5 }
     },
 
-    { "atMs": 17900, "enemyId": "crossfire", "x": -0.24, "y": -0.1, "overrides": { "hp": 3 } },
-    { "atMs": 18600, "enemyId": "crossfire", "x": 0.24, "y": -0.1, "overrides": { "hp": 3 } },
+    {
+      "atMs": 17900,
+      "enemyId": "crossfire",
+      "x": -0.24,
+      "y": -0.1,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 18600,
+      "enemyId": "crossfire",
+      "x": 0.24,
+      "y": -0.1,
+      "overrides": { "hp": 3 }
+    },
 
     {
       "atMs": 20200,
@@ -172,7 +232,19 @@
       "overrides": { "hp": 3 }
     },
 
-    { "atMs": 25400, "enemyId": "snake", "x": -0.2, "y": -0.1, "overrides": { "hp": 2 } },
-    { "atMs": 26000, "enemyId": "snake", "x": 0.2, "y": -0.1, "overrides": { "hp": 2 } }
+    {
+      "atMs": 25400,
+      "enemyId": "snake",
+      "x": -0.2,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    },
+    {
+      "atMs": 26000,
+      "enemyId": "snake",
+      "x": 0.2,
+      "y": -0.1,
+      "overrides": { "hp": 2 }
+    }
   ]
 }

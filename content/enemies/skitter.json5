@@ -3,7 +3,7 @@
     "loop": true,
     "steps": [
       {
-        "durationMs": 420,
+        "durationMs": 340,
         "kind": "cooldown"
       },
       {
@@ -11,14 +11,14 @@
           "kind": "atPlayer"
         },
         "bulletId": "dart",
-        "count": 2,
-        "intervalMs": 120,
+        "count": 3,
+        "intervalMs": 95,
         "kind": "burst",
         "damage": 1,
         "speed": 260
       },
       {
-        "durationMs": 520,
+        "durationMs": 460,
         "kind": "cooldown"
       }
     ]

@@ -59,5 +59,17 @@ export interface EnemyDef {
     lineColor?: number;
     shape?: EnemyShape;
     vector?: EnemyVector;
+    fx?: {
+      charge?: {
+        ringIntervalMs?: number;
+        inwardCountMinMax?: [number, number];
+        ringRadiusScale?: number;
+      };
+      death?: {
+        burstCount?: number;
+        secondaryBurstCount?: number;
+        ringRadiusScale?: number;
+      };
+    };
   };
 }

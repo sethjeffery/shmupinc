@@ -151,6 +151,7 @@ export class PreviewScene extends Phaser.Scene {
       this.ship.radius,
       this.mountedWeapons,
       this.emitPlayerBullet,
+      true,
     );
   }
 

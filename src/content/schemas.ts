@@ -121,10 +121,7 @@ const hazardMotionSchema = z.union([
         y: z.number().describe("End Y offset (normalized)."),
       })
       .describe("End offset from base center."),
-    yoyo: z
-      .boolean()
-      .describe("Reverse direction at the end.")
-      .default(false),
+    yoyo: z.boolean().describe("Reverse direction at the end.").default(false),
   }),
 ]);
 
@@ -132,7 +129,9 @@ const laneWallSchema = z.object({
   damageOnTouch: z.boolean().describe("Deal damage on contact.").default(false),
   deathOnBottomEject: z
     .boolean()
-    .describe("Instantly defeat the player if this hazard ejects them below the playfield.")
+    .describe(
+      "Instantly defeat the player if this hazard ejects them below the playfield.",
+    )
     .default(false),
   endMs: z
     .number()
@@ -243,8 +242,68 @@ const bulletTrailSchema = z.object({
   color: colorField("Trail color."),
   count: z.number().describe("Trail segment count.").optional(),
   intervalMs: z.number().describe("Trail spawn interval (ms).").optional(),
+  kind: z
+    .enum(["dot", "spark"])
+    .describe("Trail particle primitive.")
+    .optional(),
   sizeMax: z.number().describe("Max trail size.").optional(),
   sizeMin: z.number().describe("Min trail size.").optional(),
+});
+
+const bulletVfxSchema = z.object({
+  detonation: z
+    .object({
+      burstCount: z
+        .number()
+        .describe("Burst particle count override.")
+        .optional(),
+      ringLifeMs: z
+        .number()
+        .describe("Detonation ring lifetime (ms).")
+        .optional(),
+      ringThickness: z
+        .number()
+        .describe("Detonation ring thickness override.")
+        .optional(),
+    })
+    .describe("Explosion/detonation visuals.")
+    .optional(),
+  impact: z
+    .object({
+      color: colorField("Impact color override.").optional(),
+      ringLifeMs: z.number().describe("Impact ring lifetime (ms).").optional(),
+      ringRadius: z
+        .number()
+        .describe("Impact ring radius override.")
+        .optional(),
+      sparkCount: z
+        .number()
+        .describe("Impact spark count override.")
+        .optional(),
+    })
+    .describe("On-hit visuals for non-explosive projectiles.")
+    .optional(),
+  muzzle: z
+    .object({
+      burstCount: z
+        .number()
+        .describe("Muzzle particle count override.")
+        .optional(),
+      color: colorField("Muzzle color override.").optional(),
+      lifeMs: z.number().describe("Muzzle ring lifetime (ms).").optional(),
+      radius: z.number().describe("Muzzle ring radius override.").optional(),
+    })
+    .describe("Muzzle flash visuals.")
+    .optional(),
+  trail: z
+    .object({
+      kind: z
+        .enum(["dot", "spark"])
+        .describe("Trail particle primitive override.")
+        .optional(),
+    })
+    .describe("Trail rendering overrides.")
+    .optional(),
 });
 
 export const bulletSchema = z.object({
@@ -255,6 +314,7 @@ export const bulletSchema = z.object({
   radius: z.number().describe("Collision radius in pixels."),
   thickness: z.number().describe("Stroke thickness in pixels.").optional(),
   trail: bulletTrailSchema.describe("Trail settings.").optional(),
+  vfx: bulletVfxSchema.describe("Optional VFX overrides.").optional(),
 });
 
 const fireStepSchema = z.union([
@@ -343,6 +403,48 @@ const weaponShotSchema = z.object({
 
 const enemyStyleSchema = z.object({
   fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
+  fx: z
+    .object({
+      charge: z
+        .object({
+          inwardCountMinMax: z
+            .tuple([
+              z.number().describe("Minimum inward particle count."),
+              z.number().describe("Maximum inward particle count."),
+            ])
+            .describe("Charge inward particle count range.")
+            .optional(),
+          ringIntervalMs: z
+            .number()
+            .describe("Base ring cadence while charging (ms).")
+            .optional(),
+          ringRadiusScale: z
+            .number()
+            .describe("Scale factor for charge ring radius.")
+            .optional(),
+        })
+        .describe("Charging telegraph visuals.")
+        .optional(),
+      death: z
+        .object({
+          burstCount: z
+            .number()
+            .describe("Primary death burst count.")
+            .optional(),
+          ringRadiusScale: z
+            .number()
+            .describe("Scale factor for death ring radius.")
+            .optional(),
+          secondaryBurstCount: z
+            .number()
+            .describe("Secondary death burst count.")
+            .optional(),
+        })
+        .describe("Death burst visuals.")
+        .optional(),
+    })
+    .describe("Enemy VFX overrides.")
+    .optional(),
   lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
   shape: z
     .enum([

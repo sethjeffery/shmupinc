@@ -480,6 +480,7 @@ export class ContentPreviewScene extends Phaser.Scene {
       ship.radius,
       this.mountedWeapons,
       this.emitPlayerBullet,
+      true,
     );
   }
 

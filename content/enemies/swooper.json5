@@ -2,7 +2,7 @@
   "fire": {
     "steps": [
       {
-        "durationMs": 1100,
+        "durationMs": 900,
         "kind": "cooldown"
       },
       {
@@ -10,14 +10,14 @@
           "kind": "atPlayer"
         },
         "bulletId": "orb",
-        "count": 3,
-        "intervalMs": 180,
+        "count": 4,
+        "intervalMs": 140,
         "kind": "burst",
         "damage": 1,
         "speed": 200
       },
       {
-        "durationMs": 300,
+        "durationMs": 240,
         "kind": "cooldown"
       },
       {
@@ -25,14 +25,14 @@
           "kind": "atPlayer"
         },
         "bulletId": "orb",
-        "count": 3,
-        "intervalMs": 180,
+        "count": 4,
+        "intervalMs": 140,
         "kind": "burst",
         "damage": 1,
         "speed": 200
       },
       {
-        "durationMs": 1200,
+        "durationMs": 980,
         "kind": "cooldown"
       }
     ]

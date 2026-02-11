@@ -18,6 +18,12 @@ export interface BulletRuntimeContext {
   enemyBullets: ObjectPool<Bullet>;
   emitTrail: EmitBulletTrail;
   handleExplosion: EmitBulletExplosion;
+  onBulletImpact?: (
+    x: number,
+    y: number,
+    spec: Bullet["spec"],
+    owner: Bullet["owner"],
+  ) => void;
   onDamagePlayer: (amount: number, fxX?: number, fxY?: number) => void;
   onEnemyKilled: (enemyIndex: number) => void;
   playArea: Phaser.Geom.Rectangle;
@@ -66,6 +72,7 @@ export const updatePlayerBulletsRuntime = (
       if (isExplosiveBullet(bullet.spec)) {
         bullet.hit(ctx.handleExplosion);
       } else {
+        ctx.onBulletImpact?.(bullet.x, bullet.y, bullet.spec, bullet.owner);
         enemy.takeDamage(bullet.damage);
         if (!enemy.active) {
           ctx.onEnemyKilled(i);
@@ -106,6 +113,7 @@ export const updateEnemyBulletsRuntime = (
     if (isExplosiveBullet(bullet.spec)) {
       bullet.hit(ctx.handleExplosion);
     } else {
+      ctx.onBulletImpact?.(bullet.x, bullet.y, bullet.spec, bullet.owner);
       bullet.deactivate();
       ctx.onDamagePlayer(bullet.damage, bullet.x, bullet.y);
     }
