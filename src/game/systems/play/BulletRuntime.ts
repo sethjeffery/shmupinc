@@ -1,3 +1,4 @@
+import type { EnemyHitbox } from "../../data/enemyTypes";
 import type {
   Bullet,
   BulletUpdateContext,
@@ -8,7 +9,6 @@ import type { Enemy } from "../../entities/Enemy";
 import type { ObjectPool } from "../../util/pool";
 import type Phaser from "phaser";
 
-import { circleOverlap } from "../Collision";
 import { circleHitboxOverlap } from "../hitbox";
 import { isExplosiveBullet } from "./BulletVisualFx";
 
@@ -29,6 +29,7 @@ export interface BulletRuntimeContext {
   playArea: Phaser.Geom.Rectangle;
   playerAlive: boolean;
   playerBullets: ObjectPool<Bullet>;
+  playerHitbox: EnemyHitbox;
   playerRadius: number;
   playerX: number;
   playerY: number;
@@ -100,13 +101,13 @@ export const updateEnemyBulletsRuntime = (
       ctx.handleExplosion,
     );
     if (!bullet.active || !ctx.playerAlive) return;
-    const hit = circleOverlap(
+    const hit = circleHitboxOverlap(
       bullet.x,
       bullet.y,
       bullet.radius,
       ctx.playerX,
       ctx.playerY,
-      ctx.playerRadius,
+      ctx.playerHitbox,
     );
     if (!hit) return;
 

@@ -1,12 +1,15 @@
 import type { EnemyDef } from "../game/data/enemies";
+import type { GalaxyDefinition } from "../game/data/galaxyTypes";
 import type { GunDefinition } from "../game/data/gunTypes";
 import type { ModDefinition } from "../game/data/modTypes";
 import type { ShipDefinition } from "../game/data/shipTypes";
+import type { VectorShape } from "../game/data/vectorShape";
 import type { WaveDefinition } from "../game/data/waves";
 import type { WeaponDefinition } from "../game/data/weaponTypes";
 import type {
   ContentKind,
   EnemyContent,
+  GalaxyContent,
   GunContent,
   ModContent,
   ShipContent,
@@ -32,10 +35,9 @@ import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import Phaser from "phaser";
 import { type ComponentChildren, render } from "preact";
 
+import { resolveShipHitbox, resolveShipRadius } from "../game/data/shipTypes";
 import { canMountWeapon } from "../game/data/weaponMounts";
-import { drawEnemyToCanvas } from "../game/render/enemyShapes";
-import { drawGunToCanvas } from "../game/render/gunShapes";
-import { drawShipToCanvas } from "../game/render/shipShapes";
+import { DEFAULT_ENEMY_VECTOR } from "../game/render/enemyShapes";
 import { ContentPreviewScene } from "../game/scenes/ContentPreviewScene";
 import { getDebugFlags, setDebugFlags } from "../game/systems/DebugFlags";
 import {
@@ -50,91 +52,34 @@ import {
   type ContentTreeNode,
   writeContentFile,
 } from "./apiClient";
+import {
+  CanvasPointEditor,
+  type CanvasEditorGuide,
+  type CanvasEditorPoint,
+  type CanvasEditorScene,
+  type CanvasPointUpdate,
+} from "./canvasPointEditor";
+import { debounce, getKindForPath, scaleColor, toRgba } from "./editorUtils";
 import { buildJsonSchemaForKind } from "./jsonSchema";
+import {
+  CONTENT_EDITOR_MONACO_THEME,
+  configureContentEditorTheme,
+} from "./monacoTheme";
 import { parseJsonWithLocation } from "./parseJson";
+import {
+  REFERENCE_PICKERS,
+  type ReferencePicker,
+} from "./referencePickers";
 import { buildSchemaExplorer } from "./schemaExplorer";
 import { CONTENT_KINDS, contentSchemas } from "./schemas";
 import { buildContentRegistry } from "./validation";
-
-type ReferencePickerMode = "array" | "single";
+import {
+  buildBezierScene,
+  buildVectorScene,
+  type EditablePointPath,
+} from "./vectorEditorScenes";
 
 type WeaponPreviewMountId = string;
-
-interface ReferencePicker {
-  contentKind: ContentKind;
-  key: string;
-  label: string;
-  mode: ReferencePickerMode;
-  registryKey: keyof ContentRegistry;
-}
-
-const REFERENCE_PICKERS: ReferencePicker[] = [
-  {
-    contentKind: "waves",
-    key: "waveIds",
-    label: "Wave",
-    mode: "array",
-    registryKey: "wavesById",
-  },
-  {
-    contentKind: "hazards",
-    key: "hazardIds",
-    label: "Hazard",
-    mode: "array",
-    registryKey: "hazardsById",
-  },
-  {
-    contentKind: "shops",
-    key: "shopId",
-    label: "Shop",
-    mode: "single",
-    registryKey: "shopsById",
-  },
-  {
-    contentKind: "objectives",
-    key: "objectiveSetId",
-    label: "Objectives",
-    mode: "single",
-    registryKey: "objectivesById",
-  },
-  {
-    contentKind: "beats",
-    key: "preBeatId",
-    label: "Pre-beat",
-    mode: "single",
-    registryKey: "beatsById",
-  },
-  {
-    contentKind: "beats",
-    key: "postBeatId",
-    label: "Post-beat",
-    mode: "single",
-    registryKey: "beatsById",
-  },
-  {
-    contentKind: "guns",
-    key: "gunId",
-    label: "Gun",
-    mode: "single",
-    registryKey: "gunsById",
-  },
-];
-
-const getKindForPath = (filePath: string): ContentKind | null => {
-  const [kind] = filePath.split("/");
-  if (!kind) return null;
-  return CONTENT_KINDS.includes(kind as ContentKind)
-    ? (kind as ContentKind)
-    : null;
-};
-
-const debounce = (callback: () => void, delayMs: number): (() => void) => {
-  let handle = 0;
-  return (): void => {
-    window.clearTimeout(handle);
-    handle = window.setTimeout(callback, delayMs);
-  };
-};
 
 interface EditorShellRefs {
   bezierCanvas: HTMLCanvasElement;
@@ -145,6 +90,8 @@ interface EditorShellRefs {
   editorContainer: HTMLDivElement;
   fileLabel: HTMLDivElement;
   hazardToggle: HTMLInputElement;
+  modIconCanvasHost: HTMLDivElement;
+  modIconSection: HTMLElement;
   playButton: HTMLButtonElement;
   previewCanvasHost: HTMLDivElement;
   previewPanel: HTMLDivElement;
@@ -238,6 +185,22 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
           }}
         />
         <div className="content-editor__side">
+          <section
+            className="content-editor__panel"
+            ref={(element) => {
+              props.refs.modIconSection = element ?? undefined;
+            }}
+          >
+            <div className="content-editor__panel-title">Mod Icon</div>
+            <div className="content-editor__panel-body">
+              <div
+                className="content-editor__mod-icon-preview"
+                ref={(element) => {
+                  props.refs.modIconCanvasHost = element ?? undefined;
+                }}
+              />
+            </div>
+          </section>
           <section
             className="content-editor__panel"
             ref={(element) => {
@@ -389,16 +352,30 @@ export const initContentEditor = (): void => {
 
   const treeContainer = requireRef(refs.treeContainer, "treeContainer");
   const editorContainer = requireRef(refs.editorContainer, "editorContainer");
-  const validationStatus = requireRef(refs.validationStatus, "validationStatus");
+  const validationStatus = requireRef(
+    refs.validationStatus,
+    "validationStatus",
+  );
   const schemaPanel = requireRef(refs.schemaPanel, "schemaPanel");
   const referencePanel = requireRef(refs.referencePanel, "referencePanel");
-  const referenceSection = requireRef(refs.referenceSection, "referenceSection");
+  const referenceSection = requireRef(
+    refs.referenceSection,
+    "referenceSection",
+  );
   const bezierSection = requireRef(refs.bezierSection, "bezierSection");
+  const modIconSection = requireRef(refs.modIconSection, "modIconSection");
+  const modIconCanvasHost = requireRef(
+    refs.modIconCanvasHost,
+    "modIconCanvasHost",
+  );
   const bezierCanvas = requireRef(refs.bezierCanvas, "bezierCanvas");
   const bezierInfo = requireRef(refs.bezierInfo, "bezierInfo");
   const bezierStage = requireRef(refs.bezierStage, "bezierStage");
   const previewText = requireRef(refs.previewText, "previewText");
-  const previewCanvasHost = requireRef(refs.previewCanvasHost, "previewCanvasHost");
+  const previewCanvasHost = requireRef(
+    refs.previewCanvasHost,
+    "previewCanvasHost",
+  );
   const previewTabs = requireRef(refs.previewTabs, "previewTabs");
   const previewSection = requireRef(refs.previewSection, "previewSection");
   const fileLabel = requireRef(refs.fileLabel, "fileLabel");
@@ -425,6 +402,7 @@ export const initContentEditor = (): void => {
 
   const modelUri = monaco.Uri.parse("inmemory://model/content.json");
   const model = monaco.editor.createModel("", "json", modelUri);
+  configureContentEditorTheme(monaco);
   const editor = monaco.editor.create(editorContainer, {
     automaticLayout: true,
     fontSize: 13,
@@ -433,6 +411,7 @@ export const initContentEditor = (): void => {
     model,
     scrollBeyondLastLine: false,
     tabSize: 2,
+    theme: CONTENT_EDITOR_MONACO_THEME,
   });
 
   monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
@@ -451,6 +430,7 @@ export const initContentEditor = (): void => {
   let currentWeaponDef: null | WeaponDefinition = null;
   let currentModDef: ModDefinition | null = null;
   let currentGunDef: GunDefinition | null = null;
+  let currentGalaxyDef: GalaxyDefinition | null = null;
   let currentShipDef: null | ShipDefinition = null;
   let currentKind: ContentKind | null = null;
   let registryCache: ContentRegistryResponse | null = null;
@@ -458,13 +438,23 @@ export const initContentEditor = (): void => {
   let contentPathIndex = new Map<string, string>();
   let lastBezierPath: (number | string)[] | null = null;
   let bezierActive = false;
-  let bezierState: {
-    points: { x: number; y: number }[];
-    pointsPath: (number | string)[];
-  } | null = null;
-  const bezierAnchor = "spawn" as const;
-  let draggingPointIndex: null | number = null;
-  let draggingPointerId: null | number = null;
+  let previewPointCanvas: HTMLCanvasElement | null = null;
+  let previewPointEditor: CanvasPointEditor | null = null;
+  let previewPointEditorKey = "";
+  let modIconPointCanvas: HTMLCanvasElement | null = null;
+  let modIconPointEditor: CanvasPointEditor | null = null;
+  let modIconPointEditorKey = "";
+  const bezierPointEditor = new CanvasPointEditor(
+    bezierCanvas,
+    {
+      background: "rgba(9, 15, 26, 0.9)",
+      maxZoom: 980,
+      minZoom: 80,
+      snapStep: 0.1,
+    },
+    undefined,
+  );
+  let bezierPointEditorKey = "";
   let previewGame: null | Phaser.Game = null;
   let previewScene: ContentPreviewScene | null = null;
   let previewResizeObserver: null | ResizeObserver = null;
@@ -473,6 +463,7 @@ export const initContentEditor = (): void => {
   let currentModPreviewShipId = "";
   let currentModPreviewWeaponId = "";
   let currentModPreviewMountId = "";
+  let bezierPanelWasVisible = false;
   const loadTree = async (): Promise<void> => {
     try {
       const tree = await listContentTree();
@@ -492,6 +483,11 @@ export const initContentEditor = (): void => {
     previewCanvasHost.style.aspectRatio = aspect;
   };
 
+  const hidePreviewCanvas = (): void => {
+    previewCanvasHost.style.display = "none";
+    previewPointEditorKey = "";
+  };
+
   const hidePreviewTabs = (): void => {
     render(null, previewTabs);
     previewTabs.style.display = "none";
@@ -506,18 +502,112 @@ export const initContentEditor = (): void => {
     previewTabs.style.display = "";
   };
 
-  const mountPreviewCanvas = (className: string): HTMLCanvasElement | null => {
-    let canvasRef: HTMLCanvasElement | null = null;
-    render(
-      <canvas
-        className={className}
-        ref={(element) => {
-          canvasRef = element;
-        }}
-      />,
-      previewCanvasHost,
-    );
-    return canvasRef;
+  const destroyPreviewPointEditor = (): void => {
+    previewPointEditor?.destroy();
+    previewPointEditor = null;
+    previewPointCanvas = null;
+    previewPointEditorKey = "";
+  };
+
+  const destroyModIconPointEditor = (): void => {
+    modIconPointEditor?.destroy();
+    modIconPointEditor = null;
+    modIconPointCanvas = null;
+    modIconPointEditorKey = "";
+  };
+
+  const ensurePreviewPointEditor = (
+    className: string,
+    onPointUpdate?: (update: CanvasPointUpdate) => void,
+  ): CanvasPointEditor | null => {
+    const needsCanvas = !previewPointCanvas?.classList.contains(className);
+    if (needsCanvas) {
+      destroyPreviewPointEditor();
+      let canvasRef: HTMLCanvasElement | null = null;
+      render(
+        <canvas
+          className={className}
+          ref={(element) => {
+            canvasRef = element;
+          }}
+        />,
+        previewCanvasHost,
+      );
+      if (!canvasRef) return null;
+      previewPointCanvas = canvasRef;
+      previewPointEditor = new CanvasPointEditor(
+        canvasRef,
+        {
+          background: "rgba(8, 12, 20, 0.9)",
+          maxZoom: 980,
+          minZoom: 80,
+          snapStep: 0.1,
+        },
+        onPointUpdate,
+      );
+      return previewPointEditor;
+    }
+    previewPointEditor?.setOnPointUpdate(onPointUpdate);
+    return previewPointEditor;
+  };
+
+  const ensureModIconPointEditor = (
+    onPointUpdate?: (update: CanvasPointUpdate) => void,
+  ): CanvasPointEditor | null => {
+    if (!modIconPointCanvas) {
+      let canvasRef: HTMLCanvasElement | null = null;
+      render(
+        <canvas
+          className="content-editor__mod-icon-canvas"
+          ref={(element) => {
+            canvasRef = element;
+          }}
+        />,
+        modIconCanvasHost,
+      );
+      if (!canvasRef) return null;
+      modIconPointCanvas = canvasRef;
+      modIconPointEditor = new CanvasPointEditor(
+        canvasRef,
+        {
+          background: "rgba(8, 12, 20, 0.9)",
+          maxZoom: 980,
+          minZoom: 80,
+          snapStep: 0.1,
+        },
+        onPointUpdate,
+      );
+      return modIconPointEditor;
+    }
+    modIconPointEditor?.setOnPointUpdate(onPointUpdate);
+    return modIconPointEditor;
+  };
+
+  const updatePointAtPath = (
+    pointPath: EditablePointPath,
+    localX: number,
+    localY: number,
+  ): void => {
+    const formatOptions = { insertSpaces: true, tabSize: 2 };
+    const round = (value: number): number => Math.round(value * 1000) / 1000;
+    try {
+      let next = currentText;
+      const editsX = modify(next, pointPath.xPath, round(localX), {
+        formattingOptions: formatOptions,
+      });
+      next = applyEdits(next, editsX);
+      const editsY = modify(next, pointPath.yPath, round(localY), {
+        formattingOptions: formatOptions,
+      });
+      next = applyEdits(next, editsY);
+      if (next !== currentText) {
+        model.setValue(next);
+      }
+    } catch {
+      renderValidation([
+        "Unable to update point value. Fix JSON errors first.",
+      ]);
+    }
   };
 
   const hasUnsavedChanges = (): boolean =>
@@ -876,184 +966,16 @@ export const initContentEditor = (): void => {
     setPanelVisible(referenceSection, true);
   };
 
-  const getBezierMetrics = (): {
-    height: number;
-    playHeight: number;
-    playLeft: number;
-    playTop: number;
-    playWidth: number;
-    scale: number;
-    width: number;
-  } | null => {
-    const bounds = bezierCanvas.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return null;
-    const dpr = window.devicePixelRatio || 1;
-    const width = Math.max(1, Math.floor(bounds.width * dpr));
-    const height = Math.max(1, Math.floor(bounds.height * dpr));
-    if (bezierCanvas.width !== width || bezierCanvas.height !== height) {
-      bezierCanvas.width = width;
-      bezierCanvas.height = height;
-    }
-    const scale = Math.min(
-      width / PLAYFIELD_BASE_WIDTH,
-      height / PLAYFIELD_BASE_HEIGHT,
-    );
-    const playWidth = PLAYFIELD_BASE_WIDTH * scale;
-    const playHeight = PLAYFIELD_BASE_HEIGHT * scale;
-    return {
-      height,
-      playHeight,
-      playLeft: (width - playWidth) / 2,
-      playTop: (height - playHeight) / 2,
-      playWidth,
-      scale,
-      width,
-    };
-  };
-
-  const getBezierOrigin = (
-    metrics: ReturnType<typeof getBezierMetrics>,
-    anchor: "playfield" | "spawn",
-  ): { x: number; y: number } => {
-    if (!metrics) return { x: 0, y: 0 };
-    if (anchor === "playfield") {
-      return { x: metrics.playLeft, y: metrics.playTop };
-    }
-    return { x: metrics.playLeft + metrics.playWidth / 2, y: metrics.playTop };
-  };
-
-  const toScreen = (
-    point: { x: number; y: number },
-    metrics: ReturnType<typeof getBezierMetrics>,
-    anchor: "playfield" | "spawn",
-  ): { x: number; y: number } => {
-    if (!metrics) return { x: 0, y: 0 };
-    const origin = getBezierOrigin(metrics, anchor);
-    return {
-      x: origin.x + point.x * metrics.playWidth,
-      y: origin.y + point.y * metrics.playHeight,
-    };
-  };
-
-  const toLocal = (
-    x: number,
-    y: number,
-    metrics: ReturnType<typeof getBezierMetrics>,
-    anchor: "playfield" | "spawn",
-  ): { x: number; y: number } => {
-    if (!metrics) return { x: 0, y: 0 };
-    const origin = getBezierOrigin(metrics, anchor);
-    return {
-      x: (x - origin.x) / metrics.playWidth,
-      y: (y - origin.y) / metrics.playHeight,
-    };
-  };
-
-  const evaluateBezier = (
-    points: { x: number; y: number }[],
-    t: number,
-  ): { x: number; y: number } => {
-    const temp = points.map((point) => ({ x: point.x, y: point.y }));
-    for (let level = temp.length - 1; level > 0; level -= 1) {
-      for (let i = 0; i < level; i += 1) {
-        temp[i].x += (temp[i + 1].x - temp[i].x) * t;
-        temp[i].y += (temp[i + 1].y - temp[i].y) * t;
-      }
-    }
-    return temp[0] ?? { x: 0, y: 0 };
-  };
-
-  const drawBezierPreview = (activeIndex: null | number): void => {
-    if (!bezierState) return;
-    const metrics = getBezierMetrics();
-    if (!metrics) return;
-    const ctx = bezierCanvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, metrics.width, metrics.height);
-
-    const playWidth = metrics.playWidth;
-    const playHeight = metrics.playHeight;
-    const playLeft = metrics.playLeft;
-    const playTop = metrics.playTop;
-    const origin = getBezierOrigin(metrics, bezierAnchor);
-
-    ctx.fillStyle = "rgba(9, 15, 26, 0.9)";
-    ctx.fillRect(playLeft, playTop, playWidth, playHeight);
-    ctx.strokeStyle = "rgba(125, 214, 255, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(playLeft, playTop, playWidth, playHeight);
-
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-    ctx.beginPath();
-    ctx.moveTo(playLeft + playWidth / 2, playTop);
-    ctx.lineTo(playLeft + playWidth / 2, playTop + playHeight);
-    ctx.stroke();
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(playLeft, playTop, playWidth, playHeight);
-    ctx.clip();
-
-    ctx.strokeStyle = "rgba(125, 214, 255, 0.25)";
-    ctx.beginPath();
-    const points = bezierState.points;
-    for (let i = 0; i < points.length; i += 1) {
-      const pos = toScreen(points[i], metrics, bezierAnchor);
-      if (i === 0) {
-        ctx.moveTo(pos.x, pos.y);
-      } else {
-        ctx.lineTo(pos.x, pos.y);
-      }
-    }
-    ctx.stroke();
-
-    if (points.length >= 2) {
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      for (let i = 0; i <= 64; i += 1) {
-        const t = i / 64;
-        const local = evaluateBezier(points, t);
-        const pos = toScreen(local, metrics, bezierAnchor);
-        if (i === 0) {
-          ctx.moveTo(pos.x, pos.y);
-        } else {
-          ctx.lineTo(pos.x, pos.y);
-        }
-      }
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = "rgba(125, 214, 255, 0.4)";
-    ctx.beginPath();
-    ctx.arc(origin.x, origin.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    for (let i = 0; i < points.length; i += 1) {
-      const pos = toScreen(points[i], metrics, bezierAnchor);
-      ctx.fillStyle =
-        i === activeIndex
-          ? "rgba(125, 255, 200, 0.9)"
-          : "rgba(255, 255, 255, 0.8)";
-      ctx.strokeStyle = "rgba(15, 20, 30, 0.9)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  };
-
   const renderBezierPanel = (): void => {
     if (!currentPath) {
       setPanelVisible(bezierSection, false);
-      bezierState = null;
       lastBezierPath = null;
       bezierActive = false;
+      bezierPointEditorKey = "";
+      bezierPanelWasVisible = false;
       return;
     }
+
     const cursorPath = getCursorPath();
     const context = findBezierContext();
     if (context) {
@@ -1063,33 +985,47 @@ export const initContentEditor = (): void => {
       cursorPath &&
       lastBezierPath &&
       !isPathWithin(cursorPath, lastBezierPath) &&
-      draggingPointIndex === null
+      !bezierPointEditor.isDraggingPoint()
     ) {
       bezierActive = false;
     }
 
     if (!bezierActive) {
       setPanelVisible(bezierSection, false);
-      bezierState = null;
+      bezierPointEditorKey = "";
+      bezierPanelWasVisible = false;
       return;
     }
 
     const resolved = context ?? resolveBezierAtPath(lastBezierPath);
     if (!resolved || resolved.points.length < 2) {
-      if (bezierState) {
-        setPanelVisible(bezierSection, true);
-        drawBezierPreview(draggingPointIndex);
-        return;
-      }
       setPanelVisible(bezierSection, false);
-      bezierState = null;
+      bezierPointEditorKey = "";
+      bezierPanelWasVisible = false;
       return;
     }
-    bezierState = resolved;
+
     setPanelVisible(bezierSection, true);
-    const activePoint = draggingPointIndex ?? resolved.points.length - 1;
     bezierInfo.textContent = `Points: ${resolved.points.length}. Origin: step start (0,0). Units are normalized (x=1 full width, y=1 full height).`;
-    drawBezierPreview(activePoint);
+    const { pointPathById, scene } = buildBezierScene(
+      resolved.points,
+      resolved.pointsPath,
+    );
+    const editorKey = `${currentPath}:${resolved.pointsPath.join(".")}`;
+    bezierPointEditor.setOnPointUpdate((update) => {
+      const pointPath = pointPathById.get(update.id);
+      if (!pointPath) return;
+      updatePointAtPath(pointPath, update.x, update.y);
+    });
+    const shouldFit =
+      !bezierPanelWasVisible || bezierPointEditorKey !== editorKey;
+    if (bezierPointEditor.isDraggingPoint()) {
+      bezierPanelWasVisible = true;
+      return;
+    }
+    bezierPointEditor.setScene(scene, { fit: shouldFit });
+    bezierPointEditorKey = editorKey;
+    bezierPanelWasVisible = true;
   };
 
   const applySchema = (kind: ContentKind | null): void => {
@@ -1122,6 +1058,7 @@ export const initContentEditor = (): void => {
 
   const ensurePreviewGame = (): void => {
     if (previewGame || !previewCanvasHost) return;
+    destroyPreviewPointEditor();
     render(null, previewCanvasHost);
     const rect = previewCanvasHost.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
@@ -1160,234 +1097,232 @@ export const initContentEditor = (): void => {
       previewGame = null;
       previewScene = null;
     }
+    destroyPreviewPointEditor();
     render(null, previewCanvasHost);
   };
 
-  const renderGunPreview = (
-    gun: GunDefinition,
-    ship: null | ShipDefinition,
+  const renderVectorPreview = (
+    className: string,
+    editorKey: string,
+    vector: VectorShape,
+    pointPathPrefix: (number | string)[],
+    style: { fill: string; helperStroke?: string; stroke: string },
+    guides?: CanvasEditorGuide[],
   ): void => {
-    teardownPreviewGame();
+    if (previewGame) {
+      teardownPreviewGame();
+    }
     setPreviewAspect("1 / 1");
-    const gunPreviewCanvas = mountPreviewCanvas("content-editor__gun-preview");
-    if (!gunPreviewCanvas) return;
-    const rect = previewCanvasHost.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-    const dpr = window.devicePixelRatio || 1;
-    gunPreviewCanvas.width = Math.floor(width * dpr);
-    gunPreviewCanvas.height = Math.floor(height * dpr);
-    gunPreviewCanvas.style.width = `${width}px`;
-    gunPreviewCanvas.style.height = `${height}px`;
-    const ctx = gunPreviewCanvas.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-    const axisX = width * 0.5;
-    const axisY = height * 0.5;
-    ctx.save();
-    ctx.strokeStyle = "rgba(143, 166, 199, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, axisY);
-    ctx.lineTo(width, axisY);
-    ctx.moveTo(axisX, 0);
-    ctx.lineTo(axisX, height);
-    ctx.stroke();
-    ctx.restore();
-    if (!ship) {
-      const accent = gun.lineColor ?? 0x7df9ff;
-      const size = Math.min(width, height) * 0.36;
-      drawGunToCanvas(ctx, gun, axisX, axisY, size, accent);
-      return;
+    const { pointPathById, scene } = buildVectorScene(
+      vector,
+      pointPathPrefix,
+      style,
+      guides,
+    );
+    const editorInstance = ensurePreviewPointEditor(className, (update) => {
+      const pointPath = pointPathById.get(update.id);
+      if (!pointPath) return;
+      updatePointAtPath(pointPath, update.x, update.y);
+    });
+    if (!editorInstance) return;
+    if (editorInstance.isDraggingPoint()) return;
+    editorInstance.setScene(scene, {
+      fit: previewPointEditorKey !== editorKey,
+    });
+    previewPointEditorKey = editorKey;
+  };
+
+  const renderGunPreview = (gun: GunDefinition): void => {
+    const accent = gun.lineColor ?? 0x7df9ff;
+    const fill = toRgba(gun.fillColor ?? scaleColor(accent, 0.28), 0.9);
+    const stroke = toRgba(accent, 0.95);
+    renderVectorPreview(
+      "content-editor__gun-preview",
+      `gun:${currentPath ?? "none"}`,
+      gun.vector,
+      ["vector"],
+      {
+        fill,
+        helperStroke: toRgba(accent, 0.5),
+        stroke,
+      },
+    );
+  };
+
+  const getModAccentColor = (iconKind: ModDefinition["iconKind"]): number => {
+    switch (iconKind) {
+      case "aoe":
+        return 0xff6b6b;
+      case "bounce":
+        return 0x9fb7ff;
+      case "homing":
+        return 0x7df9ff;
+      case "multi":
+        return 0xffd166;
+      case "power":
+      default:
+        return 0xff8c42;
     }
+  };
 
-    const color = ship.color;
-    const r = (color >> 16) & 0xff;
-    const g = (color >> 8) & 0xff;
-    const b = color & 0xff;
-    const fill = `rgba(${Math.round(r * 0.25)}, ${Math.round(
-      g * 0.25,
-    )}, ${Math.round(b * 0.25)}, 0.9)`;
-    const stroke = `rgba(${r}, ${g}, ${b}, 0.9)`;
-    const radius = Math.min(width, height) * 0.26;
-    const centerX = axisX;
-    const centerY = axisY;
-
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.fillStyle = fill;
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 2;
-    drawShipToCanvas(ctx, ship.vector, radius);
-    ctx.restore();
-
-    const mounts = ship.mounts;
-    const gunAccent = gun.lineColor ?? 0x7df9ff;
-    const sizeForMount = (_size: "large" | "small"): number => radius;
-    for (const mount of mounts) {
-      const x = centerX + mount.offset.x * radius;
-      const y = centerY + mount.offset.y * radius;
-      drawGunToCanvas(
-        ctx,
-        gun,
-        x,
-        y,
-        sizeForMount(mount.size),
-        gunAccent,
-        mount.offset.x < 0,
-      );
-    }
+  const renderModIconPreview = (mod: ModDefinition): void => {
+    const accent = getModAccentColor(mod.iconKind);
+    const fill = toRgba(scaleColor(accent, 0.32), 0.9);
+    const stroke = toRgba(accent, 0.95);
+    const { pointPathById, scene } = buildVectorScene(mod.icon, ["icon"], {
+      fill,
+      helperStroke: toRgba(accent, 0.5),
+      stroke,
+    });
+    const editorInstance = ensureModIconPointEditor((update) => {
+      const pointPath = pointPathById.get(update.id);
+      if (!pointPath) return;
+      updatePointAtPath(pointPath, update.x, update.y);
+    });
+    if (!editorInstance) return;
+    const editorKey = `mod:${currentPath ?? "none"}`;
+    if (editorInstance.isDraggingPoint()) return;
+    editorInstance.setScene(scene, {
+      fit: modIconPointEditorKey !== editorKey,
+    });
+    modIconPointEditorKey = editorKey;
   };
 
   const renderShipPreview = (ship: ShipDefinition): void => {
-    teardownPreviewGame();
-    setPreviewAspect("1 / 1");
-    const shipPreviewCanvas = mountPreviewCanvas("content-editor__ship-preview");
-    if (!shipPreviewCanvas) return;
-    const rect = previewCanvasHost.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-    const dpr = window.devicePixelRatio || 1;
-    shipPreviewCanvas.width = Math.floor(width * dpr);
-    shipPreviewCanvas.height = Math.floor(height * dpr);
-    shipPreviewCanvas.style.width = `${width}px`;
-    shipPreviewCanvas.style.height = `${height}px`;
-    const ctx = shipPreviewCanvas.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-
-    const centerX = width * 0.5;
-    const centerY = height * 0.5;
-    const baseRadius = Math.min(width, height) * 0.26;
-    const radius = baseRadius * (ship.radiusMultiplier ?? 1);
-    const vectorShape = ship.vector;
-
-    const color = ship.color;
-    const r = (color >> 16) & 0xff;
-    const g = (color >> 8) & 0xff;
-    const b = color & 0xff;
-    const fill = `rgba(${Math.round(r * 0.25)}, ${Math.round(
-      g * 0.25,
-    )}, ${Math.round(b * 0.25)}, 0.9)`;
-    const stroke = `rgba(${r}, ${g}, ${b}, 0.9)`;
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(143, 166, 199, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, centerY);
-    ctx.lineTo(width, centerY);
-    ctx.moveTo(centerX, 0);
-    ctx.lineTo(centerX, height);
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.fillStyle = fill;
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 2;
-    drawShipToCanvas(ctx, vectorShape, radius);
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(143, 166, 199, 0.45)";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-
-    for (const mount of ship.mounts) {
-      const colorHex = mount.size === "large" ? "#7df9ff" : "#ffd166";
-      const marker =
-        Math.max(4, radius * 0.08) * (mount.size === "large" ? 1.1 : 0.85);
-      const x = centerX + mount.offset.x * radius;
-      const y = centerY + mount.offset.y * radius;
-      ctx.save();
-      ctx.fillStyle = `${colorHex}cc`;
-      ctx.strokeStyle = colorHex;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y, marker, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+    const guides: CanvasEditorGuide[] = ship.mounts.map((mount) => ({
+      kind: "circle",
+      r: 0.085,
+      stroke: "rgba(255, 219, 111, 0.9)",
+      width: 1.75,
+      x: mount.offset.x,
+      y: mount.offset.y,
+    }));
+    const shipRadius = Math.max(resolveShipRadius(ship), 0.0001);
+    const shipHitbox = resolveShipHitbox(ship);
+    if (shipHitbox.kind === "circle") {
+      guides.push({
+        kind: "circle",
+        r: shipHitbox.radius / shipRadius,
+        stroke: "rgba(143, 166, 199, 0.5)",
+        width: 1.5,
+        x: 0,
+        y: 0,
+      });
+    } else {
+      guides.push({
+        kind: "ellipse",
+        rx: shipHitbox.radiusX / shipRadius,
+        ry: shipHitbox.radiusY / shipRadius,
+        stroke: "rgba(143, 166, 199, 0.5)",
+        width: 1.5,
+        x: 0,
+        y: 0,
+      });
     }
+    renderVectorPreview(
+      "content-editor__ship-preview",
+      `ship:${currentPath ?? "none"}`,
+      ship.vector,
+      ["vector"],
+      {
+        fill: toRgba(scaleColor(ship.color, 0.25), 0.9),
+        helperStroke: toRgba(ship.color, 0.45),
+        stroke: toRgba(ship.color, 0.95),
+      },
+      guides,
+    );
+  };
+
+  const renderGalaxyPreview = (galaxy: GalaxyDefinition): void => {
+    if (previewGame) {
+      teardownPreviewGame();
+    }
+    setPreviewAspect("16 / 10");
+    const pointPathById = new Map<string, EditablePointPath>();
+    const points: CanvasEditorPoint[] = galaxy.nodes.map((node, index) => {
+      pointPathById.set(node.id, {
+        xPath: ["nodes", index, "pos", "x"],
+        yPath: ["nodes", index, "pos", "y"],
+      });
+      return {
+        id: node.id,
+        x: node.pos.x * 2 - 1,
+        y: node.pos.y * 2 - 1,
+      };
+    });
+    const validPointIds = new Set(points.map((point) => point.id));
+    const scene: CanvasEditorScene = {
+      axisX: 0,
+      axisY: 0,
+      paths: galaxy.edges
+        .filter(
+          (edge) => validPointIds.has(edge.from) && validPointIds.has(edge.to),
+        )
+        .map((edge) => ({
+          pointIds: [edge.from, edge.to],
+          stroke: "rgba(125, 249, 255, 0.65)",
+          width: 1.75,
+        })),
+      points,
+    };
+    const editorInstance = ensurePreviewPointEditor(
+      "content-editor__ship-preview",
+      (update) => {
+        const pointPath = pointPathById.get(update.id);
+        if (!pointPath) return;
+        const nextX = Math.max(0, Math.min(1, (update.x + 1) * 0.5));
+        const nextY = Math.max(0, Math.min(1, (update.y + 1) * 0.5));
+        updatePointAtPath(pointPath, nextX, nextY);
+      },
+    );
+    if (!editorInstance) return;
+    const editorKey = `galaxy:${currentPath ?? "none"}`;
+    if (editorInstance.isDraggingPoint()) return;
+    editorInstance.setScene(scene, {
+      fit: previewPointEditorKey !== editorKey,
+    });
+    previewPointEditorKey = editorKey;
   };
 
   const renderEnemyPreview = (enemy: EnemyDef): void => {
-    teardownPreviewGame();
-    setPreviewAspect("1 / 1");
-    const enemyPreviewCanvas = mountPreviewCanvas("content-editor__enemy-preview");
-    if (!enemyPreviewCanvas) return;
-    const rect = previewCanvasHost.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-    const dpr = window.devicePixelRatio || 1;
-    enemyPreviewCanvas.width = Math.floor(width * dpr);
-    enemyPreviewCanvas.height = Math.floor(height * dpr);
-    enemyPreviewCanvas.style.width = `${width}px`;
-    enemyPreviewCanvas.style.height = `${height}px`;
-    const ctx = enemyPreviewCanvas.getContext("2d");
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-
-    const centerX = width * 0.5;
-    const centerY = height * 0.5;
-    const minSize = Math.min(width, height);
-    const baseRadius = minSize * 0.26;
-    const rawRadius = baseRadius * (enemy.radius / 16);
-    const maxRadius = minSize * 0.38;
-    const radius = Math.min(rawRadius, maxRadius);
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(143, 166, 199, 0.2)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, centerY);
-    ctx.lineTo(width, centerY);
-    ctx.moveTo(centerX, 0);
-    ctx.lineTo(centerX, height);
-    ctx.stroke();
-    ctx.restore();
-
     const style = enemy.style ?? {};
-    const fill = style.fillColor ?? 0x1c0f1a;
     const line = style.lineColor ?? 0xff6b6b;
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(Math.PI);
-    ctx.fillStyle = `#${fill.toString(16).padStart(6, "0")}`;
-    ctx.strokeStyle = `#${line.toString(16).padStart(6, "0")}`;
-    ctx.lineWidth = 2;
-    drawEnemyToCanvas(ctx, style.vector ?? style.shape ?? "swooper", radius);
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(143, 166, 199, 0.45)";
-    ctx.lineWidth = 1.5;
-    const hitboxScale = enemy.radius > 0 ? radius / enemy.radius : 1;
-    const hitbox = enemy.hitbox;
-    ctx.beginPath();
-    if (hitbox.kind === "ellipse") {
-      ctx.ellipse(
-        centerX,
-        centerY,
-        hitbox.radiusX * hitboxScale,
-        hitbox.radiusY * hitboxScale,
-        0,
-        0,
-        Math.PI * 2,
-      );
+    const fill = style.fillColor ?? 0x1c0f1a;
+    const vector = style.vector ?? DEFAULT_ENEMY_VECTOR;
+    const hitboxGuides: CanvasEditorGuide[] = [];
+    const radiusScale = enemy.radius > 0 ? 1 / enemy.radius : 1;
+    if (enemy.hitbox.kind === "circle") {
+      hitboxGuides.push({
+        kind: "circle",
+        r: enemy.hitbox.radius * radiusScale,
+        stroke: "rgba(143, 166, 199, 0.45)",
+        width: 1.5,
+        x: 0,
+        y: 0,
+      });
     } else {
-      ctx.arc(centerX, centerY, hitbox.radius * hitboxScale, 0, Math.PI * 2);
+      hitboxGuides.push({
+        kind: "ellipse",
+        rx: enemy.hitbox.radiusX * radiusScale,
+        ry: enemy.hitbox.radiusY * radiusScale,
+        stroke: "rgba(143, 166, 199, 0.45)",
+        width: 1.5,
+        x: 0,
+        y: 0,
+      });
     }
-    ctx.stroke();
-    ctx.restore();
+    renderVectorPreview(
+      "content-editor__enemy-preview",
+      `enemy:${currentPath ?? "none"}`,
+      vector,
+      ["style", "vector"],
+      {
+        fill: toRgba(fill, 0.9),
+        helperStroke: toRgba(line, 0.45),
+        stroke: toRgba(line, 0.95),
+      },
+      hitboxGuides,
+    );
   };
 
   const getPreviewTabClassName = (
@@ -1521,18 +1456,23 @@ export const initContentEditor = (): void => {
   const renderPreview = (): void => {
     if (!currentPath) {
       previewText.textContent = "";
+      hidePreviewCanvas();
       hidePreviewTabs();
       setPanelVisible(previewSection, false);
+      setPanelVisible(modIconSection, false);
+      destroyModIconPointEditor();
+      render(null, modIconCanvasHost);
       teardownPreviewGame();
       return;
     }
+    setPanelVisible(modIconSection, false);
 
     if (currentKind === "levels") {
       setPreviewAspect(playfieldAspect);
       const registry = getRegistry();
       if (!registry) {
         previewText.textContent = "Preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
@@ -1542,7 +1482,7 @@ export const initContentEditor = (): void => {
         previewText.textContent = currentLevelId
           ? `Level not found in registry: ${currentLevelId}`
           : "Level id missing.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         setPanelVisible(previewSection, true);
         return;
       }
@@ -1552,7 +1492,7 @@ export const initContentEditor = (): void => {
         `Win: ${level.winCondition.kind}`,
       ];
       previewText.textContent = lines.join("\n");
-      previewCanvasHost.style.display = "none";
+      hidePreviewCanvas();
       hidePreviewTabs();
       teardownPreviewGame();
       setPanelVisible(previewSection, true);
@@ -1562,7 +1502,7 @@ export const initContentEditor = (): void => {
     if (currentKind === "enemies") {
       if (bezierActive) {
         previewText.textContent = "";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         previewScene?.setMode(null);
         hidePreviewTabs();
         setPanelVisible(previewSection, false);
@@ -1570,7 +1510,7 @@ export const initContentEditor = (): void => {
       }
       if (!currentEnemyDef) {
         previewText.textContent = "Enemy preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
@@ -1586,7 +1526,7 @@ export const initContentEditor = (): void => {
     if (currentKind === "waves") {
       if (bezierActive) {
         previewText.textContent = "";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, false);
         hidePreviewTabs();
@@ -1596,7 +1536,7 @@ export const initContentEditor = (): void => {
       const registry = getRegistry();
       if (!registry || !currentWaveDef) {
         previewText.textContent = "Wave preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
         return;
@@ -1613,7 +1553,7 @@ export const initContentEditor = (): void => {
     if (currentKind === "ships") {
       if (!currentShipDef) {
         previewText.textContent = "Ship preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
@@ -1626,10 +1566,26 @@ export const initContentEditor = (): void => {
       return;
     }
 
+    if (currentKind === "galaxies") {
+      if (!currentGalaxyDef) {
+        previewText.textContent = "Galaxy preview unavailable.";
+        hidePreviewCanvas();
+        hidePreviewTabs();
+        setPanelVisible(previewSection, true);
+        return;
+      }
+      previewText.textContent = `Nodes: ${currentGalaxyDef.nodes.length}\nEdges: ${currentGalaxyDef.edges.length}`;
+      previewCanvasHost.style.display = "";
+      setPanelVisible(previewSection, true);
+      hidePreviewTabs();
+      renderGalaxyPreview(currentGalaxyDef);
+      return;
+    }
+
     if (currentKind === "guns") {
       if (!currentGunDef) {
         previewText.textContent = "Gun preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         setPanelVisible(previewSection, true);
         return;
@@ -1638,7 +1594,7 @@ export const initContentEditor = (): void => {
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       hidePreviewTabs();
-      renderGunPreview(currentGunDef, null);
+      renderGunPreview(currentGunDef);
       return;
     }
 
@@ -1648,7 +1604,7 @@ export const initContentEditor = (): void => {
       const ship = getPreviewShip();
       if (!registry || !currentWeaponDef || !ship) {
         previewText.textContent = "Weapon preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
@@ -1722,10 +1678,13 @@ export const initContentEditor = (): void => {
       const registry = getRegistry();
       if (!registry || !currentModDef) {
         previewText.textContent = "Mod preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
+        setPanelVisible(modIconSection, false);
+        destroyModIconPointEditor();
+        render(null, modIconCanvasHost);
         return;
       }
       const ships = Object.values(registry.shipsById).sort((a, b) =>
@@ -1736,10 +1695,13 @@ export const initContentEditor = (): void => {
       );
       if (ships.length === 0 || weapons.length === 0) {
         previewText.textContent = "Mod preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
+        setPanelVisible(modIconSection, false);
+        destroyModIconPointEditor();
+        render(null, modIconCanvasHost);
         return;
       }
 
@@ -1755,10 +1717,13 @@ export const initContentEditor = (): void => {
       const weapon = registry.weaponsById[currentModPreviewWeaponId];
       if (!ship || !weapon) {
         previewText.textContent = "Mod preview unavailable.";
-        previewCanvasHost.style.display = "none";
+        hidePreviewCanvas();
         hidePreviewTabs();
         previewScene?.setMode(null);
         setPanelVisible(previewSection, true);
+        setPanelVisible(modIconSection, false);
+        destroyModIconPointEditor();
+        render(null, modIconCanvasHost);
         return;
       }
 
@@ -1806,13 +1771,18 @@ export const initContentEditor = (): void => {
       previewScene?.setWeapon(weapon, ship, currentModPreviewMountId, [
         currentModDef,
       ]);
+      setPanelVisible(modIconSection, true);
+      renderModIconPreview(currentModDef);
       return;
     }
 
     previewText.textContent = "";
-    previewCanvasHost.style.display = "none";
+    hidePreviewCanvas();
     hidePreviewTabs();
     setPanelVisible(previewSection, false);
+    setPanelVisible(modIconSection, false);
+    destroyModIconPointEditor();
+    render(null, modIconCanvasHost);
     teardownPreviewGame();
   };
 
@@ -1835,6 +1805,7 @@ export const initContentEditor = (): void => {
     currentWeaponDef = null;
     currentModDef = null;
     currentGunDef = null;
+    currentGalaxyDef = null;
     currentShipDef = null;
     if (!currentPath) {
       renderValidation(["No file selected."]);
@@ -1941,6 +1912,16 @@ export const initContentEditor = (): void => {
       ]);
       currentGunDef = build.registry.gunsById[result.data.id] ?? null;
       setLevelButtonsEnabled(false);
+    } else if (kind === "galaxies") {
+      const build = buildContentRegistry([
+        {
+          data: result.data as GalaxyContent,
+          kind: "galaxies",
+          path: currentPath,
+        },
+      ]);
+      currentGalaxyDef = build.registry.galaxiesById[result.data.id] ?? null;
+      setLevelButtonsEnabled(false);
     } else if (kind === "ships") {
       const build = buildContentRegistry([
         {
@@ -2001,93 +1982,6 @@ export const initContentEditor = (): void => {
     void requestOpenFile(targetPath);
   });
 
-  const updateBezierPoint = (
-    index: number,
-    localX: number,
-    localY: number,
-  ): void => {
-    if (!bezierState) return;
-    const targetPath = [...bezierState.pointsPath, index];
-    const formatOptions = { insertSpaces: true, tabSize: 2 };
-    const round = (value: number): number => Math.round(value * 1000) / 1000;
-    try {
-      let next = currentText;
-      const editsX = modify(next, [...targetPath, "x"], round(localX), {
-        formattingOptions: formatOptions,
-      });
-      next = applyEdits(next, editsX);
-      const editsY = modify(next, [...targetPath, "y"], round(localY), {
-        formattingOptions: formatOptions,
-      });
-      next = applyEdits(next, editsY);
-      if (next !== currentText) {
-        model.setValue(next);
-      }
-    } catch {
-      renderValidation([
-        "Unable to update bezier point. Fix JSON errors first.",
-      ]);
-    }
-  };
-
-  bezierCanvas.addEventListener("pointerdown", (event) => {
-    if (!bezierState) return;
-    const metrics = getBezierMetrics();
-    if (!metrics) return;
-    const rect = bezierCanvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const cursorX = (event.clientX - rect.left) * dpr;
-    const cursorY = (event.clientY - rect.top) * dpr;
-    const hitRadius = 10 * dpr;
-    let hitIndex: null | number = null;
-    for (let i = 0; i < bezierState.points.length; i += 1) {
-      const pos = toScreen(bezierState.points[i], metrics, bezierAnchor);
-      const dx = pos.x - cursorX;
-      const dy = pos.y - cursorY;
-      if (dx * dx + dy * dy <= hitRadius * hitRadius) {
-        hitIndex = i;
-        break;
-      }
-    }
-    if (hitIndex === null) return;
-    draggingPointIndex = hitIndex;
-    draggingPointerId = event.pointerId;
-    bezierCanvas.setPointerCapture(event.pointerId);
-    drawBezierPreview(hitIndex);
-  });
-
-  bezierCanvas.addEventListener("pointermove", (event) => {
-    if (draggingPointIndex === null || draggingPointerId !== event.pointerId)
-      return;
-    if (!bezierState) return;
-    const metrics = getBezierMetrics();
-    if (!metrics) return;
-    const rect = bezierCanvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const cursorX = (event.clientX - rect.left) * dpr;
-    const cursorY = (event.clientY - rect.top) * dpr;
-    const local = toLocal(cursorX, cursorY, metrics, bezierAnchor);
-    updateBezierPoint(draggingPointIndex, local.x, local.y);
-    if (bezierState.points[draggingPointIndex]) {
-      bezierState.points[draggingPointIndex] = {
-        x: local.x,
-        y: local.y,
-      };
-      drawBezierPreview(draggingPointIndex);
-    }
-  });
-
-  const stopBezierDrag = (event: PointerEvent): void => {
-    if (draggingPointerId !== event.pointerId) return;
-    draggingPointIndex = null;
-    draggingPointerId = null;
-    bezierCanvas.releasePointerCapture(event.pointerId);
-    drawBezierPreview(null);
-  };
-
-  bezierCanvas.addEventListener("pointerup", stopBezierDrag);
-  bezierCanvas.addEventListener("pointercancel", stopBezierDrag);
-
   const openFile = async (path: string): Promise<void> => {
     let contents = "";
     try {
@@ -2103,6 +1997,7 @@ export const initContentEditor = (): void => {
     lastBezierPath = null;
     bezierActive = false;
     referenceSection.style.display = "none";
+    modIconSection.style.display = "none";
     fileLabel.textContent = path;
     model.setValue(contents);
     updateDirtyState();

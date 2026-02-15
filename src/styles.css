@@ -411,6 +411,169 @@ body.ui-open canvas {
   cursor: pointer;
 }
 
+.ui-overlay--progression {
+  padding: 24px;
+}
+
+.progression-shell {
+  width: min(1080px, 96vw);
+  min-height: min(720px, 86vh);
+  display: grid;
+  grid-template-columns: 1.65fr minmax(280px, 0.9fr);
+  gap: 18px;
+}
+
+.progression-map-frame {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(125, 249, 255, 0.18);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(125, 249, 255, 0.08), transparent 50%),
+    radial-gradient(circle at 80% 65%, rgba(255, 209, 102, 0.09), transparent 45%),
+    linear-gradient(165deg, rgba(9, 14, 24, 0.96), rgba(6, 10, 16, 0.98));
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.45),
+    inset 0 0 18px rgba(125, 249, 255, 0.08);
+}
+
+.progression-map-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(125, 249, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 249, 255, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+}
+
+.progression-map {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.progression-ambient {
+  pointer-events: none;
+}
+
+.progression-ambient-star {
+  fill: rgba(229, 240, 255, 0.95);
+  animation: progressionStarTwinkle 5.2s ease-in-out infinite;
+}
+
+.progression-edge {
+  stroke: rgba(113, 138, 168, 0.35);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.progression-edge.is-unlocked {
+  stroke: rgba(125, 249, 255, 0.55);
+}
+
+.progression-edge.is-complete {
+  stroke: rgba(255, 209, 102, 0.75);
+}
+
+.progression-node {
+  cursor: default;
+}
+
+.progression-node circle {
+  fill: rgba(12, 21, 35, 0.98);
+  stroke: rgba(98, 122, 150, 0.58);
+  stroke-width: 2.5;
+}
+
+.progression-node.is-unlocked circle {
+  stroke: rgba(125, 249, 255, 0.72);
+}
+
+.progression-node.is-current circle {
+  stroke: rgba(125, 249, 255, 1);
+  filter: drop-shadow(0 0 10px rgba(125, 249, 255, 0.55));
+}
+
+.progression-node.is-complete circle {
+  stroke: rgba(255, 209, 102, 0.9);
+}
+
+.progression-node.is-branch-choice circle {
+  stroke-dasharray: 4 4;
+}
+
+.progression-node.is-actionable {
+  cursor: pointer;
+}
+
+.progression-node-label {
+  fill: #e9f4ff;
+  font-family: "Orbitron", sans-serif;
+  font-size: 18px;
+  text-anchor: middle;
+  letter-spacing: 0.08em;
+}
+
+.progression-node-stars {
+  fill: rgba(166, 188, 216, 0.96);
+  font-family: "Orbitron", sans-serif;
+  font-size: 13px;
+  text-anchor: middle;
+  letter-spacing: 0.08em;
+}
+
+.progression-side {
+  border-radius: 18px;
+  border: 1px solid rgba(125, 249, 255, 0.18);
+  background: linear-gradient(
+    150deg,
+    rgba(16, 24, 40, 0.92),
+    rgba(8, 12, 20, 0.96)
+  );
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    inset 0 0 18px rgba(125, 249, 255, 0.08);
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.progression-title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f1f8ff;
+}
+
+.progression-description {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.progression-status {
+  color: #d7e9ff;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+@keyframes progressionStarTwinkle {
+  0% {
+    opacity: 0.18;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.32;
+  }
+}
+
 @media (max-width: 640px) {
   .ui-panel {
     width: min(520px, 92vw);
@@ -423,6 +586,25 @@ body.ui-open canvas {
 
   .ui-button {
     font-size: 11px;
+  }
+
+  .ui-overlay--progression {
+    padding: 12px;
+  }
+
+  .progression-shell {
+    min-height: min(760px, 88vh);
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(320px, 1.4fr) auto;
+    gap: 12px;
+  }
+
+  .progression-title {
+    font-size: 18px;
+  }
+
+  .progression-node-label {
+    font-size: 15px;
   }
 }
 
@@ -983,6 +1165,7 @@ body.ui-open canvas {
     ),
     linear-gradient(180deg, rgba(9, 14, 24, 0.82), rgba(7, 11, 19, 0.95));
   overflow: hidden;
+  user-select: none;
 }
 
 .shop-node-graph::before {
@@ -1010,6 +1193,27 @@ body.ui-open canvas {
   );
   pointer-events: none;
   z-index: 0;
+}
+
+.shop-node-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  z-index: 1;
+}
+
+.shop-node-viewport:active {
+  cursor: grabbing;
+}
+
+.shop-node-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 .shop-node-link {
@@ -1057,16 +1261,10 @@ body.ui-open canvas {
   width: clamp(132px, 15vw, 168px);
   min-height: 88px;
   border-radius: 12px;
-  border: 1px solid rgba(125, 249, 255, 0.25);
-  background: linear-gradient(
-    165deg,
-    rgba(18, 26, 43, 0.8),
-    rgba(11, 17, 28, 0.4)
-  );
+  border: 1px solid transparent;
+  background-color: transparent;
   color: #d9e6ff;
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.38),
-    inset 0 0 16px rgba(125, 249, 255, 0.08);
+  box-shadow: 0 0 18px rgba(125, 249, 255, 0.22);
   padding: 16px 12px;
   display: grid;
   gap: 2px;
@@ -1080,33 +1278,39 @@ body.ui-open canvas {
 .shop-node--mod {
   cursor: pointer;
   transition:
+    background-color 0.18s ease,
     border-color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 .shop-node--weapon:hover,
 .shop-node--mod:hover {
+  background-color: rgba(16, 26, 43, 0.68);
   border-color: rgba(125, 249, 255, 0.55);
-  transform: translate(-50%, -50%) scale(1.02);
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.32),
+    0 0 20px rgba(125, 249, 255, 0.32);
+  transform: translate(-50%, -50%) scale(1.015);
 }
 
 .shop-node--hull {
   box-shadow: none !important;
-  background: transparent;
+  background-color: transparent;
   border: none;
+  pointer-events: none;
 }
 
 .shop-node.is-empty {
-  border-color: rgba(120, 150, 185, 0.3);
   color: rgba(196, 213, 236, 0.75);
 }
 
 .shop-node.is-selected {
+  background-color: rgba(24, 30, 42, 0.78);
   border-color: rgba(255, 209, 102, 0.9);
   box-shadow:
     0 0 16px rgba(255, 209, 102, 0.38),
-    inset 0 0 16px rgba(255, 209, 102, 0.12);
+    0 0 28px rgba(255, 209, 102, 0.2);
 }
 
 .shop-node.is-surge {
@@ -1128,13 +1332,6 @@ body.ui-open canvas {
   height: 140px;
   filter: drop-shadow(0 0 16px rgba(125, 249, 255, 0.45))
     drop-shadow(0 0 30px rgba(125, 249, 255, 0.2));
-}
-
-.shop-node-slot {
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  color: rgba(159, 183, 255, 0.9);
-  text-transform: uppercase;
 }
 
 .shop-node-name {
@@ -1757,7 +1954,7 @@ body.ui-open canvas {
 }
 
 .content-editor-mode #content-root {
-  display: block;
+  display: grid;
 }
 
 .content-editor {
@@ -2013,6 +2210,22 @@ body.ui-open canvas {
 }
 
 .content-editor__preview-canvas canvas {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.content-editor__mod-icon-preview {
+  aspect-ratio: 1 / 1;
+  background: rgba(8, 12, 20, 0.9);
+  border: 1px solid rgba(125, 214, 255, 0.18);
+  border-radius: 6px;
+  min-height: 180px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.content-editor__mod-icon-canvas {
   display: block;
   height: 100%;
   width: 100%;

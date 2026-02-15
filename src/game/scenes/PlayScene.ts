@@ -8,9 +8,15 @@ import type { EmitBullet } from "../systems/FireScriptRunner";
 import Phaser from "phaser";
 
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
+import { advanceActiveGalaxyOnLevelClear } from "../data/galaxyProgress";
 import { recordLevelCompletion } from "../data/levelProgress";
-import { getActiveLevelSession } from "../data/levelState";
+import { clearActiveLevel, getActiveLevelSession } from "../data/levelState";
 import { bankGold, computePlayerLoadout } from "../data/save";
+import {
+  resolveShipHitbox,
+  resolveShipRadius,
+  shipHitboxMaxRadius,
+} from "../data/shipTypes";
 import { type EnemyOverride } from "../data/waves";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { PickupGold } from "../entities/PickupGold";
@@ -18,7 +24,7 @@ import { Ship } from "../entities/Ship";
 import { CONTACT_DAMAGE_PER_SEC } from "../systems/combatConstants";
 import {
   circleHitboxOverlap,
-  resolveCircleHitboxPenetration,
+  resolveHitboxHitboxPenetration,
 } from "../systems/hitbox";
 import { LevelRunner } from "../systems/LevelRunner";
 import { ParallaxBackground } from "../systems/Parallax";
@@ -142,7 +148,14 @@ export class PlayScene extends Phaser.Scene {
   private damageJoltY = 0;
   private chargeCueCooldownMs: Record<string, number> = {};
   private touchOffsetY = 0;
-  private collisionPush = { nx: 0, ny: 0, x: 0, y: 0 };
+  private collisionPush = {
+    contactX: 0,
+    contactY: 0,
+    nx: 0,
+    ny: 0,
+    x: 0,
+    y: 0,
+  };
   private collisionResolver?: PlayerCollisionResolver;
   private fpsText?: Phaser.GameObjects.Text;
   private fpsTimerMs = 0;
@@ -195,9 +208,16 @@ export class PlayScene extends Phaser.Scene {
         }
       }
     } else if (this.shipAlive) {
-      const dx = this.ship.x - x;
-      const dy = this.ship.y - y;
-      if (dx * dx + dy * dy <= explosion.radius * explosion.radius) {
+      if (
+        circleHitboxOverlap(
+          x,
+          y,
+          explosion.radius,
+          this.ship.x,
+          this.ship.y,
+          this.ship.hitbox,
+        )
+      ) {
         this.damagePlayer(explosion.damage, x, y);
       }
     }
@@ -278,9 +298,10 @@ export class PlayScene extends Phaser.Scene {
 
     this.ship = new Ship(this, {
       color: stats.ship.color,
+      hitbox: resolveShipHitbox(stats.ship),
       maxHp: stats.ship.maxHp,
       moveSpeed: stats.ship.moveSpeed,
-      radius: 17 * (stats.ship.radiusMultiplier ?? 1),
+      radius: resolveShipRadius(stats.ship),
       vector: stats.ship.vector,
     });
     this.ship.setMountedWeapons(this.mountedWeapons);
@@ -350,7 +371,7 @@ export class PlayScene extends Phaser.Scene {
         getPlayArea: () => this.playArea,
         getPlayerState: () => {
           playerState.alive = this.shipAlive;
-          playerState.radius = this.ship.radius;
+          playerState.radius = shipHitboxMaxRadius(this.ship.hitbox);
           playerState.x = this.ship.x;
           playerState.y = this.ship.y;
           return playerState;
@@ -485,6 +506,7 @@ export class PlayScene extends Phaser.Scene {
       playArea: this.playArea,
       playerAlive: this.shipAlive,
       playerBullets: this.playerBullets,
+      playerHitbox: this.ship.hitbox,
       playerRadius: this.ship.radius,
       playerX: this.ship.x,
       playerY: this.ship.y,
@@ -511,8 +533,8 @@ export class PlayScene extends Phaser.Scene {
       onEnemyContact: (index, enemy, push, contactDamage) => {
         const fxColor =
           enemy.def.style?.lineColor ?? enemy.def.style?.fillColor ?? 0xff6b6b;
-        const contactX = this.ship.x - push.nx * this.ship.radius;
-        const contactY = this.ship.y - push.ny * this.ship.radius;
+        const contactX = push.contactX;
+        const contactY = push.contactY;
         this.vfx.onPlayerContact(contactX, contactY, fxColor);
         this.applyPlayerPush(push.x, push.y, fxColor, contactX, contactY);
         this.applyContactDamage(contactDamage, contactX, contactY);
@@ -534,17 +556,26 @@ export class PlayScene extends Phaser.Scene {
     enemyX: number,
     enemyY: number,
     enemyHitbox: EnemyHitbox,
-  ): { x: number; y: number; nx: number; ny: number } | null {
-    const penetration = resolveCircleHitboxPenetration(
+  ): {
+    contactX: number;
+    contactY: number;
+    x: number;
+    y: number;
+    nx: number;
+    ny: number;
+  } | null {
+    const penetration = resolveHitboxHitboxPenetration(
       this.ship.x,
       this.ship.y,
-      this.ship.radius,
+      this.ship.hitbox,
       enemyX,
       enemyY,
       enemyHitbox,
     );
     if (!penetration) return null;
     const out = this.collisionPush;
+    out.contactX = penetration.contactX;
+    out.contactY = penetration.contactY;
     out.nx = penetration.nx;
     out.ny = penetration.ny;
     out.x = penetration.nx * penetration.depth;
@@ -591,6 +622,7 @@ export class PlayScene extends Phaser.Scene {
       playArea: this.playArea,
       playerAlive: this.shipAlive,
       playerBullets: this.playerBullets,
+      playerHitbox: this.ship.hitbox,
       playerRadius: this.ship.radius,
       playerX: this.ship.x,
       playerY: this.ship.y,
@@ -1003,10 +1035,15 @@ export class PlayScene extends Phaser.Scene {
         hp: this.ship.hp,
         maxHp: this.ship.maxHp,
       });
+      if (activeSession.returnRoute === "progression") {
+        advanceActiveGalaxyOnLevelClear(activeSession.id);
+      }
     }
     const beatId = activeSession?.level.postBeatId;
+    const nextRoute = activeSession?.returnRoute ?? "menu";
+    clearActiveLevel();
     this.time.delayedCall(700, () => {
-      emitVictoryRoute(this.game, beatId);
+      emitVictoryRoute(this.game, beatId, nextRoute);
     });
   }
 

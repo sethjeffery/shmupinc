@@ -4,15 +4,12 @@ import { signal, type Signal } from "@preact/signals";
 import { render } from "preact";
 
 import {
-  getFirstUnlockedLevelId,
-  getLevelStarCap,
-  getLevelStars,
-  getStoryLevelOrder,
-  isLevelUnlocked,
-} from "../game/data/levelProgress";
-import { getLevels } from "../game/data/levels";
+  buildActiveGalaxyView,
+  ensureActiveGalaxy,
+  launchGalaxyNode,
+  type GalaxyView,
+} from "../game/data/galaxyProgress";
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
-import { loadSave } from "../game/data/save";
 import { STORY_BEATS } from "../game/data/storyBeats";
 
 export type UiRoute =
@@ -21,6 +18,7 @@ export type UiRoute =
   | "menu"
   | "pause"
   | "play"
+  | "progression"
   | "story";
 
 export interface GameOverStats {
@@ -44,6 +42,7 @@ interface StoryBeatView {
 interface UiViewSignals {
   gameOver: Signal<GameOverStats>;
   menuActions: Signal<PanelAction[]>;
+  progression: Signal<GalaxyView | null>;
   route: Signal<UiRoute>;
   storyBeat: Signal<StoryBeatView>;
 }
@@ -85,6 +84,197 @@ const UiPanel = (props: {
   </div>
 );
 
+const PROGRESSION_MAP_WIDTH = 1000;
+const PROGRESSION_MAP_HEIGHT = 640;
+
+interface AmbientStar {
+  cx: number;
+  cy: number;
+  delaySec: number;
+  durationSec: number;
+  opacity: number;
+  r: number;
+}
+
+const hashString = (value: string): number => {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
+const createRng = (seedValue: number): (() => number) => {
+  let seed = seedValue >>> 0;
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const sanitizeSvgId = (value: string): string =>
+  value.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+const buildAmbientStars = (galaxyId: string): AmbientStar[] => {
+  const rand = createRng(hashString(`stars:${galaxyId}`));
+  const stars: AmbientStar[] = [];
+  for (let index = 0; index < 92; index += 1) {
+    stars.push({
+      cx: rand() * PROGRESSION_MAP_WIDTH,
+      cy: rand() * PROGRESSION_MAP_HEIGHT,
+      delaySec: rand() * 8,
+      durationSec: 2.8 + rand() * 8.6,
+      opacity: 0.2 + rand() * 0.7,
+      r: rand() > 0.88 ? 2 + rand() * 2 : 0.7 + rand() * 1.4,
+    });
+  }
+  return stars;
+};
+
+const ProgressionOverlay = (props: {
+  onAction: (action: string, levelId?: string) => void;
+  view: GalaxyView;
+}) => {
+  const svgPrefix = `progression-${sanitizeSvgId(props.view.id)}`;
+  const ambientStars = buildAmbientStars(props.view.id);
+  const nodeById = new Map(props.view.nodes.map((node) => [node.id, node]));
+  return (
+    <div className="progression-shell">
+      <div className="progression-map-frame">
+        <svg
+          className="progression-map"
+          viewBox={`0 0 ${PROGRESSION_MAP_WIDTH} ${PROGRESSION_MAP_HEIGHT}`}
+        >
+          <defs>
+            <linearGradient id={`${svgPrefix}-edge-active`} x1="0%" x2="100%">
+              <stop offset="0%" stopColor="rgba(125, 249, 255, 0.25)" />
+              <stop offset="100%" stopColor="rgba(125, 249, 255, 0.8)" />
+            </linearGradient>
+          </defs>
+
+          <g className="progression-ambient" aria-hidden="true">
+            {ambientStars.map((star, index) => (
+              <circle
+                className="progression-ambient-star"
+                cx={star.cx}
+                cy={star.cy}
+                key={`ambient-star-${index}`}
+                r={star.r}
+                style={{
+                  animationDelay: `${star.delaySec.toFixed(2)}s`,
+                  animationDuration: `${star.durationSec.toFixed(2)}s`,
+                  opacity: star.opacity,
+                }}
+              />
+            ))}
+          </g>
+
+          {props.view.edges.map((edge) => {
+            const from = nodeById.get(edge.from);
+            const to = nodeById.get(edge.to);
+            if (!from || !to) return null;
+            const x1 = from.pos.x * PROGRESSION_MAP_WIDTH;
+            const y1 = from.pos.y * PROGRESSION_MAP_HEIGHT;
+            const x2 = to.pos.x * PROGRESSION_MAP_WIDTH;
+            const y2 = to.pos.y * PROGRESSION_MAP_HEIGHT;
+            const className = `progression-edge${
+              edge.isCompleted ? " is-complete" : edge.isUnlocked ? " is-unlocked" : ""
+            }`;
+            return (
+              <line
+                className={className}
+                key={`${edge.from}-${edge.to}`}
+                stroke={
+                  edge.isCompleted
+                    ? undefined
+                    : edge.isUnlocked
+                      ? `url(#${svgPrefix}-edge-active)`
+                      : undefined
+                }
+                x1={x1}
+                x2={x2}
+                y1={y1}
+                y2={y2}
+              />
+            );
+          })}
+          {props.view.nodes.map((node) => {
+            const x = node.pos.x * PROGRESSION_MAP_WIDTH;
+            const y = node.pos.y * PROGRESSION_MAP_HEIGHT;
+            const className = `progression-node${
+              node.isCompleted ? " is-complete" : ""
+            }${node.isCurrent ? " is-current" : ""}${
+              node.isBranchChoice ? " is-branch-choice" : ""
+            }${node.isUnlocked ? " is-unlocked" : " is-locked"}${
+              node.isSelectable || node.isReplayable ? " is-actionable" : ""
+            }`;
+            return (
+              <g
+                className={className}
+                key={node.id}
+                onClick={() => {
+                  if (!node.isSelectable && !node.isReplayable) return;
+                  props.onAction("galaxy-node", node.id);
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <circle cx={x} cy={y} r={20} />
+                <text className="progression-node-label" x={x} y={y + 40}>
+                  {node.name}
+                </text>
+                <text className="progression-node-stars" x={x} y={y + 58}>
+                  {`★${node.stars}/${node.starCap}`}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      <div className="progression-side">
+        <div className="progression-title">{props.view.name}</div>
+        {props.view.description ? (
+          <div className="progression-description">{props.view.description}</div>
+        ) : null}
+        <div className="progression-status">
+          {props.view.isComplete
+            ? "Galaxy Complete"
+            : props.view.currentNodeId
+              ? "Current node selected. Clear it to advance."
+              : props.view.branchChoiceNodeIds.length > 0
+                ? "Branch point reached. Choose your next route."
+                : "Campaign state ready."}
+        </div>
+        <div className="ui-actions">
+          {props.view.nodes
+            .filter((node) => node.isCurrent || node.isBranchChoice)
+            .map((node, index) => (
+              <button
+                key={`launch-${node.id}`}
+                className={`ui-button${index === 0 ? " ui-button--primary" : ""}`}
+                onClick={() => props.onAction("galaxy-node", node.id)}
+                type="button"
+              >
+                {node.isCurrent ? `Launch ${node.name}` : `Choose ${node.name}`}
+              </button>
+            ))}
+          <button
+            className="ui-button"
+            onClick={() => props.onAction("menu")}
+            type="button"
+          >
+            Main Menu
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const UiRoot = (props: {
   onAction: (action: string, levelId?: string) => void;
   signals: UiViewSignals;
@@ -94,8 +284,10 @@ const UiRoot = (props: {
     route === "menu" ||
     route === "pause" ||
     route === "gameover" ||
+    route === "progression" ||
     route === "story";
   const gameOverStats = props.signals.gameOver.value;
+  const progression = props.signals.progression.value;
   const storyBeat = props.signals.storyBeat.value;
 
   return (
@@ -142,6 +334,20 @@ const UiRoot = (props: {
       </div>
 
       <div
+        className={`ui-overlay ui-overlay--progression${route === "progression" ? " is-active" : ""}`}
+      >
+        {progression ? (
+          <ProgressionOverlay onAction={props.onAction} view={progression} />
+        ) : (
+          <UiPanel
+            actions={[{ action: "menu", label: "Main Menu", primary: false }]}
+            onAction={props.onAction}
+            title="No Galaxy Data"
+          />
+        )}
+      </div>
+
+      <div
         className={`ui-overlay ui-overlay--story${route === "story" ? " is-active" : ""}`}
       >
         <div className="story-panel">
@@ -182,6 +388,7 @@ export class UiRouter {
   private transitionToken = 0;
   private readonly routeSignal = signal<UiRoute>("menu");
   private readonly menuActionsSignal = signal<PanelAction[]>([]);
+  private readonly progressionSignal = signal<GalaxyView | null>(null);
   private readonly gameOverSignal = signal<GameOverStats>({ gold: 0, wave: 0 });
   private readonly storyBeatSignal = signal<StoryBeatView>({
     lines: ["Awaiting mission data."],
@@ -196,13 +403,14 @@ export class UiRouter {
     }
     this.root = root;
 
-    this.refreshMenuActions();
+    this.refreshProgressionView();
     render(
       <UiRoot
         onAction={(action, levelId) => this.handleAction(action, levelId)}
         signals={{
           gameOver: this.gameOverSignal,
           menuActions: this.menuActionsSignal,
+          progression: this.progressionSignal,
           route: this.routeSignal,
           storyBeat: this.storyBeatSignal,
         }}
@@ -248,6 +456,7 @@ export class UiRouter {
       route === "menu" ||
       route === "pause" ||
       route === "gameover" ||
+      route === "progression" ||
       route === "story";
     document.body.classList.toggle("ui-open", uiOpen);
     document.body.classList.toggle(
@@ -271,6 +480,13 @@ export class UiRouter {
       return;
     }
 
+    if (route === "progression") {
+      this.stopPlayScene();
+      this.stopShopScene();
+      this.refreshProgressionView();
+      return;
+    }
+
     if (route === "hangar") {
       this.stopPlayScene();
       void this.openHangar(token);
@@ -281,7 +497,7 @@ export class UiRouter {
       this.stopPlayScene();
       this.stopShopScene();
       clearActiveLevel();
-      this.refreshMenuActions();
+      this.refreshProgressionView();
     }
   }
 
@@ -372,8 +588,19 @@ export class UiRouter {
     if (input) input.enabled = enabled;
   }
 
-  private startStoryLevel(levelId: string): void {
-    const session = startLevelSession(levelId);
+  private startStoryLevel(
+    levelId: string,
+    options?: {
+      returnRoute?: UiRoute;
+      source?: { galaxyId?: string; nodeId?: string };
+    },
+  ): void {
+    const returnRoute =
+      options?.returnRoute === "progression" ? "progression" : "menu";
+    const session = startLevelSession(levelId, {
+      returnRoute,
+      source: options?.source,
+    });
     const level = session?.level;
     if (!level) {
       this.setRoute("menu");
@@ -389,8 +616,11 @@ export class UiRouter {
   private handleAction(action: string, levelId?: string): void {
     switch (action) {
       case "start": {
-        const firstUnlocked = getFirstUnlockedLevelId();
-        if (firstUnlocked) this.startStoryLevel(firstUnlocked);
+        this.setRoute("progression");
+        break;
+      }
+      case "progression": {
+        this.setRoute("progression");
         break;
       }
       case "hangar":
@@ -412,10 +642,17 @@ export class UiRouter {
       case "menu":
         this.setRoute("menu");
         break;
-      case "story-level": {
+      case "galaxy-node": {
         if (!levelId) break;
-        if (!isLevelUnlocked(levelId)) break;
-        this.startStoryLevel(levelId);
+        const launch = launchGalaxyNode(levelId);
+        if (!launch) break;
+        this.startStoryLevel(launch.levelId, {
+          returnRoute: "progression",
+          source: {
+            galaxyId: launch.galaxyId,
+            nodeId: launch.nodeId,
+          },
+        });
         break;
       }
       case "story-continue":
@@ -440,54 +677,39 @@ export class UiRouter {
       }
     }
     if (event.key === "Enter" && this.route === "menu") {
-      const firstUnlocked = getFirstUnlockedLevelId();
-      if (firstUnlocked) this.startStoryLevel(firstUnlocked);
+      this.setRoute("progression");
     }
   }
 
   private tryAutoStartLevel(): void {
     const params = new URLSearchParams(window.location.search);
     const levelId = params.get("level");
-    if (levelId && isLevelUnlocked(levelId)) {
+    if (levelId) {
       this.startStoryLevel(levelId);
       window.history.replaceState({}, "", window.location.pathname);
       return;
     }
-    const firstUnlocked = getFirstUnlockedLevelId();
-    if (levelId && firstUnlocked) {
-      this.startStoryLevel(firstUnlocked);
-    }
+    ensureActiveGalaxy();
+    this.refreshProgressionView();
     window.history.replaceState({}, "", window.location.pathname);
   }
 
   private buildMenuActions(): PanelAction[] {
-    const levels = getLevels();
-    const save = loadSave();
-    const firstUnlocked = getFirstUnlockedLevelId(save);
-    const storyActions = getStoryLevelOrder().map((levelId) => {
-      const title = levels[levelId]?.title ?? levelId;
-      const unlocked = isLevelUnlocked(levelId, save);
-      const stars = getLevelStars(levelId, save);
-      const starCap = getLevelStarCap(levelId);
-      return {
-        action: "story-level",
-        disabled: !unlocked,
-        label: unlocked
-          ? `Story: ${title} (★${stars}/${starCap})`
-          : `Story: ${title} (★${stars}/${starCap}) (Locked · Need 1★ prev)`,
-        levelId,
-        primary: false,
-      } satisfies PanelAction;
-    });
-
+    const progression = buildActiveGalaxyView();
+    const currentNode = progression?.nodes.find(
+      (node) => node.id === progression.currentNodeId,
+    );
     return [
       {
-        action: "start",
-        disabled: !firstUnlocked,
-        label: "Start Mission",
+        action: currentNode ? "galaxy-node" : "progression",
+        disabled: !progression,
+        label: currentNode
+          ? `Continue: ${currentNode.name}`
+          : "Open Star Map",
+        levelId: currentNode?.id,
         primary: true,
       },
-      ...storyActions,
+      { action: "progression", label: "Campaign Map", primary: false },
       { action: "hangar", label: "Hangar", primary: false },
     ];
   }
@@ -516,5 +738,11 @@ export class UiRouter {
 
   private refreshMenuActions(): void {
     this.menuActionsSignal.value = this.buildMenuActions();
+  }
+
+  private refreshProgressionView(): void {
+    ensureActiveGalaxy();
+    this.progressionSignal.value = buildActiveGalaxyView();
+    this.refreshMenuActions();
   }
 }

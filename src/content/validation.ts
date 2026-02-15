@@ -1,4 +1,5 @@
 import type { EnemyDef } from "../game/data/enemyTypes";
+import type { GalaxyDefinition } from "../game/data/galaxyTypes";
 import type { GunDefinition } from "../game/data/gunTypes";
 import type {
   HazardScript,
@@ -28,6 +29,7 @@ import type {
   BulletContent,
   ContentKind,
   EnemyContent,
+  GalaxyContent,
   GunContent,
   HazardContent,
   LevelContent,
@@ -60,6 +62,7 @@ export interface ContentRegistry {
   bulletsById: Record<string, BulletContent>;
   beatsById: Record<string, StoryBeat>;
   enemiesById: Record<string, EnemyDef>;
+  galaxiesById: Record<string, GalaxyDefinition>;
   gunsById: Record<string, GunDefinition>;
   hazardsById: Record<string, HazardScript>;
   levelsById: Record<string, LevelDefinition>;
@@ -437,6 +440,7 @@ export const buildContentRegistry = (
   const bulletsById: Record<string, BulletContent> = {};
   const enemiesById: Record<string, EnemyContent> = {};
   const gunsById: Record<string, GunContent> = {};
+  const galaxiesById: Record<string, GalaxyContent> = {};
   const hazardsById: Record<string, HazardContent> = {};
   const levelsById: Record<string, LevelContent> = {};
   const modsById: Record<string, ModContent> = {};
@@ -499,6 +503,13 @@ export const buildContentRegistry = (
           break;
         }
         gunsById[id] = value as GunContent;
+        break;
+      case "galaxies":
+        if (galaxiesById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        galaxiesById[id] = value as GalaxyContent;
         break;
       case "hazards":
         if (hazardsById[id]) {
@@ -625,6 +636,28 @@ export const buildContentRegistry = (
       ...gun,
       fillColor: resolveColor(gun.fillColor),
       lineColor: resolveColor(gun.lineColor),
+    };
+  }
+
+  const resolvedGalaxies: Record<string, GalaxyDefinition> = {};
+  for (const [id, galaxy] of Object.entries(galaxiesById)) {
+    for (const node of galaxy.nodes) {
+      if (!levelsById[node.levelId]) {
+        addReferenceError(
+          errors,
+          `galaxies/${id}`,
+          `Missing level "${node.levelId}" referenced by node "${node.id}".`,
+        );
+      }
+    }
+    resolvedGalaxies[id] = {
+      decorations: galaxy.decorations,
+      description: galaxy.description,
+      edges: galaxy.edges,
+      id: galaxy.id,
+      name: galaxy.name,
+      nodes: galaxy.nodes,
+      startNodeId: galaxy.startNodeId,
     };
   }
 
@@ -896,6 +929,7 @@ export const buildContentRegistry = (
       beatsById,
       bulletsById,
       enemiesById: resolvedEnemies,
+      galaxiesById: resolvedGalaxies,
       gunsById: resolvedGuns,
       hazardsById: resolvedHazards,
       levelsById: resolvedLevels,

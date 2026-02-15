@@ -1,5 +1,5 @@
 import type { MountedWeapon } from "../data/save";
-import type { ShipVector } from "../data/shipTypes";
+import type { ShipHitbox, ShipVector } from "../data/shipTypes";
 
 import Phaser from "phaser";
 
@@ -18,6 +18,7 @@ interface GunAttachment {
 
 export interface ShipConfig {
   radius: number;
+  hitbox: ShipHitbox;
   maxHp: number;
   moveSpeed: number;
   color: number;
@@ -35,6 +36,7 @@ export class Ship {
   graphics: Phaser.GameObjects.Graphics;
   color: number;
   vector: ShipVector;
+  hitbox: ShipHitbox;
   private flashTimer = 0;
   private gunAttachments: GunAttachment[] = [];
 
@@ -46,6 +48,7 @@ export class Ship {
     this.moveSpeed = config.moveSpeed;
     this.color = config.color;
     this.vector = config.vector;
+    this.hitbox = config.hitbox;
 
     this.x = scene.scale.width * 0.5;
     this.y = scene.scale.height * 0.8;
@@ -97,6 +100,10 @@ export class Ship {
   setRadius(radius: number): void {
     this.radius = radius;
     this.redraw(this.flashTimer);
+  }
+
+  setHitbox(hitbox: ShipHitbox): void {
+    this.hitbox = hitbox;
   }
 
   setMountedWeapons(mountedWeapons: MountedWeapon[]): void {

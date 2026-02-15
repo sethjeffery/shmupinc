@@ -5,6 +5,7 @@ import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
 
+import { resolveShipHitbox, resolveShipRadius } from "../data/shipTypes";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { Ship } from "../entities/Ship";
 import { DEFAULT_SHIP_VECTOR } from "../render/shipShapes";
@@ -76,6 +77,7 @@ export class PreviewScene extends Phaser.Scene {
     this.particles = new ParticleSystem(this);
     this.ship = new Ship(this, {
       color: 0x7df9ff,
+      hitbox: { kind: "circle", radius: this.baseRadius },
       maxHp: 6,
       moveSpeed: 0,
       radius: this.baseRadius,
@@ -118,7 +120,8 @@ export class PreviewScene extends Phaser.Scene {
     this.mountedWeapons = mountedWeapons;
     this.currentShip = ship;
     this.ship.setAppearance(ship.color, ship.vector);
-    this.ship.setRadius(this.baseRadius * (ship.radiusMultiplier ?? 1));
+    this.ship.setRadius(resolveShipRadius(ship, this.baseRadius));
+    this.ship.setHitbox(resolveShipHitbox(ship, this.baseRadius));
     this.ship.setMountedWeapons(this.mountedWeapons);
     this.playerFiring.reset();
     this.bullets.forEachActive((bullet) => bullet.deactivate());
@@ -134,11 +137,11 @@ export class PreviewScene extends Phaser.Scene {
     this.bounds.setTo(0, 0, width, height);
     this.parallax.setBounds(this.bounds);
     if (this.currentShip) {
-      this.ship.setRadius(
-        this.baseRadius * (this.currentShip.radiusMultiplier ?? 1),
-      );
+      this.ship.setRadius(resolveShipRadius(this.currentShip, this.baseRadius));
+      this.ship.setHitbox(resolveShipHitbox(this.currentShip, this.baseRadius));
     } else {
       this.ship.setRadius(this.baseRadius);
+      this.ship.setHitbox({ kind: "circle", radius: this.baseRadius });
     }
     this.ship.setPosition(width * 0.5, height * 0.72);
   }

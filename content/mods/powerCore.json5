@@ -4,6 +4,33 @@
   "description": "Amplifies weapon output.",
   "cost": 160,
   "iconKind": "power",
+  "icon": {
+    "v": 2,
+    "items": [
+      {
+        "t": "p",
+        "c": [
+          ["M", 0, -1],
+          ["L", 0.34, -0.22],
+          ["L", 0.08, -0.22],
+          ["L", 0.3, 0.98],
+          ["L", -0.34, 0.18],
+          ["L", -0.04, 0.18],
+          ["Z"]
+        ],
+        "f": true,
+        "s": true
+      },
+      {
+        "t": "p",
+        "c": [
+          ["M", 0.02, -0.14],
+          ["L", -0.08, 0.62]
+        ],
+        "s": true
+      }
+    ]
+  },
   "effects": {
     "damageMultiplier": 1.5
   }

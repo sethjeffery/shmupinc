@@ -45,6 +45,7 @@ const EMPTY_REGISTRY: ContentRegistry = {
   beatsById: {},
   bulletsById: {},
   enemiesById: {},
+  galaxiesById: {},
   gunsById: {},
   hazardsById: {},
   levelsById: {},

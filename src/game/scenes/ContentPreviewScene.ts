@@ -9,6 +9,7 @@ import type { EmitBullet } from "../systems/FireScriptRunner";
 import Phaser from "phaser";
 
 import { resolveEnemyDefinition, type EnemyDef } from "../data/enemies";
+import { resolveShipHitbox, resolveShipRadius } from "../data/shipTypes";
 import {
   normalizeMountMods,
   resolveWeaponStatsWithMods,
@@ -17,6 +18,7 @@ import { canMountWeapon } from "../data/weaponMounts";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { Enemy } from "../entities/Enemy";
 import { Ship } from "../entities/Ship";
+import { DEFAULT_ENEMY_VECTOR } from "../render/enemyShapes";
 import { DEFAULT_SHIP_VECTOR } from "../render/shipShapes";
 import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
@@ -52,7 +54,7 @@ const createWeaponPreviewDummy = (id: string, lineColor: number): EnemyDef => ({
   style: {
     fillColor: 0x151b27,
     lineColor,
-    shape: "blimp",
+    vector: DEFAULT_ENEMY_VECTOR,
   },
 });
 
@@ -176,6 +178,7 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.drawPlayerMarker();
     this.playerShip = new Ship(this, {
       color: 0x7df9ff,
+      hitbox: { kind: "circle", radius: 17 },
       maxHp: 6,
       moveSpeed: 0,
       radius: 17,
@@ -461,6 +464,7 @@ export class ContentPreviewScene extends Phaser.Scene {
       playArea: this.bounds,
       playerAlive: true,
       playerBullets: this.playerBullets,
+      playerHitbox: ship.hitbox,
       playerRadius: ship.radius,
       playerX: ship.x,
       playerY: ship.y,
@@ -590,8 +594,9 @@ export class ContentPreviewScene extends Phaser.Scene {
     if (this.playerShip) {
       this.playerShip.graphics.setVisible(show);
       if (show && this.shipDef) {
-        const radius = 17 * (this.shipDef.radiusMultiplier ?? 1);
+        const radius = resolveShipRadius(this.shipDef);
         this.playerShip.setAppearance(this.shipDef.color, this.shipDef.vector);
+        this.playerShip.setHitbox(resolveShipHitbox(this.shipDef));
         this.playerShip.setRadius(radius);
         this.playerShip.setMountedWeapons(this.mountedWeapons);
       }

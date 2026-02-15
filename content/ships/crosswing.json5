@@ -1,0 +1,77 @@
+{
+  "color": "#9fb7ff",
+  "cost": 0,
+  "description": "A swift fighter jet with twin side cannons, great for strategic gun placement.",
+  "id": "crosswing",
+  "magnetMultiplier": 1,
+  "maxHp": 6,
+  "moveSpeed": 7,
+  "mounts": [
+    {
+      "id": "left",
+      "offset": {
+        "x": 0.75,
+        "y": -0.35
+      },
+      "size": "small",
+      "modSlots": 1
+    },
+    {
+      "id": "right",
+      "offset": {
+        "x": -0.75,
+        "y": -0.35
+      },
+      "size": "small",
+      "modSlots": 1
+    }
+  ],
+  "name": "Crosswing",
+  "radiusMultiplier": 1.1,
+  "vector": {
+    "v": 2,
+    "items": [
+      {
+        "t": "p",
+        "c": [
+          ["M", -0.8, 0.8],
+          ["L", -0.8, -0.5],
+          ["L", -0.7, -0.5],
+          ["L", -0.7, 0.8],
+          ["Z"]
+        ],
+        "f": true,
+        "s": true
+      },
+      {
+        "t": "p",
+        "c": [
+          ["M", 0.8, 0.8],
+          ["L", 0.8, -0.5],
+          ["L", 0.7, -0.5],
+          ["L", 0.7, 0.8],
+          ["Z"]
+        ],
+        "f": true,
+        "s": true
+      },
+      {
+        "t": "p",
+        "c": [
+          ["M", 0, -1],
+          ["Q", 0.2, -1, 0.2, 0.4],
+          ["L", 0.9, 0.5],
+          ["L", 0.9, 0.7],
+          ["L", 0, 0.9],
+          ["L", -0.9, 0.7],
+          ["L", -0.9, 0.5],
+          ["L", -0.2, 0.4],
+          ["Q", -0.2, -1, 0, -1],
+          ["Z"]
+        ],
+        "f": true,
+        "s": true
+      }
+    ]
+  }
+}

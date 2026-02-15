@@ -1,3 +1,4 @@
+import type { GalaxyDefinition } from "./galaxyTypes";
 import type { ModInstanceId } from "./modInstances";
 import type { ModDefinition, ModId } from "./modTypes";
 import type { ResourceId, RewardBundle, UnlockId } from "./objectiveTypes";
@@ -5,6 +6,7 @@ import type { ShipDefinition, ShipId, WeaponMount } from "./shipTypes";
 import type { WeaponInstanceId } from "./weaponInstances";
 import type { WeaponDefinition, WeaponId, WeaponStats } from "./weaponTypes";
 
+import { getFirstGalaxyId, getGalaxies } from "./galaxies";
 import { getLevels } from "./levels";
 import { MODS } from "./mods";
 import { SHIPS, STARTER_SHIP_ID } from "./ships";
@@ -33,8 +35,17 @@ export interface MountAssignment {
   modInstanceIds: ModInstanceId[];
 }
 
+export interface GalaxyCampaignState {
+  branchChoiceNodeIds: string[];
+  completedNodeIds: string[];
+  currentNodeId: null | string;
+  unlockedNodeIds: string[];
+}
+
 export interface SaveData {
+  activeGalaxyId: null | string;
   claimedObjectiveIds: string[];
+  galaxyCampaign: Record<string, GalaxyCampaignState>;
   levelStars: Record<string, number>;
   ownedWeapons: WeaponInstance[];
   ownedMods: ModInstance[];
@@ -56,7 +67,9 @@ export interface MountedWeapon {
 }
 
 const defaultSave: SaveData = {
+  activeGalaxyId: null,
   claimedObjectiveIds: [],
+  galaxyCampaign: {},
   levelStars: {},
   mountedWeapons: {},
   nextModInstanceId: 1,
@@ -70,6 +83,15 @@ const defaultSave: SaveData = {
 };
 
 let cached: null | SaveData = null;
+
+const createDefaultGalaxyCampaignState = (
+  galaxy: GalaxyDefinition,
+): GalaxyCampaignState => ({
+  branchChoiceNodeIds: [],
+  completedNodeIds: [],
+  currentNodeId: galaxy.startNodeId,
+  unlockedNodeIds: [galaxy.startNodeId],
+});
 
 function getStorage(): null | Storage {
   if (typeof localStorage === "undefined") return null;
@@ -92,6 +114,8 @@ const createWeaponInstance = (
 };
 
 const createModInstance = (save: SaveData, modId: ModId): ModInstance => {
+  const existing = save.ownedMods.find((instance) => instance.modId === modId);
+  if (existing) return existing;
   const id = `m${save.nextModInstanceId}`;
   save.nextModInstanceId += 1;
   const instance = { id, modId };
@@ -124,6 +148,20 @@ const normalizeOwnedWeapons = (save: SaveData): void => {
     unique.push(instance);
   }
   save.ownedWeapons = unique;
+};
+
+const normalizeOwnedMods = (save: SaveData): void => {
+  const seenInstances = new Set<ModInstanceId>();
+  const seenMods = new Set<ModId>();
+  const unique: ModInstance[] = [];
+  for (const instance of save.ownedMods) {
+    if (seenInstances.has(instance.id)) continue;
+    if (seenMods.has(instance.modId)) continue;
+    seenInstances.add(instance.id);
+    seenMods.add(instance.modId);
+    unique.push(instance);
+  }
+  save.ownedMods = unique;
 };
 
 const normalizeNextWeaponInstanceId = (save: SaveData): void => {
@@ -299,6 +337,83 @@ const normalizeLevelStars = (save: SaveData): void => {
   save.levelStars = normalized;
 };
 
+const normalizeGalaxyCampaign = (save: SaveData): void => {
+  const galaxies = getGalaxies();
+  const normalizedCampaign: Record<string, GalaxyCampaignState> = {};
+
+  for (const [galaxyId, galaxy] of Object.entries(galaxies)) {
+    const validNodeIds = new Set(galaxy.nodes.map((node) => node.id));
+    const existing = save.galaxyCampaign[galaxyId];
+    const base = existing ?? createDefaultGalaxyCampaignState(galaxy);
+
+    const completedNodeIds = Array.from(
+      new Set(
+        base.completedNodeIds.filter((nodeId) => validNodeIds.has(nodeId)),
+      ),
+    );
+    const completedSet = new Set(completedNodeIds);
+
+    const unlockedNodeIds = Array.from(
+      new Set(
+        base.unlockedNodeIds.filter(
+          (nodeId) => validNodeIds.has(nodeId) && !completedSet.has(nodeId),
+        ),
+      ),
+    );
+    if (
+      !completedSet.has(galaxy.startNodeId) &&
+      !unlockedNodeIds.includes(galaxy.startNodeId)
+    ) {
+      unlockedNodeIds.unshift(galaxy.startNodeId);
+    }
+
+    let currentNodeId = base.currentNodeId;
+    if (
+      !currentNodeId ||
+      !validNodeIds.has(currentNodeId) ||
+      completedSet.has(currentNodeId)
+    ) {
+      currentNodeId = null;
+    }
+
+    const branchChoiceNodeIds = Array.from(
+      new Set(
+        base.branchChoiceNodeIds.filter(
+          (nodeId) =>
+            validNodeIds.has(nodeId) &&
+            unlockedNodeIds.includes(nodeId) &&
+            !completedSet.has(nodeId),
+        ),
+      ),
+    );
+
+    if (!currentNodeId) {
+      if (branchChoiceNodeIds.length === 1) {
+        currentNodeId = branchChoiceNodeIds[0];
+      } else if (branchChoiceNodeIds.length === 0) {
+        currentNodeId =
+          unlockedNodeIds.find((nodeId) => !completedSet.has(nodeId)) ?? null;
+      }
+    }
+
+    normalizedCampaign[galaxyId] = {
+      branchChoiceNodeIds:
+        currentNodeId && branchChoiceNodeIds.includes(currentNodeId)
+          ? []
+          : branchChoiceNodeIds,
+      completedNodeIds,
+      currentNodeId,
+      unlockedNodeIds,
+    };
+  }
+
+  save.galaxyCampaign = normalizedCampaign;
+  if (save.activeGalaxyId && !galaxies[save.activeGalaxyId]) {
+    save.activeGalaxyId = null;
+  }
+  save.activeGalaxyId ??= getFirstGalaxyId();
+};
+
 const compareWeaponInstancesByPower = (
   a: WeaponInstance,
   b: WeaponInstance,
@@ -340,6 +455,7 @@ export function loadSave(): SaveData {
   );
   normalizeOwnedWeapons(cached);
   cached.ownedMods = cached.ownedMods.filter((item) => MODS[item.modId]);
+  normalizeOwnedMods(cached);
   if (cached.ownedWeapons.length === 0 && WEAPONS[STARTER_WEAPON_ID]) {
     createWeaponInstance(cached, STARTER_WEAPON_ID);
   }
@@ -347,6 +463,7 @@ export function loadSave(): SaveData {
   normalizeNextModInstanceId(cached);
   normalizeMountedWeapons(cached);
   normalizeLevelStars(cached);
+  normalizeGalaxyCampaign(cached);
   ensureDefaultLoadout(cached);
 
   return { ...cached };
@@ -366,10 +483,12 @@ export function mutateSave(
   const save = loadSave();
   mutator(save);
   normalizeOwnedWeapons(save);
+  normalizeOwnedMods(save);
   normalizeResources(save);
   normalizeUnlocks(save);
   normalizeClaimedObjectives(save);
   normalizeLevelStars(save);
+  normalizeGalaxyCampaign(save);
   normalizeMountedWeapons(save);
   if (!options?.allowEmptyLoadout) {
     ensureDefaultLoadout(save);

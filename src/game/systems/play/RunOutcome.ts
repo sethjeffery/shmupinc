@@ -46,14 +46,15 @@ export const emitGameOverEvent = (
 export const emitVictoryRoute = (
   game: Phaser.Game,
   postBeatId: string | undefined,
+  nextRoute: "menu" | "progression" = "menu",
 ): void => {
   if (postBeatId) {
     game.events.emit("ui:story", {
       beatId: postBeatId,
       clearLevelOnExit: true,
-      nextRoute: "menu",
+      nextRoute,
     });
     return;
   }
-  game.events.emit("ui:route", "menu");
+  game.events.emit("ui:route", nextRoute);
 };

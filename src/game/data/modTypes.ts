@@ -1,8 +1,11 @@
 import type { BulletHoming, BulletRicochet } from "./scripts";
+import type { VectorShape } from "./vectorShape";
 
 export type ModId = string;
 
 export type ModIconKind = "aoe" | "bounce" | "homing" | "multi" | "power";
+
+export type ModIconVector = VectorShape;
 
 export interface ModMultiEffect {
   count: 3;
@@ -34,5 +37,6 @@ export interface ModDefinition {
   costResource?: string;
   requiresUnlocks?: string[];
   iconKind: ModIconKind;
+  icon: ModIconVector;
   effects: ModEffects;
 }

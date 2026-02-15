@@ -4,6 +4,7 @@ export const CONTENT_KINDS = [
   "beats",
   "bullets",
   "enemies",
+  "galaxies",
   "guns",
   "hazards",
   "mods",
@@ -34,14 +35,90 @@ const vec2Schema = z.object({
   y: z.number().describe("Local Y offset in pixels."),
 });
 
-const gunPointSchema = z.object({
-  x: z.number().describe("Normalized X (-1..1, 0 centered)."),
-  y: z.number().describe("Normalized Y (-1..1, 0 centered)."),
+const vectorPathCommandSchema = z.union([
+  z.tuple([
+    z.literal("M"),
+    z.number().describe("Move X."),
+    z.number().describe("Move Y."),
+  ]),
+  z.tuple([
+    z.literal("L"),
+    z.number().describe("Line end X."),
+    z.number().describe("Line end Y."),
+  ]),
+  z.tuple([
+    z.literal("Q"),
+    z.number().describe("Control X."),
+    z.number().describe("Control Y."),
+    z.number().describe("End X."),
+    z.number().describe("End Y."),
+  ]),
+  z.tuple([
+    z.literal("C"),
+    z.number().describe("Control A X."),
+    z.number().describe("Control A Y."),
+    z.number().describe("Control B X."),
+    z.number().describe("Control B Y."),
+    z.number().describe("End X."),
+    z.number().describe("End Y."),
+  ]),
+  z.tuple([z.literal("Z")]),
+]);
+
+const vectorPathItemSchema = z.object({
+  c: z
+    .array(vectorPathCommandSchema)
+    .describe("Path commands using M/L/Q/C/Z commands."),
+  f: z.boolean().describe("Fill this primitive.").optional(),
+  s: z.boolean().describe("Stroke this primitive.").optional(),
+  t: z.literal("p").describe("Path primitive."),
+  w: z
+    .number()
+    .positive()
+    .describe("Optional stroke width override.")
+    .optional(),
 });
 
-const gunLineSchema = z.object({
-  from: gunPointSchema.describe("Line start point."),
-  to: gunPointSchema.describe("Line end point."),
+const vectorCircleItemSchema = z.object({
+  f: z.boolean().describe("Fill this primitive.").optional(),
+  r: z.number().positive().describe("Radius."),
+  s: z.boolean().describe("Stroke this primitive.").optional(),
+  t: z.literal("c").describe("Circle primitive."),
+  w: z
+    .number()
+    .positive()
+    .describe("Optional stroke width override.")
+    .optional(),
+  x: z.number().describe("Center X."),
+  y: z.number().describe("Center Y."),
+});
+
+const vectorEllipseItemSchema = z.object({
+  f: z.boolean().describe("Fill this primitive.").optional(),
+  rx: z.number().positive().describe("Radius X."),
+  ry: z.number().positive().describe("Radius Y."),
+  s: z.boolean().describe("Stroke this primitive.").optional(),
+  t: z.literal("e").describe("Ellipse primitive."),
+  w: z
+    .number()
+    .positive()
+    .describe("Optional stroke width override.")
+    .optional(),
+  x: z.number().describe("Center X."),
+  y: z.number().describe("Center Y."),
+});
+
+const vectorShapeSchema = z.object({
+  items: z
+    .array(
+      z.union([
+        vectorPathItemSchema,
+        vectorCircleItemSchema,
+        vectorEllipseItemSchema,
+      ]),
+    )
+    .describe("Vector primitives."),
+  v: z.literal(2).describe("Vector schema version."),
 });
 
 const gunSchema = z.object({
@@ -49,11 +126,8 @@ const gunSchema = z.object({
   fillColor: colorField("Optional fill color override.").optional(),
   id: idField("Unique gun id."),
   lineColor: colorField("Optional line color override.").optional(),
-  lines: z.array(gunLineSchema).describe("Optional line accents.").optional(),
   name: z.string().describe("Display name."),
-  outline: z
-    .array(gunPointSchema)
-    .describe("Closed outline points for the gun body."),
+  vector: vectorShapeSchema.describe("Gun vector shape."),
 });
 
 const weaponSizeSchema = z.enum(["large", "small"]);
@@ -401,85 +475,61 @@ const weaponShotSchema = z.object({
     .default({ x: 0, y: 0 }),
 });
 
+const enemyStyleFxSchema = z
+  .object({
+    charge: z
+      .object({
+        inwardCountMinMax: z
+          .tuple([
+            z.number().describe("Minimum inward particle count."),
+            z.number().describe("Maximum inward particle count."),
+          ])
+          .describe("Charge inward particle count range.")
+          .optional(),
+        ringIntervalMs: z
+          .number()
+          .describe("Base ring cadence while charging (ms).")
+          .optional(),
+        ringRadiusScale: z
+          .number()
+          .describe("Scale factor for charge ring radius.")
+          .optional(),
+      })
+      .describe("Charging telegraph visuals.")
+      .optional(),
+    death: z
+      .object({
+        burstCount: z
+          .number()
+          .describe("Primary death burst count.")
+          .optional(),
+        ringRadiusScale: z
+          .number()
+          .describe("Scale factor for death ring radius.")
+          .optional(),
+        secondaryBurstCount: z
+          .number()
+          .describe("Secondary death burst count.")
+          .optional(),
+      })
+      .describe("Death burst visuals.")
+      .optional(),
+  })
+  .describe("Enemy VFX overrides.")
+  .optional();
+
 const enemyStyleSchema = z.object({
   fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
-  fx: z
-    .object({
-      charge: z
-        .object({
-          inwardCountMinMax: z
-            .tuple([
-              z.number().describe("Minimum inward particle count."),
-              z.number().describe("Maximum inward particle count."),
-            ])
-            .describe("Charge inward particle count range.")
-            .optional(),
-          ringIntervalMs: z
-            .number()
-            .describe("Base ring cadence while charging (ms).")
-            .optional(),
-          ringRadiusScale: z
-            .number()
-            .describe("Scale factor for charge ring radius.")
-            .optional(),
-        })
-        .describe("Charging telegraph visuals.")
-        .optional(),
-      death: z
-        .object({
-          burstCount: z
-            .number()
-            .describe("Primary death burst count.")
-            .optional(),
-          ringRadiusScale: z
-            .number()
-            .describe("Scale factor for death ring radius.")
-            .optional(),
-          secondaryBurstCount: z
-            .number()
-            .describe("Secondary death burst count.")
-            .optional(),
-        })
-        .describe("Death burst visuals.")
-        .optional(),
-    })
-    .describe("Enemy VFX overrides.")
-    .optional(),
+  fx: enemyStyleFxSchema,
   lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
-  shape: z
-    .enum([
-      "asteroid",
-      "blimp",
-      "bomber",
-      "boss",
-      "crossfire",
-      "sine",
-      "skitter",
-      "snake",
-      "sniper",
-      "spinner",
-      "swooper",
-      "sidesweeper",
-    ])
-    .describe("Enemy shape.")
-    .default("swooper"),
-  vector: z
-    .object({
-      lines: z
-        .array(
-          z.object({
-            from: vec2Schema.describe("Line start point."),
-            to: vec2Schema.describe("Line end point."),
-          }),
-        )
-        .describe("Optional interior lines for detail.")
-        .optional(),
-      outline: z
-        .array(vec2Schema)
-        .describe("Closed outline points, relative to enemy radius."),
-    })
-    .describe("Custom vector shape (overrides built-in silhouette).")
-    .optional(),
+  vector: vectorShapeSchema.describe("Enemy vector silhouette."),
+});
+
+const enemyStyleOverrideSchema = z.object({
+  fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
+  fx: enemyStyleFxSchema,
+  lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
+  vector: vectorShapeSchema.describe("Enemy vector silhouette.").optional(),
 });
 
 const enemyHitboxSchema = z.union([
@@ -541,7 +591,7 @@ const enemyOverrideSchema = z.object({
     .describe("Override rotation mode.")
     .optional(),
   rotationDeg: z.number().describe("Override rotation angle.").optional(),
-  style: enemyStyleSchema.describe("Override styling.").optional(),
+  style: enemyStyleOverrideSchema.describe("Override styling.").optional(),
 });
 
 const spawnSchema = z.object({
@@ -714,6 +764,129 @@ const levelSchema = z.object({
   winCondition: winConditionSchema.describe("Primary victory condition."),
 });
 
+const galaxyNodePositionSchema = z.object({
+  x: z.number().min(0).max(1).describe("Normalized map X (0..1)."),
+  y: z.number().min(0).max(1).describe("Normalized map Y (0..1)."),
+});
+
+const galaxyNodeSchema = z.object({
+  id: idField("Unique node id within this galaxy."),
+  levelId: idField("Level id launched by this node."),
+  name: z.string().describe("Optional display label override.").optional(),
+  pos: galaxyNodePositionSchema,
+});
+
+const galaxyEdgeSchema = z.object({
+  from: idField("Source node id."),
+  to: idField("Destination node id."),
+});
+
+const galaxyDecorationSchema = z.object({
+  id: idField("Optional decoration id.").optional(),
+  kind: z
+    .enum(["asteroidField", "nebula", "planet"])
+    .describe("Decoration type."),
+  label: z.string().describe("Optional map label.").optional(),
+  pos: galaxyNodePositionSchema.describe("Decoration anchor position."),
+  scale: z.number().positive().describe("Decoration scale factor.").optional(),
+  tint: colorField("Optional tint for this decoration.").optional(),
+});
+
+const galaxySchema = z
+  .object({
+    decorations: z
+      .array(galaxyDecorationSchema)
+      .describe("Background map decorations.")
+      .default([])
+      .optional(),
+    description: z
+      .string()
+      .describe("Optional campaign summary shown in the map UI.")
+      .optional(),
+    edges: z.array(galaxyEdgeSchema).describe("Directed connections."),
+    id: idField("Unique galaxy id."),
+    name: z.string().describe("Display name."),
+    nodes: z.array(galaxyNodeSchema).min(1).describe("Playable map nodes."),
+    startNodeId: idField("Node id where campaign progression starts."),
+  })
+  .superRefine((galaxy, ctx) => {
+    const nodeIds = new Set<string>();
+    const levelIds = new Set<string>();
+    for (let i = 0; i < galaxy.nodes.length; i += 1) {
+      const node = galaxy.nodes[i];
+      if (nodeIds.has(node.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate node id "${node.id}".`,
+          path: ["nodes", i, "id"],
+        });
+      }
+      nodeIds.add(node.id);
+      if (levelIds.has(node.levelId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate levelId "${node.levelId}" in galaxy nodes.`,
+          path: ["nodes", i, "levelId"],
+        });
+      }
+      levelIds.add(node.levelId);
+    }
+
+    if (!nodeIds.has(galaxy.startNodeId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `startNodeId "${galaxy.startNodeId}" is not defined in nodes.`,
+        path: ["startNodeId"],
+      });
+    }
+
+    for (let i = 0; i < galaxy.edges.length; i += 1) {
+      const edge = galaxy.edges[i];
+      if (!nodeIds.has(edge.from)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Unknown edge source "${edge.from}".`,
+          path: ["edges", i, "from"],
+        });
+      }
+      if (!nodeIds.has(edge.to)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Unknown edge destination "${edge.to}".`,
+          path: ["edges", i, "to"],
+        });
+      }
+    }
+
+    if (nodeIds.has(galaxy.startNodeId)) {
+      const outgoing = new Map<string, string[]>();
+      for (const edge of galaxy.edges) {
+        const list = outgoing.get(edge.from) ?? [];
+        list.push(edge.to);
+        outgoing.set(edge.from, list);
+      }
+      const seen = new Set<string>([galaxy.startNodeId]);
+      const queue = [galaxy.startNodeId];
+      while (queue.length > 0) {
+        const next = queue.shift();
+        if (!next) break;
+        for (const to of outgoing.get(next) ?? []) {
+          if (seen.has(to)) continue;
+          seen.add(to);
+          queue.push(to);
+        }
+      }
+      galaxy.nodes.forEach((node, index) => {
+        if (seen.has(node.id)) return;
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Node "${node.id}" is unreachable from startNodeId.`,
+          path: ["nodes", index, "id"],
+        });
+      });
+    }
+  });
+
 const weaponStatsSchema = z.object({
   angleDeg: z
     .number()
@@ -810,8 +983,9 @@ const modSchema = z.object({
         .optional(),
     })
     .describe("Stat effects applied to mounted weapon."),
+  icon: vectorShapeSchema.describe("Vector icon geometry for this mod."),
   iconKind: modIconKindSchema.describe(
-    "Icon category for code-drawn mod icon.",
+    "Icon category used for uniqueness and accent color.",
   ),
   id: idField("Unique mod id."),
   name: z.string().describe("Display name."),
@@ -820,20 +994,7 @@ const modSchema = z.object({
     .optional(),
 });
 
-const shipVectorSchema = z.object({
-  lines: z
-    .array(
-      z.object({
-        from: vec2Schema.describe("Line start point."),
-        to: vec2Schema.describe("Line end point."),
-      }),
-    )
-    .describe("Optional interior lines for detail.")
-    .optional(),
-  outline: z
-    .array(vec2Schema)
-    .describe("Closed outline points, relative to ship radius."),
-});
+const shipVectorSchema = vectorShapeSchema.describe("Ship vector silhouette.");
 
 const weaponSchema = z.object({
   cost: z.number().min(0).describe("Shop cost."),
@@ -851,49 +1012,72 @@ const weaponSchema = z.object({
   stats: weaponStatsSchema.describe("Base weapon stats."),
 });
 
-const shipSchema = z.object({
-  color: colorField("Ship fill color."),
-  cost: z.number().min(0).describe("Unlock cost."),
-  costResource: idField("Resource id used to buy this ship.")
-    .default("gold")
-    .optional(),
-  description: z.string().describe("Player-facing description."),
-  id: idField("Unique ship id."),
-  magnetMultiplier: z.number().describe("Pickup magnet multiplier."),
-  maxHp: z.number().describe("Max HP."),
-  mounts: z
-    .array(
-      z.object({
-        id: idField("Unique mount id within this ship."),
-        modSlots: z
-          .int()
-          .min(0)
-          .optional()
-          .default(0)
-          .describe("Number of mod sockets on this mount."),
-        offset: z
-          .object({
-            x: z.number().describe("Mount X offset in ship-radius units."),
-            y: z.number().describe("Mount Y offset in ship-radius units."),
-          })
-          .describe("Offset from ship center."),
-        size: weaponSizeSchema.describe("Mount size."),
-      }),
+const shipSchema = z
+  .object({
+    color: colorField("Ship fill color."),
+    cost: z.number().min(0).describe("Unlock cost."),
+    costResource: idField("Resource id used to buy this ship.")
+      .default("gold")
+      .optional(),
+    description: z.string().describe("Player-facing description."),
+    hitbox: enemyHitboxSchema
+      .describe("Collision hit area (circle or ellipse).")
+      .optional(),
+    id: idField("Unique ship id."),
+    magnetMultiplier: z.number().describe("Pickup magnet multiplier."),
+    maxHp: z.number().describe("Max HP."),
+    mounts: z
+      .array(
+        z.object({
+          id: idField("Unique mount id within this ship."),
+          modSlots: z
+            .int()
+            .min(0)
+            .max(2)
+            .optional()
+            .default(0)
+            .describe("Number of mod sockets on this mount (max 2)."),
+          offset: z
+            .object({
+              x: z.number().describe("Mount X offset in ship-radius units."),
+              y: z.number().describe("Mount Y offset in ship-radius units."),
+            })
+            .describe("Offset from ship center."),
+          size: weaponSizeSchema.describe("Mount size."),
+        }),
+      )
+      .max(3, "Ships can define at most 3 weapon mounts.")
+      .describe("Weapon mounts for this ship (max 3)."),
+    moveSpeed: z.number().describe("Movement speed scalar."),
+    name: z.string().describe("Display name."),
+    radiusMultiplier: z.number().describe("Collision radius multiplier."),
+    requiresUnlocks: idArray(
+      "Unlock ids required before this can be purchased.",
     )
-    .describe("Weapon mounts for this ship."),
-  moveSpeed: z.number().describe("Movement speed scalar."),
-  name: z.string().describe("Display name."),
-  radiusMultiplier: z.number().describe("Collision radius multiplier."),
-  requiresUnlocks: idArray("Unlock ids required before this can be purchased.")
-    .default([])
-    .optional(),
-  vector: shipVectorSchema.describe("Required ship vector silhouette."),
-});
+      .default([])
+      .optional(),
+    vector: shipVectorSchema.describe("Required ship vector silhouette."),
+  })
+  .superRefine((ship, ctx) => {
+    const seen = new Set<string>();
+    ship.mounts.forEach((mount, index) => {
+      if (seen.has(mount.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate mount id "${mount.id}". Mount ids must be unique per ship.`,
+          path: ["mounts", index, "id"],
+        });
+        return;
+      }
+      seen.add(mount.id);
+    });
+  });
 
 export const contentSchemas = {
   beats: beatSchema,
   bullets: bulletSchema,
   enemies: enemySchema,
+  galaxies: galaxySchema,
   guns: gunSchema,
   hazards: laneWallSchema,
   levels: levelSchema,
@@ -908,6 +1092,7 @@ export const contentSchemas = {
 export type BeatContent = z.infer<typeof beatSchema>;
 export type BulletContent = z.infer<typeof bulletSchema>;
 export type EnemyContent = z.infer<typeof enemySchema>;
+export type GalaxyContent = z.infer<typeof galaxySchema>;
 export type GunContent = z.infer<typeof gunSchema>;
 export type HazardContent = z.infer<typeof laneWallSchema>;
 export type ModContent = z.infer<typeof modSchema>;

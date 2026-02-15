@@ -5,7 +5,10 @@ import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
 
-import { drawEnemyToGraphics } from "../render/enemyShapes";
+import {
+  DEFAULT_ENEMY_VECTOR,
+  drawEnemyToGraphics,
+} from "../render/enemyShapes";
 import { FireScriptRunner } from "../systems/FireScriptRunner";
 import { MoveScriptRunner } from "../systems/MoveScriptRunner";
 import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "../util/playArea";
@@ -270,7 +273,7 @@ export class Enemy {
     this.graphics.fillStyle(fill, 0.92 + flashBlend * 0.08);
     drawEnemyToGraphics(
       this.graphics,
-      style.vector ?? style.shape ?? "swooper",
+      style.vector ?? DEFAULT_ENEMY_VECTOR,
       this.radius,
     );
     if (flashBlend > 0.04) {

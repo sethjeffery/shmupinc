@@ -1,9 +1,8 @@
 import type { ShopRules } from "../data/levels";
 import type { ModInstanceId } from "../data/modInstances";
 import type { ModIconKind, ModId } from "../data/mods";
-import type { ModDefinition } from "../data/modTypes";
+import type { ModDefinition, ModIconVector } from "../data/modTypes";
 import type { MountAssignment, SaveData } from "../data/save";
-import type { BulletKind } from "../data/scripts";
 import type { ShipId } from "../data/ships";
 import type { ShipDefinition, ShipVector } from "../data/shipTypes";
 import type { WeaponInstanceId } from "../data/weaponInstances";
@@ -14,7 +13,7 @@ import { signal, type Signal } from "@preact/signals";
 import Phaser from "phaser";
 import { render } from "preact";
 
-import { GUNS } from "../data/guns";
+import { GUNS, type GunDefinition } from "../data/guns";
 import { getActiveLevelSession } from "../data/levelState";
 import { MODS } from "../data/mods";
 import {
@@ -35,7 +34,9 @@ import { filterShopItems, pickAllowedId } from "../data/shopRules";
 import { canMountWeapon } from "../data/weaponMounts";
 import { WEAPONS } from "../data/weapons";
 import { drawGunToCanvas } from "../render/gunShapes";
+import { drawModToCanvas, getModIconBounds } from "../render/modShapes";
 import { DEFAULT_SHIP_VECTOR, drawShipToCanvas } from "../render/shipShapes";
+import { getVectorBounds } from "../render/vector/cache";
 import { PreviewScene } from "./PreviewScene";
 
 type ShopItemType = "inventory" | "mod" | "mount" | "ship" | "weapon";
@@ -77,12 +78,27 @@ interface NodeOptionIcon {
   accentColor: number;
   gunId?: string;
   iconKind: CardIconKind;
-  modIcon?: ModIconKind;
+  modVector?: ModIconVector;
   weaponSize?: WeaponSize;
+}
+
+interface NodeGraphPoint {
+  x: number;
+  y: number;
+}
+
+interface NodeGraphLayout {
+  mountPoints: Map<string, NodeGraphPoint>;
+  modPoints: Map<string, NodeGraphPoint[]>;
+  shipPoint: NodeGraphPoint;
+  worldHeight: number;
+  worldWidth: number;
 }
 
 const SELL_RATIO = 0.5;
 const PRIMARY_RESOURCE_ID = "gold";
+const MAX_RENDERED_WEAPON_MOUNTS = 3;
+const MAX_RENDERED_MOD_SLOTS = 2;
 
 const formatCost = (cost: number, resourceId: string): string =>
   resourceId === PRIMARY_RESOURCE_ID ? `${cost}g` : `${cost} ${resourceId}`;
@@ -257,6 +273,19 @@ export class ShopScene extends Phaser.Scene {
   private shopRules: null | ShopRules = null;
   private dragPayload: DragPayload | null = null;
   private loadoutSelection: LoadoutNodeSelection | null = null;
+  private nodeGraphDrag: {
+    pointerId: number;
+    startX: number;
+    startY: number;
+  } | null = null;
+  private nodeGraphPinchStart: { distance: number; scale: number } | null =
+    null;
+  private nodeGraphPointers = new Map<number, NodeGraphPoint>();
+  private nodeGraphOffset = { x: 0, y: 0 };
+  private nodeGraphScale = 1;
+  private nodeGraphTransformReady = false;
+  private nodeGraphViewport?: HTMLDivElement;
+  private nodeGraphWorld?: HTMLDivElement;
   private activeEnergySurge: { mountId: string; slotIndex?: number } | null =
     null;
   private energySurgeTimeout: null | number = null;
@@ -318,6 +347,12 @@ export class ShopScene extends Phaser.Scene {
     this.mountCallouts.clear();
     this.mountCalloutLines.clear();
     this.dragHoverMountId = null;
+    this.nodeGraphDrag = null;
+    this.nodeGraphPinchStart = null;
+    this.nodeGraphPointers.clear();
+    this.nodeGraphTransformReady = false;
+    this.nodeGraphViewport = undefined;
+    this.nodeGraphWorld = undefined;
     this.clearDragPreview();
     if (this.energySurgeTimeout !== null) {
       window.clearTimeout(this.energySurgeTimeout);
@@ -372,6 +407,14 @@ export class ShopScene extends Phaser.Scene {
       this.mountCallouts.clear();
       this.mountCalloutLines.clear();
       this.dragHoverMountId = null;
+      this.nodeGraphDrag = null;
+      this.nodeGraphPinchStart = null;
+      this.nodeGraphPointers.clear();
+      this.nodeGraphTransformReady = false;
+      this.nodeGraphViewport = undefined;
+      this.nodeGraphWorld = undefined;
+    } else {
+      window.requestAnimationFrame(() => this.syncNodeGraphTransform());
     }
   }
 
@@ -601,7 +644,7 @@ export class ShopScene extends Phaser.Scene {
           iconKind: "ship",
           id: ship.id,
           key: `ship-${ship.id}`,
-          modIcon: undefined,
+          modVector: undefined,
           name: ship.name,
           shipShape: ship.vector,
           state,
@@ -647,7 +690,7 @@ export class ShopScene extends Phaser.Scene {
           iconKind: "gun",
           id: weapon.id,
           key: `weapon-${weapon.id}`,
-          modIcon: undefined,
+          modVector: undefined,
           name: weapon.name,
           shipShape: undefined,
           state,
@@ -660,26 +703,26 @@ export class ShopScene extends Phaser.Scene {
     const modCards = this.getFilteredMods()
       .sort((a, b) => a.cost - b.cost)
       .map((mod) => {
-        const ownedCount = this.save.ownedMods.filter(
+        const owned = this.save.ownedMods.some(
           (instance) => instance.modId === mod.id,
-        ).length;
+        );
         const missingUnlocks = getMissingUnlocks(
           this.save,
           mod.requiresUnlocks,
         );
-        const unlockBlocked = ownedCount === 0 && missingUnlocks.length > 0;
+        const unlockBlocked = !owned && missingUnlocks.length > 0;
         const status = unlockBlocked
           ? `Blueprint Required · ${formatCost(
               mod.cost,
               mod.costResource ?? PRIMARY_RESOURCE_ID,
             )}`
-          : ownedCount > 0
-            ? `Owned x${ownedCount} · ${formatCost(
+          : owned
+            ? `Owned · ${formatCost(
                 mod.cost,
                 mod.costResource ?? PRIMARY_RESOURCE_ID,
               )}`
             : formatCost(mod.cost, mod.costResource ?? PRIMARY_RESOURCE_ID);
-        const state: ShopCardState = ownedCount > 0 ? "owned" : "locked";
+        const state: ShopCardState = owned ? "owned" : "locked";
         const accentColor = this.getModAccentColor(mod.iconKind);
         return this.buildCard({
           accent: formatColor(accentColor),
@@ -689,7 +732,7 @@ export class ShopScene extends Phaser.Scene {
           iconKind: "mod",
           id: mod.id,
           key: `mod-${mod.id}`,
-          modIcon: mod.iconKind,
+          modVector: mod.icon,
           name: mod.name,
           shipShape: undefined,
           state,
@@ -710,7 +753,7 @@ export class ShopScene extends Phaser.Scene {
     iconKind: CardIconKind;
     id: string;
     key: string;
-    modIcon?: ModIconKind;
+    modVector?: ModIconVector;
     name: string;
     shipShape?: ShipVector;
     state: ShopCardState;
@@ -735,7 +778,7 @@ export class ShopScene extends Phaser.Scene {
               accentColor: data.accentColor,
               className: "card-icon-canvas",
               gunId: data.gunId,
-              modIcon: data.modIcon,
+              modVector: data.modVector,
               shipShape: data.shipShape ?? DEFAULT_SHIP_VECTOR,
               size: 52,
               weaponSize: data.weaponSize,
@@ -817,24 +860,22 @@ export class ShopScene extends Phaser.Scene {
     ship: ShipDefinition,
     assignments: MountAssignment[],
   ) {
-    const center = { x: 50, y: 54 };
+    const visibleMounts = ship.mounts.slice(0, MAX_RENDERED_WEAPON_MOUNTS);
     const assignmentById = new Map(
       assignments.map((entry) => [entry.mountId, entry]),
     );
-    const mountPositions = new Map<string, { x: number; y: number }>();
+    const layout = this.createNodeGraphLayout(ship, assignments);
 
-    for (const mount of ship.mounts) {
-      const x = this.clampPercent(50 + mount.offset.x * 44, 8, 92);
-      const y = this.clampPercent(54 + mount.offset.y * 38, 10, 92);
-      mountPositions.set(mount.id, { x, y });
-    }
-
+    const links: ReturnType<typeof this.createNodeLink>[] = [];
     const nodes: ReturnType<typeof this.buildNodeIcon>[] = [];
     nodes.push(
       <div
         className="shop-node shop-node--hull"
         key="node-hull"
-        style={{ left: `${center.x}%`, top: `${center.y}%` }}
+        style={{
+          left: `${layout.shipPoint.x}px`,
+          top: `${layout.shipPoint.y}px`,
+        }}
       >
         {this.buildNodeIcon("ship", {
           accentColor: ship.color,
@@ -845,8 +886,8 @@ export class ShopScene extends Phaser.Scene {
       </div>,
     );
 
-    for (const mount of ship.mounts) {
-      const mountPos = mountPositions.get(mount.id);
+    for (const mount of visibleMounts) {
+      const mountPos = layout.mountPoints.get(mount.id);
       if (!mountPos) continue;
       const assignment = assignmentById.get(mount.id);
       const instance = assignment?.weaponInstanceId
@@ -860,10 +901,10 @@ export class ShopScene extends Phaser.Scene {
         this.loadoutSelection.mountId === mount.id;
       const mountSurge = this.activeEnergySurge?.mountId === mount.id;
 
-      nodes.push(
+      links.push(
         this.createNodeLink(
+          layout.shipPoint,
           mountPos,
-          center,
           Boolean(weapon),
           selected,
           mountSurge,
@@ -900,7 +941,7 @@ export class ShopScene extends Phaser.Scene {
               this.mountDots.delete(mount.id);
             }
           }}
-          style={{ left: `${mountPos.x}%`, top: `${mountPos.y}%` }}
+          style={{ left: `${mountPos.x}px`, top: `${mountPos.y}px` }}
           type="button"
         >
           {this.buildNodeIcon("gun", {
@@ -908,36 +949,16 @@ export class ShopScene extends Phaser.Scene {
             gunId: weapon?.gunId,
             weaponSize: weapon?.size,
           })}
-          <div className="shop-node-name">{weapon?.name ?? "Select"}</div>
+          <div className="shop-node-name">{weapon?.name ?? "EMPTY"}</div>
         </button>,
       );
 
-      if (!weapon || mount.modSlots <= 0) continue;
+      const modSlotCount = Math.min(mount.modSlots, MAX_RENDERED_MOD_SLOTS);
+      if (!weapon || modSlotCount <= 0) continue;
 
-      const mountVectorX = mountPos.x - center.x;
-      const mountVectorY = mountPos.y - center.y;
-      const vectorLength = Math.hypot(mountVectorX, mountVectorY) || 1;
-      const dirX = mountVectorX / vectorLength;
-      const dirY = mountVectorY / vectorLength;
-      const tangentX = -dirY;
-      const tangentY = dirX;
-
-      for (let slotIndex = 0; slotIndex < mount.modSlots; slotIndex += 1) {
-        const modDistance = 11 + slotIndex * 8;
-        const lateral =
-          mount.modSlots > 1 ? (slotIndex - (mount.modSlots - 1) / 2) * 4.4 : 0;
-        const modPos = {
-          x: this.clampPercent(
-            mountPos.x + dirX * modDistance + tangentX * lateral,
-            7,
-            93,
-          ),
-          y: this.clampPercent(
-            mountPos.y + dirY * modDistance + tangentY * lateral,
-            9,
-            92,
-          ),
-        };
+      for (let slotIndex = 0; slotIndex < modSlotCount; slotIndex += 1) {
+        const modPos = layout.modPoints.get(mount.id)?.[slotIndex];
+        if (!modPos) continue;
         const modInstanceId = assignment?.modInstanceIds[slotIndex] ?? null;
         const modInstance = modInstanceId
           ? this.save.ownedMods.find((entry) => entry.id === modInstanceId)
@@ -951,7 +972,7 @@ export class ShopScene extends Phaser.Scene {
           this.activeEnergySurge?.mountId === mount.id &&
           this.activeEnergySurge.slotIndex === slotIndex;
 
-        nodes.push(
+        links.push(
           this.createNodeLink(
             modPos,
             mountPos,
@@ -973,16 +994,15 @@ export class ShopScene extends Phaser.Scene {
             data-mount-id={mount.id}
             data-slot-index={slotIndex}
             key={`node-mod-${mount.id}-${slotIndex}`}
-            style={{ left: `${modPos.x}%`, top: `${modPos.y}%` }}
+            style={{ left: `${modPos.x}px`, top: `${modPos.y}px` }}
             type="button"
           >
             {this.buildNodeIcon("mod", {
               accentColor: mod
                 ? this.getModAccentColor(mod.iconKind)
                 : 0x6a7a90,
-              modIcon: mod?.iconKind,
+              modVector: mod?.icon,
             })}
-            <div className="shop-node-slot">{`M${slotIndex + 1}`}</div>
             <div className="shop-node-name">{mod?.name ?? "Select"}</div>
           </button>,
         );
@@ -995,8 +1015,42 @@ export class ShopScene extends Phaser.Scene {
         ref={(element) => {
           this.mountVisual = element ?? undefined;
         }}
+        onWheel={(event) => {
+          this.handleNodeGraphWheel(event as WheelEvent);
+        }}
       >
-        {nodes}
+        <div
+          className="shop-node-viewport"
+          ref={(element) => {
+            this.nodeGraphViewport = element ?? undefined;
+          }}
+          onPointerCancel={(event) => {
+            this.stopNodeGraphDrag(event as PointerEvent);
+          }}
+          onPointerDown={(event) => {
+            this.startNodeGraphDrag(event as PointerEvent);
+          }}
+          onPointerMove={(event) => {
+            this.updateNodeGraphDrag(event as PointerEvent);
+          }}
+          onPointerUp={(event) => {
+            this.stopNodeGraphDrag(event as PointerEvent);
+          }}
+        >
+          <div
+            className="shop-node-world"
+            ref={(element) => {
+              this.nodeGraphWorld = element ?? undefined;
+            }}
+            style={{
+              height: `${layout.worldHeight}px`,
+              width: `${layout.worldWidth}px`,
+            }}
+          >
+            {links}
+            {nodes}
+          </div>
+        </div>
       </div>
     );
   }
@@ -1007,7 +1061,7 @@ export class ShopScene extends Phaser.Scene {
       accentColor: number;
       className?: string;
       gunId?: string;
-      modIcon?: ModIconKind;
+      modVector?: ModIconVector;
       size?: number;
       shipShape?: ShipVector;
       weaponSize?: WeaponSize;
@@ -1027,7 +1081,7 @@ export class ShopScene extends Phaser.Scene {
             options.accentColor,
             options.shipShape ?? this.getSelectedShip().vector,
             options.gunId,
-            options.modIcon,
+            options.modVector,
             options.weaponSize,
           );
         }}
@@ -1183,7 +1237,7 @@ export class ShopScene extends Phaser.Scene {
             icon: {
               accentColor: this.getModAccentColor(mod.iconKind),
               iconKind: "mod",
-              modIcon: mod.iconKind,
+              modVector: mod.icon,
             },
             instanceId: instance.id,
             key: `mod-node-option-${instance.id}`,
@@ -1245,7 +1299,7 @@ export class ShopScene extends Phaser.Scene {
           accentColor: data.icon.accentColor,
           className: "shop-node-option-icon",
           gunId: data.icon.gunId,
-          modIcon: data.icon.modIcon,
+          modVector: data.icon.modVector,
           size: 100,
           weaponSize: data.icon.weaponSize,
         })}
@@ -1258,8 +1312,8 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private createNodeLink(
-    from: { x: number; y: number },
-    to: { x: number; y: number },
+    from: NodeGraphPoint,
+    to: NodeGraphPoint,
     active: boolean,
     selected: boolean,
     surge: boolean,
@@ -1276,14 +1330,351 @@ export class ShopScene extends Phaser.Scene {
         className={className}
         key={key}
         style={{
-          left: `${from.x}%`,
-          top: `${from.y}%`,
+          left: `${from.x}px`,
+          top: `${from.y}px`,
           transform: `rotate(${Math.atan2(dy, dx)}rad)`,
-          width: `${width}%`,
+          width: `${width}px`,
         }}
       />
     );
   }
+
+  private createNodeGraphLayout(
+    ship: ShipDefinition,
+    assignments: MountAssignment[],
+  ): NodeGraphLayout {
+    const visibleMounts = ship.mounts.slice(0, MAX_RENDERED_WEAPON_MOUNTS);
+    const mountAssignmentById = new Map(
+      assignments.map((assignment) => [assignment.mountId, assignment]),
+    );
+    const mountAngles = this.getMountBranchAngles(visibleMounts.length);
+    const mountDistance = 160;
+    const modDistance = 160;
+    const shipHalfSize = { h: 96, w: 96 };
+    const nodeHalfSize = { h: 72, w: 98 };
+
+    let minX = -shipHalfSize.w;
+    let maxX = shipHalfSize.w;
+    let minY = -shipHalfSize.h;
+    let maxY = shipHalfSize.h;
+    const includePointBounds = (
+      point: NodeGraphPoint,
+      halfSize: { h: number; w: number },
+    ): void => {
+      minX = Math.min(minX, point.x - halfSize.w);
+      maxX = Math.max(maxX, point.x + halfSize.w);
+      minY = Math.min(minY, point.y - halfSize.h);
+      maxY = Math.max(maxY, point.y + halfSize.h);
+    };
+
+    const shipLocalPoint = { x: 0, y: 0 };
+    const mountLocalPoints = new Map<string, NodeGraphPoint>();
+    const modLocalPoints = new Map<string, NodeGraphPoint[]>();
+
+    visibleMounts.forEach((mount, index) => {
+      const branchAngle = mountAngles[index] ?? 0;
+      const branchVector = this.getAngleVector(branchAngle);
+      const mountPoint = {
+        x: shipLocalPoint.x + branchVector.x * mountDistance,
+        y: shipLocalPoint.y + branchVector.y * mountDistance,
+      };
+      mountLocalPoints.set(mount.id, mountPoint);
+      includePointBounds(mountPoint, nodeHalfSize);
+
+      const mountAssignment = mountAssignmentById.get(mount.id);
+      const modCount = mountAssignment?.weaponInstanceId
+        ? Math.min(mount.modSlots, MAX_RENDERED_MOD_SLOTS)
+        : 0;
+      const modBranchOffsets = this.getModBranchAngles(modCount);
+      const mountModPoints: NodeGraphPoint[] = [];
+      modBranchOffsets.forEach((offset) => {
+        const modAngle = branchAngle + offset;
+        const modVector = this.getAngleVector(modAngle);
+        const modPoint = {
+          x: mountPoint.x + modVector.x * modDistance,
+          y: mountPoint.y + modVector.y * modDistance,
+        };
+        mountModPoints.push(modPoint);
+        includePointBounds(modPoint, nodeHalfSize);
+      });
+      modLocalPoints.set(mount.id, mountModPoints);
+    });
+
+    const framePadding = { x: 180, y: 180 };
+    const coreWidth = maxX - minX;
+    const coreHeight = maxY - minY;
+    const baseWidth = coreWidth + framePadding.x * 2;
+    const baseHeight = coreHeight + framePadding.y * 2;
+    const worldWidth = Math.max(1020, baseWidth);
+    const worldHeight = Math.max(820, baseHeight);
+    const extraX = (worldWidth - baseWidth) * 0.5;
+    const extraY = (worldHeight - baseHeight) * 0.5;
+    const shiftX = -minX + framePadding.x + extraX;
+    const shiftY = -minY + framePadding.y + extraY;
+
+    const mountPoints = new Map<string, NodeGraphPoint>();
+    for (const [mountId, point] of mountLocalPoints) {
+      mountPoints.set(mountId, {
+        x: point.x + shiftX,
+        y: point.y + shiftY,
+      });
+    }
+
+    const modPoints = new Map<string, NodeGraphPoint[]>();
+    for (const [mountId, points] of modLocalPoints) {
+      modPoints.set(
+        mountId,
+        points.map((point) => ({ x: point.x + shiftX, y: point.y + shiftY })),
+      );
+    }
+
+    const shipPoint = {
+      x: shipLocalPoint.x + shiftX,
+      y: shipLocalPoint.y + shiftY,
+    };
+
+    return {
+      modPoints,
+      mountPoints,
+      shipPoint,
+      worldHeight,
+      worldWidth,
+    };
+  }
+
+  private getAngleVector(angleDegrees: number): NodeGraphPoint {
+    const radians = (angleDegrees * Math.PI) / 180;
+    return {
+      x: Math.sin(radians),
+      y: -Math.cos(radians),
+    };
+  }
+
+  private getMountBranchAngles(count: number): number[] {
+    if (count <= 0) return [];
+    if (count === 1) return [0];
+    if (count === 2) return [-35, 35];
+    return [-90, 0, 90];
+  }
+
+  private getModBranchAngles(count: number): number[] {
+    if (count <= 0) return [];
+    if (count === 1) return [0];
+    return [-45, 45];
+  }
+
+  private clampNodeGraphScale(value: number): number {
+    return Math.max(0.5, Math.min(1, value));
+  }
+
+  private getNodeGraphBounds(scale: number): {
+    viewportHeight: number;
+    viewportWidth: number;
+    worldHeight: number;
+    worldWidth: number;
+  } | null {
+    if (!this.nodeGraphViewport || !this.nodeGraphWorld) return null;
+    return {
+      viewportHeight: this.nodeGraphViewport.clientHeight,
+      viewportWidth: this.nodeGraphViewport.clientWidth,
+      worldHeight: this.nodeGraphWorld.offsetHeight * scale,
+      worldWidth: this.nodeGraphWorld.offsetWidth * scale,
+    };
+  }
+
+  private clampNodeGraphOffset(
+    x: number,
+    y: number,
+    scale = this.nodeGraphScale,
+  ): { x: number; y: number } {
+    const bounds = this.getNodeGraphBounds(scale);
+    if (!bounds) return { x, y };
+    const centerX = (bounds.viewportWidth - bounds.worldWidth) * 0.5;
+    const centerY = (bounds.viewportHeight - bounds.worldHeight) * 0.5;
+    if (bounds.worldWidth <= bounds.viewportWidth) {
+      x = centerX;
+    } else {
+      x = Math.min(0, Math.max(bounds.viewportWidth - bounds.worldWidth, x));
+    }
+    if (bounds.worldHeight <= bounds.viewportHeight) {
+      y = centerY;
+    } else {
+      y = Math.min(0, Math.max(bounds.viewportHeight - bounds.worldHeight, y));
+    }
+    return { x, y };
+  }
+
+  private getNodeGraphCenteredOffset(scale = this.nodeGraphScale): {
+    x: number;
+    y: number;
+  } {
+    const bounds = this.getNodeGraphBounds(scale);
+    if (!bounds) return { x: 0, y: 0 };
+    return {
+      x: (bounds.viewportWidth - bounds.worldWidth) * 0.5,
+      y: (bounds.viewportHeight - bounds.worldHeight) * 0.5,
+    };
+  }
+
+  private applyNodeGraphTransform(): void {
+    if (!this.nodeGraphWorld) return;
+    const { x, y } = this.nodeGraphOffset;
+    this.nodeGraphWorld.style.transform = `translate(${x}px, ${y}px) scale(${this.nodeGraphScale})`;
+  }
+
+  private syncNodeGraphTransform(): void {
+    if (!this.nodeGraphViewport || !this.nodeGraphWorld) return;
+    if (!this.nodeGraphTransformReady) {
+      this.nodeGraphScale = 1;
+      const centered = this.getNodeGraphCenteredOffset(1);
+      this.nodeGraphOffset = this.clampNodeGraphOffset(
+        centered.x,
+        centered.y,
+        1,
+      );
+      this.nodeGraphTransformReady = true;
+    } else {
+      this.nodeGraphOffset = this.clampNodeGraphOffset(
+        this.nodeGraphOffset.x,
+        this.nodeGraphOffset.y,
+      );
+    }
+    this.applyNodeGraphTransform();
+  }
+
+  private setNodeGraphScale(nextScale: number, anchor?: NodeGraphPoint): void {
+    const clampedScale = this.clampNodeGraphScale(nextScale);
+    if (clampedScale === this.nodeGraphScale) return;
+    let nextX = this.nodeGraphOffset.x;
+    let nextY = this.nodeGraphOffset.y;
+    if (anchor) {
+      const ratio = clampedScale / this.nodeGraphScale;
+      nextX = anchor.x - (anchor.x - nextX) * ratio;
+      nextY = anchor.y - (anchor.y - nextY) * ratio;
+    }
+    this.nodeGraphScale = clampedScale;
+    this.nodeGraphOffset = this.clampNodeGraphOffset(
+      nextX,
+      nextY,
+      clampedScale,
+    );
+    this.applyNodeGraphTransform();
+  }
+
+  private adjustNodeGraphZoom(delta: number, anchor?: NodeGraphPoint): void {
+    this.setNodeGraphScale(this.nodeGraphScale + delta, anchor);
+  }
+
+  private setNodeGraphPointer(event: PointerEvent): void {
+    this.nodeGraphPointers.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }
+
+  private clearNodeGraphPointer(pointerId: number): void {
+    this.nodeGraphPointers.delete(pointerId);
+    if (this.nodeGraphPointers.size < 2) {
+      this.nodeGraphPinchStart = null;
+    }
+  }
+
+  private getNodeGraphPinchMetrics(): {
+    center: NodeGraphPoint;
+    distance: number;
+  } | null {
+    if (this.nodeGraphPointers.size < 2) return null;
+    const [a, b] = Array.from(this.nodeGraphPointers.values());
+    const distance = Math.hypot(b.x - a.x, b.y - a.y);
+    return {
+      center: {
+        x: (a.x + b.x) * 0.5,
+        y: (a.y + b.y) * 0.5,
+      },
+      distance,
+    };
+  }
+
+  private handleNodeGraphWheel(event: WheelEvent): void {
+    if (!this.nodeGraphViewport) return;
+    event.preventDefault();
+    const rect = this.nodeGraphViewport.getBoundingClientRect();
+    const anchor = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    const delta = Math.max(-0.075, Math.min(0.075, -event.deltaY * 0.0015));
+    if (delta === 0) return;
+    this.adjustNodeGraphZoom(delta, anchor);
+  }
+
+  private startNodeGraphDrag(event: PointerEvent): void {
+    if (!this.nodeGraphViewport) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest(".shop-node")) return;
+    this.setNodeGraphPointer(event);
+    this.nodeGraphViewport.setPointerCapture(event.pointerId);
+    const pinch = this.getNodeGraphPinchMetrics();
+    if (pinch) {
+      this.nodeGraphDrag = null;
+      this.nodeGraphPinchStart = {
+        distance: Math.max(1, pinch.distance),
+        scale: this.nodeGraphScale,
+      };
+      return;
+    }
+    this.nodeGraphDrag = {
+      pointerId: event.pointerId,
+      startX: event.clientX - this.nodeGraphOffset.x,
+      startY: event.clientY - this.nodeGraphOffset.y,
+    };
+  }
+
+  private updateNodeGraphDrag(event: PointerEvent): void {
+    if (!this.nodeGraphViewport) return;
+    if (!this.nodeGraphPointers.has(event.pointerId)) return;
+    this.setNodeGraphPointer(event);
+    const pinch = this.getNodeGraphPinchMetrics();
+    if (pinch) {
+      this.nodeGraphPinchStart ??= {
+        distance: Math.max(1, pinch.distance),
+        scale: this.nodeGraphScale,
+      };
+      const rect = this.nodeGraphViewport.getBoundingClientRect();
+      const anchor = {
+        x: pinch.center.x - rect.left,
+        y: pinch.center.y - rect.top,
+      };
+      const pinchRatio = pinch.distance / this.nodeGraphPinchStart.distance;
+      const dampedRatio = 1 + (pinchRatio - 1) * 0.75;
+      this.setNodeGraphScale(
+        this.nodeGraphPinchStart.scale * dampedRatio,
+        anchor,
+      );
+      return;
+    }
+    if (!this.nodeGraphDrag) return;
+    if (event.pointerId !== this.nodeGraphDrag.pointerId) return;
+    this.nodeGraphOffset = this.clampNodeGraphOffset(
+      event.clientX - this.nodeGraphDrag.startX,
+      event.clientY - this.nodeGraphDrag.startY,
+    );
+    this.applyNodeGraphTransform();
+  }
+
+  private stopNodeGraphDrag(event: PointerEvent): void {
+    if (!this.nodeGraphViewport) return;
+    if (this.nodeGraphViewport.hasPointerCapture(event.pointerId)) {
+      this.nodeGraphViewport.releasePointerCapture(event.pointerId);
+    }
+    this.clearNodeGraphPointer(event.pointerId);
+    if (this.nodeGraphDrag?.pointerId === event.pointerId) {
+      this.nodeGraphDrag = null;
+    }
+  }
+
   private queueEnergySurge(mountId: string, slotIndex?: number): void {
     this.activeEnergySurge = { mountId, slotIndex };
     if (this.energySurgeTimeout !== null) {
@@ -1337,10 +1728,6 @@ export class ShopScene extends Phaser.Scene {
     if (mod.effects.aoe) pieces.push("+aoe");
     if (mod.effects.bounce) pieces.push("+ricochet");
     return pieces.slice(0, 2).join(" | ") || "No stat shift";
-  }
-
-  private clampPercent(value: number, min: number, max: number): number {
-    return Math.max(min, Math.min(max, value));
   }
 
   private updateMountVisualHighlights(): void {
@@ -1561,9 +1948,17 @@ export class ShopScene extends Phaser.Scene {
     if (type === "mod") {
       const mod = MODS[id];
       if (!mod) return;
+      const alreadyOwned = this.save.ownedMods.some(
+        (instance) => instance.modId === mod.id,
+      );
+      if (alreadyOwned) return;
       if (!this.isModAllowed(mod)) return;
       if (!hasRequiredUnlocks(this.save, mod.requiresUnlocks)) return;
       this.updateSave((data) => {
+        const owned = data.ownedMods.some(
+          (instance) => instance.modId === mod.id,
+        );
+        if (owned) return;
         if (!hasRequiredUnlocks(data, mod.requiresUnlocks)) return;
         const resourceId = mod.costResource ?? PRIMARY_RESOURCE_ID;
         if (!spendResourceInSave(data, resourceId, mod.cost)) return;
@@ -2065,7 +2460,7 @@ export class ShopScene extends Phaser.Scene {
         colorValue,
         this.getSelectedShip().vector,
         undefined,
-        mod.iconKind,
+        mod.icon,
         undefined,
       );
     });
@@ -2164,7 +2559,7 @@ export class ShopScene extends Phaser.Scene {
     colorValue: number,
     shipShape: ShipVector,
     gunId?: string,
-    modIcon?: ModIconKind,
+    modVector?: ModIconVector,
     weaponSize?: WeaponSize,
   ): void {
     const ctx = canvas.getContext("2d");
@@ -2185,30 +2580,102 @@ export class ShopScene extends Phaser.Scene {
       return;
     }
     if (kind === "mod") {
-      this.drawModIcon(
-        ctx,
-        modIcon ?? "power",
-        width / 2,
-        height / 2,
-        width * 0.3,
-        color,
-      );
+      if (modVector) {
+        this.drawCenteredModIcon(ctx, modVector, width, height, colorValue);
+      } else {
+        this.drawVacantMountIcon(
+          ctx,
+          width / 2,
+          height / 2,
+          width * 0.3,
+          color,
+        );
+      }
       return;
     }
     const gun = gunId ? GUNS[gunId] : null;
     if (gun) {
-      const scale = weaponSize === "large" ? 0.34 : 0.26;
-      drawGunToCanvas(
-        ctx,
-        gun,
-        width / 2,
-        height / 2,
-        width * scale,
-        colorValue,
-      );
+      this.drawCenteredGunIcon(ctx, gun, width, height, colorValue, weaponSize);
       return;
     }
-    this.drawBullet(ctx, "orb", width / 2, height / 2, width * 0.32, color);
+    this.drawVacantMountIcon(ctx, width / 2, height / 2, width * 0.3, color);
+  }
+
+  private drawCenteredGunIcon(
+    ctx: CanvasRenderingContext2D,
+    gun: GunDefinition,
+    canvasWidth: number,
+    canvasHeight: number,
+    colorValue: number,
+    weaponSize?: WeaponSize,
+  ): void {
+    const bounds = this.getGunLocalBounds(gun);
+    const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
+    const localHeight = Math.max(0.001, bounds.maxY - bounds.minY);
+    const localMaxSpan = Math.max(localWidth, localHeight);
+    const targetSpan = canvasWidth * (weaponSize === "large" ? 0.476 : 0.364);
+    const scale = targetSpan / localMaxSpan;
+    const localCenterX = (bounds.minX + bounds.maxX) * 0.5;
+    const localCenterY = (bounds.minY + bounds.maxY) * 0.5;
+    drawGunToCanvas(
+      ctx,
+      gun,
+      canvasWidth * 0.5 - localCenterX * scale,
+      canvasHeight * 0.5 - localCenterY * scale,
+      scale,
+      colorValue,
+    );
+  }
+
+  private drawCenteredModIcon(
+    ctx: CanvasRenderingContext2D,
+    icon: ModIconVector,
+    canvasWidth: number,
+    canvasHeight: number,
+    colorValue: number,
+  ): void {
+    const bounds = getModIconBounds(icon);
+    const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
+    const localHeight = Math.max(0.001, bounds.maxY - bounds.minY);
+    const localMaxSpan = Math.max(localWidth, localHeight);
+    const targetSpan = canvasWidth * 0.5;
+    const scale = targetSpan / localMaxSpan;
+    const localCenterX = (bounds.minX + bounds.maxX) * 0.5;
+    const localCenterY = (bounds.minY + bounds.maxY) * 0.5;
+    drawModToCanvas(
+      ctx,
+      icon,
+      canvasWidth * 0.5 - localCenterX * scale,
+      canvasHeight * 0.5 - localCenterY * scale,
+      scale,
+      colorValue,
+    );
+  }
+
+  private getGunLocalBounds(gun: GunDefinition): {
+    maxX: number;
+    maxY: number;
+    minX: number;
+    minY: number;
+  } {
+    return getVectorBounds(gun.vector);
+  }
+
+  private drawVacantMountIcon(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    color: string,
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = this.toRgba(color, 0.9, 1.05);
+    ctx.lineWidth = Math.max(2, size * 0.12);
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   private getModAccentColor(icon: ModIconKind): number {
@@ -2227,70 +2694,6 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
-  private drawModIcon(
-    ctx: CanvasRenderingContext2D,
-    icon: ModIconKind,
-    x: number,
-    y: number,
-    size: number,
-    color: string,
-  ): void {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = 2;
-    switch (icon) {
-      case "power":
-        ctx.beginPath();
-        ctx.moveTo(0, -size * 0.5);
-        ctx.lineTo(size * 0.2, -size * 0.1);
-        ctx.lineTo(-size * 0.05, -size * 0.1);
-        ctx.lineTo(size * 0.18, size * 0.45);
-        ctx.lineTo(-size * 0.2, size * 0.02);
-        ctx.lineTo(size * 0.02, size * 0.02);
-        ctx.closePath();
-        ctx.fill();
-        break;
-      case "homing":
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.2, 0, Math.PI * 2);
-        ctx.stroke();
-        break;
-      case "aoe":
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.22, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-      case "multi":
-        for (const dx of [-0.35, 0, 0.35]) {
-          ctx.beginPath();
-          ctx.arc(size * dx, 0, size * 0.14, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        break;
-      case "bounce":
-        ctx.beginPath();
-        ctx.arc(-size * 0.18, -size * 0.12, size * 0.14, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(-size * 0.06, -size * 0.22);
-        ctx.lineTo(size * 0.3, -size * 0.22);
-        ctx.lineTo(size * 0.18, -size * 0.36);
-        ctx.moveTo(size * 0.3, -size * 0.22);
-        ctx.lineTo(size * 0.18, -size * 0.08);
-        ctx.stroke();
-        break;
-    }
-    ctx.restore();
-  }
-
   private drawShip(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -2306,52 +2709,6 @@ export class ShopScene extends Phaser.Scene {
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 2;
     drawShipToCanvas(ctx, vector, r);
-    ctx.restore();
-  }
-
-  private drawBullet(
-    ctx: CanvasRenderingContext2D,
-    kind: BulletKind,
-    x: number,
-    y: number,
-    size: number,
-    color: string,
-    angleRad: number = -Math.PI / 2,
-  ): void {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angleRad + Math.PI / 2);
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    switch (kind) {
-      case "dart":
-        ctx.lineWidth = Math.max(2, size * 0.12);
-        ctx.beginPath();
-        ctx.moveTo(0, size * 0.45);
-        ctx.lineTo(0, -size * 0.45);
-        ctx.stroke();
-        break;
-      case "missile":
-        ctx.lineWidth = 2;
-        ctx.fillRect(-size * 0.18, -size * 0.45, size * 0.36, size * 0.9);
-        ctx.strokeRect(-size * 0.18, -size * 0.45, size * 0.36, size * 0.9);
-        ctx.fillStyle = this.toRgba(color, 1, 1.1);
-        ctx.fillRect(-size * 0.12, size * 0.3, size * 0.24, size * 0.18);
-        break;
-      case "bomb":
-        ctx.lineWidth = Math.max(2, size * 0.12);
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        break;
-      case "orb":
-      default:
-        ctx.beginPath();
-        ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-    }
     ctx.restore();
   }
 

@@ -1,0 +1,59 @@
+{
+  "color": "#9ba4bf",
+  "cost": 100,
+  "description": "Small, light, and a great little fighter from Thailand. Resistance is useless.",
+  "id": "thaifighter",
+  "magnetMultiplier": 1,
+  "maxHp": 8,
+  "moveSpeed": 9,
+  "mounts": [
+    {
+      "id": "nose",
+      "offset": {
+        "x": 0,
+        "y": -0.2
+      },
+      "size": "large",
+      "modSlots": 2
+    }
+  ],
+  "hitbox": {
+    "kind": "ellipse",
+    "radiusX": 15,
+    "radiusY": 15
+  },
+  "name": "Thai Fighter",
+  "radiusMultiplier": 1.1,
+  "vector": {
+    "v": 2,
+    "items": [
+      {
+        "t": "p",
+        "c": [
+          ["M", 0, -0.3],
+          ["Q", 0.2, -0.3, 0.2, -0.1],
+          ["L", 0.5, -0.1],
+          ["L", 0.5, -0.9],
+          ["L", 0.6, -0.9],
+          ["L", 0.9, 0.2],
+          ["L", 0.5, 0.8],
+          ["L", 0.5, 0.1],
+          ["L", 0.2, 0.1],
+          ["Q", 0.2, 0.3, 0, 0.3],
+          ["Q", -0.2, 0.3, -0.2, 0.1],
+          ["L", -0.5, 0.1],
+          ["L", -0.5, 0.8],
+          ["L", -0.9, 0.2],
+          ["L", -0.6, -0.9],
+          ["L", -0.5, -0.9],
+          ["L", -0.5, -0.1],
+          ["L", -0.2, -0.1],
+          ["Q", -0.2, -0.3, 0, -0.3],
+          ["Z"]
+        ],
+        "f": true,
+        "s": true
+      }
+    ]
+  }
+}

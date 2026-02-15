@@ -129,6 +129,14 @@ export const buildJsonSchemaForKind = (
     }
   }
 
+  if (kind === "galaxies" && props.nodes) {
+    const nodeItem = getItemsSchema(props.nodes);
+    const nodeProps = getProperties(nodeItem);
+    if (nodeProps?.levelId) {
+      setEnumOnProperty(nodeProps.levelId, Object.keys(registry.levelsById));
+    }
+  }
+
   if (kind === "shops") {
     if (props.allowedWeapons) {
       setEnumOnArrayItems(

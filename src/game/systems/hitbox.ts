@@ -8,6 +8,14 @@ export interface CircleHitboxPenetration {
   ny: number;
 }
 
+export interface HitboxHitboxPenetration {
+  contactX: number;
+  contactY: number;
+  depth: number;
+  nx: number;
+  ny: number;
+}
+
 const EPSILON = 0.0001;
 
 const getEllipseBoundaryDistance = (
@@ -21,6 +29,15 @@ const getEllipseBoundaryDistance = (
   );
   return denom > EPSILON ? 1 / denom : Math.max(radiusX, radiusY);
 };
+
+const getHitboxBoundaryDistance = (
+  hitbox: EnemyHitbox,
+  nx: number,
+  ny: number,
+): number =>
+  hitbox.kind === "circle"
+    ? hitbox.radius
+    : getEllipseBoundaryDistance(hitbox.radiusX, hitbox.radiusY, nx, ny);
 
 export const hitboxMaxRadius = (hitbox: EnemyHitbox): number =>
   hitbox.kind === "circle"
@@ -100,3 +117,31 @@ export const circleHitboxOverlap = (
       hitbox,
     ),
   );
+
+export const resolveHitboxHitboxPenetration = (
+  sourceX: number,
+  sourceY: number,
+  sourceHitbox: EnemyHitbox,
+  targetX: number,
+  targetY: number,
+  targetHitbox: EnemyHitbox,
+): HitboxHitboxPenetration | null => {
+  const dx = sourceX - targetX;
+  const dy = sourceY - targetY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const nx = dist > EPSILON ? dx / dist : 1;
+  const ny = dist > EPSILON ? dy / dist : 0;
+
+  const sourceBoundary = getHitboxBoundaryDistance(sourceHitbox, nx, ny);
+  const targetBoundary = getHitboxBoundaryDistance(targetHitbox, -nx, -ny);
+  const overlap = sourceBoundary + targetBoundary - dist;
+  if (overlap <= EPSILON) return null;
+
+  return {
+    contactX: sourceX - nx * sourceBoundary,
+    contactY: sourceY - ny * sourceBoundary,
+    depth: overlap,
+    nx,
+    ny,
+  };
+};

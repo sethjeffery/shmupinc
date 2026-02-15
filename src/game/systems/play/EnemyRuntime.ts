@@ -8,6 +8,8 @@ import { ENEMIES, resolveEnemyDefinition } from "../../data/enemies";
 import { Enemy } from "../../entities/Enemy";
 
 export interface EnemyPush {
+  contactX: number;
+  contactY: number;
   nx: number;
   ny: number;
   x: number;

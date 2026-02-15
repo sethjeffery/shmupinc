@@ -1,18 +1,12 @@
-import type { Vec2 } from "./scripts";
+import type { VectorShape } from "./vectorShape";
 
 export type GunId = string;
-
-export interface GunLine {
-  from: Vec2;
-  to: Vec2;
-}
 
 export interface GunDefinition {
   id: GunId;
   name: string;
   description: string;
-  outline: Vec2[];
-  lines?: GunLine[];
+  vector: VectorShape;
   fillColor?: number;
   lineColor?: number;
 }
