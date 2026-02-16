@@ -1,5 +1,5 @@
 import type { FireScript, MoveScript } from "./scripts";
-import type { VectorShape } from "./vectorShape";
+import type { VectorColor, VectorShape } from "./vectorShape";
 
 export interface BossPhase {
   hpThreshold: number;
@@ -34,8 +34,7 @@ export interface EnemyDef {
   rotation?: "fixed" | "movement";
   rotationDeg?: number;
   style?: {
-    fillColor?: number;
-    lineColor?: number;
+    color?: VectorColor;
     vector?: EnemyVector;
     fx?: {
       charge?: {

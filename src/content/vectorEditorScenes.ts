@@ -7,6 +7,8 @@ import type {
   CanvasEditorScene,
 } from "./canvasPointEditor";
 
+import { parseVectorColor } from "../game/data/vectorShape";
+
 export interface EditablePointPath {
   xPath: (number | string)[];
   yPath: (number | string)[];
@@ -23,12 +25,41 @@ interface VectorPreviewStyle {
   stroke: string;
 }
 
+const extractAlpha = (value: string, fallback: number): number => {
+  const rgbaMatch =
+    /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([+-]?(?:\d+\.?\d*|\.\d+))\s*\)$/i.exec(
+      value,
+    );
+  if (!rgbaMatch) return fallback;
+  const alpha = Number.parseFloat(rgbaMatch[1]);
+  return Number.isFinite(alpha) ? alpha : fallback;
+};
+
+const toRgba = (color: number, alpha: number): string => {
+  const r = (color >> 16) & 0xff;
+  const g = (color >> 8) & 0xff;
+  const b = color & 0xff;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const resolveStyledColor = (
+  override: number | undefined,
+  fallback: string,
+): string => {
+  if (override === undefined) return fallback;
+  return toRgba(override, extractAlpha(fallback, 1));
+};
+
 export const buildVectorScene = (
   vector: VectorShape,
   pathPrefix: (number | string)[],
   style: VectorPreviewStyle,
   guides?: CanvasEditorGuide[],
+  options?: {
+    allowStyleFallback?: boolean;
+  },
 ): SceneBuildResult => {
+  const allowStyleFallback = options?.allowStyleFallback === true;
   const pointPathById = new Map<string, EditablePointPath>();
   const points: CanvasEditorPoint[] = [];
   const paths: CanvasEditorPath[] = [];
@@ -71,16 +102,30 @@ export const buildVectorScene = (
         addPoint(pointId, x, y);
         circlePointIds.push(pointId);
       }
+      const fillColor = parseVectorColor(item.f);
+      const strokeColor = parseVectorColor(item.s);
       paths.push({
         closed: true,
-        fill: item.f ? style.fill : undefined,
+        fill:
+          fillColor !== undefined
+            ? resolveStyledColor(fillColor, style.fill)
+            : allowStyleFallback
+              ? style.fill
+              : undefined,
         pointIds: circlePointIds,
-        stroke: item.s === false ? null : style.stroke,
+        stroke:
+          strokeColor !== undefined
+            ? resolveStyledColor(strokeColor, style.stroke)
+            : allowStyleFallback
+              ? style.stroke
+              : null,
         width: item.w ?? 2,
       });
       continue;
     }
     if (item.t !== "p") continue;
+    const fillColor = parseVectorColor(item.f);
+    const strokeColor = parseVectorColor(item.s);
     let currentPointId: null | string = null;
     const pathCommands: CanvasEditorPathCommand[] = [];
     const helperPaths: CanvasEditorPath[] = [];
@@ -194,8 +239,18 @@ export const buildVectorScene = (
     if (pathCommands.length) {
       paths.push({
         commands: pathCommands,
-        fill: item.f ? style.fill : undefined,
-        stroke: item.s === false ? null : style.stroke,
+        fill:
+          fillColor !== undefined
+            ? resolveStyledColor(fillColor, style.fill)
+            : allowStyleFallback
+              ? style.fill
+              : undefined,
+        stroke:
+          strokeColor !== undefined
+            ? resolveStyledColor(strokeColor, style.stroke)
+            : allowStyleFallback
+              ? style.stroke
+              : null,
         width: item.w ?? 2,
       });
       paths.push(...helperPaths);

@@ -66,10 +66,7 @@ import {
   configureContentEditorTheme,
 } from "./monacoTheme";
 import { parseJsonWithLocation } from "./parseJson";
-import {
-  REFERENCE_PICKERS,
-  type ReferencePicker,
-} from "./referencePickers";
+import { REFERENCE_PICKERS, type ReferencePicker } from "./referencePickers";
 import { buildSchemaExplorer } from "./schemaExplorer";
 import { CONTENT_KINDS, contentSchemas } from "./schemas";
 import { buildContentRegistry } from "./validation";
@@ -1108,6 +1105,9 @@ export const initContentEditor = (): void => {
     pointPathPrefix: (number | string)[],
     style: { fill: string; helperStroke?: string; stroke: string },
     guides?: CanvasEditorGuide[],
+    options?: {
+      allowStyleFallback?: boolean;
+    },
   ): void => {
     if (previewGame) {
       teardownPreviewGame();
@@ -1118,6 +1118,7 @@ export const initContentEditor = (): void => {
       pointPathPrefix,
       style,
       guides,
+      options,
     );
     const editorInstance = ensurePreviewPointEditor(className, (update) => {
       const pointPath = pointPathById.get(update.id);
@@ -1133,8 +1134,8 @@ export const initContentEditor = (): void => {
   };
 
   const renderGunPreview = (gun: GunDefinition): void => {
-    const accent = gun.lineColor ?? 0x7df9ff;
-    const fill = toRgba(gun.fillColor ?? scaleColor(accent, 0.28), 0.9);
+    const accent = 0x7df9ff;
+    const fill = toRgba(scaleColor(accent, 0.28), 0.9);
     const stroke = toRgba(accent, 0.95);
     renderVectorPreview(
       "content-editor__gun-preview",
@@ -1146,6 +1147,8 @@ export const initContentEditor = (): void => {
         helperStroke: toRgba(accent, 0.5),
         stroke,
       },
+      undefined,
+      { allowStyleFallback: true },
     );
   };
 
@@ -1169,11 +1172,17 @@ export const initContentEditor = (): void => {
     const accent = getModAccentColor(mod.iconKind);
     const fill = toRgba(scaleColor(accent, 0.32), 0.9);
     const stroke = toRgba(accent, 0.95);
-    const { pointPathById, scene } = buildVectorScene(mod.icon, ["icon"], {
-      fill,
-      helperStroke: toRgba(accent, 0.5),
-      stroke,
-    });
+    const { pointPathById, scene } = buildVectorScene(
+      mod.icon,
+      ["icon"],
+      {
+        fill,
+        helperStroke: toRgba(accent, 0.5),
+        stroke,
+      },
+      undefined,
+      { allowStyleFallback: true },
+    );
     const editorInstance = ensureModIconPointEditor((update) => {
       const pointPath = pointPathById.get(update.id);
       if (!pointPath) return;
@@ -1230,6 +1239,7 @@ export const initContentEditor = (): void => {
         stroke: toRgba(ship.color, 0.95),
       },
       guides,
+      { allowStyleFallback: false },
     );
   };
 
@@ -1286,8 +1296,6 @@ export const initContentEditor = (): void => {
 
   const renderEnemyPreview = (enemy: EnemyDef): void => {
     const style = enemy.style ?? {};
-    const line = style.lineColor ?? 0xff6b6b;
-    const fill = style.fillColor ?? 0x1c0f1a;
     const vector = style.vector ?? DEFAULT_ENEMY_VECTOR;
     const hitboxGuides: CanvasEditorGuide[] = [];
     const radiusScale = enemy.radius > 0 ? 1 / enemy.radius : 1;
@@ -1317,11 +1325,12 @@ export const initContentEditor = (): void => {
       vector,
       ["style", "vector"],
       {
-        fill: toRgba(fill, 0.9),
-        helperStroke: toRgba(line, 0.45),
-        stroke: toRgba(line, 0.95),
+        fill: toRgba(0xffffff, 0.9),
+        helperStroke: toRgba(0xffffff, 0.45),
+        stroke: toRgba(0xffffff, 0.95),
       },
       hitboxGuides,
+      { allowStyleFallback: false },
     );
   };
 

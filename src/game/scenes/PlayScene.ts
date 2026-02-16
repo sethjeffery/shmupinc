@@ -9,14 +9,20 @@ import Phaser from "phaser";
 
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
 import { advanceActiveGalaxyOnLevelClear } from "../data/galaxyProgress";
-import { recordLevelCompletion } from "../data/levelProgress";
+import { getLevelStars, recordLevelCompletion } from "../data/levelProgress";
 import { clearActiveLevel, getActiveLevelSession } from "../data/levelState";
-import { bankGold, computePlayerLoadout } from "../data/save";
+import {
+  addResourceInSave,
+  bankGold,
+  computePlayerLoadout,
+  mutateSave,
+} from "../data/save";
 import {
   resolveShipHitbox,
   resolveShipRadius,
   shipHitboxMaxRadius,
 } from "../data/shipTypes";
+import { parseVectorColor } from "../data/vectorShape";
 import { type EnemyOverride } from "../data/waves";
 import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { PickupGold } from "../entities/PickupGold";
@@ -60,6 +66,17 @@ const ENEMY_MARGIN = 120;
 const SHIP_REGEN_PER_SEC = 0.05;
 const PLAYER_DEATH_HIDE_SHIP_MS = 180;
 const PLAYER_DEATH_RETURN_DELAY_MS = 3200;
+const PLAYER_ENTRY_DELAY_MS = 140;
+const PLAYER_ENTRY_DURATION_MS = 820;
+const PLAYER_ENTRY_LAUNCH_RING_MS = 260;
+const LEVEL_INTRO_HOLD_MS = 2000;
+const PLAYER_VICTORY_EXIT_MS = 520;
+const VICTORY_ROUTE_DELAY_MS = 760;
+const KILL_GOLD_MULTIPLIER = 0.42;
+const BOSS_GOLD_MULTIPLIER = 0.55;
+const FIRST_CLEAR_BONUS_BASE = 120;
+const FIRST_CLEAR_BONUS_STEP = 45;
+const FIRST_CLEAR_BONUS_MAX = 360;
 const PLAYER_DAMAGE_MULTIPLIER = 1.2;
 const HIT_COOLDOWN_SEC = 0.5;
 const BUMP_FX = {
@@ -105,11 +122,24 @@ const DAMAGE_JOLT_Y_RATIO = 0.14;
 const CHARGE_CUE_COOLDOWN_MIN_MS = 34;
 const CHARGE_CUE_COOLDOWN_MAX_MS = 165;
 
+const getLevelOrderNumber = (levelId: string): number => {
+  const match = /^L(\d+)_/i.exec(levelId);
+  if (!match) return 1;
+  const parsed = Number.parseInt(match[1], 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 1;
+  return parsed;
+};
+
+const computeFirstClearGoldBonus = (levelId: string): number => {
+  const order = getLevelOrderNumber(levelId);
+  const bonus = FIRST_CLEAR_BONUS_BASE + (order - 1) * FIRST_CLEAR_BONUS_STEP;
+  return Math.min(FIRST_CLEAR_BONUS_MAX, bonus);
+};
+
 export class PlayScene extends Phaser.Scene {
   private hud!: HUD;
   private ship!: Ship;
   private playArea = new Phaser.Geom.Rectangle();
-  private playAreaFrame?: Phaser.GameObjects.Graphics;
   private pointerActive = false;
   private firingInputActive = false;
   private target = new Phaser.Math.Vector2();
@@ -134,6 +164,7 @@ export class PlayScene extends Phaser.Scene {
   private runEnemiesDefeated = 0;
   private runEnemiesSpawned = 0;
   private shipAlive = true;
+  private introSequenceActive = false;
   private bossTimerMs = 0;
   private bossActive = false;
   private enemyEntered = new WeakMap<Enemy, boolean>();
@@ -159,6 +190,8 @@ export class PlayScene extends Phaser.Scene {
   private collisionResolver?: PlayerCollisionResolver;
   private fpsText?: Phaser.GameObjects.Text;
   private fpsTimerMs = 0;
+  private missionIntroTitle?: Phaser.GameObjects.Text;
+  private missionIntroTag?: Phaser.GameObjects.Text;
   private bulletContext: BulletUpdateContext = {
     enemies: [],
     playerAlive: false,
@@ -252,6 +285,7 @@ export class PlayScene extends Phaser.Scene {
     this.runEnemiesSpawned = 0;
     this.bossTimerMs = 0;
     this.bossActive = false;
+    this.introSequenceActive = false;
     this.enemyEntered = new WeakMap();
     this.framePulseBoost = 0;
     this.framePulseColor = FRAME_PULSE_COLOR;
@@ -269,14 +303,19 @@ export class PlayScene extends Phaser.Scene {
       this.levelRunner.destroy();
       this.levelRunner = undefined;
     }
-    if (this.playAreaFrame) {
-      this.playAreaFrame.destroy();
-      this.playAreaFrame = undefined;
-    }
     if (this.gameOverTimer) {
       this.gameOverTimer.remove(false);
       this.gameOverTimer = undefined;
     }
+    if (this.missionIntroTitle) {
+      this.missionIntroTitle.destroy();
+      this.missionIntroTitle = undefined;
+    }
+    if (this.missionIntroTag) {
+      this.missionIntroTag.destroy();
+      this.missionIntroTag = undefined;
+    }
+    this.applyCanvasFx();
     this.collisionResolver = undefined;
   }
 
@@ -291,13 +330,15 @@ export class PlayScene extends Phaser.Scene {
     this.setupInput();
     this.scale.off("resize", this.onResize, this);
     this.scale.on("resize", this.onResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.clearCanvasFx();
+    });
 
     const stats = computePlayerLoadout();
     this.mountedWeapons = stats.mountedWeapons;
     this.magnetMultiplier = stats.ship.magnetMultiplier ?? 1;
 
     this.ship = new Ship(this, {
-      color: stats.ship.color,
       hitbox: resolveShipHitbox(stats.ship),
       maxHp: stats.ship.maxHp,
       moveSpeed: stats.ship.moveSpeed,
@@ -328,7 +369,11 @@ export class PlayScene extends Phaser.Scene {
     this.runElapsedMs = 0;
     this.runEnemiesDefeated = 0;
     this.runEnemiesSpawned = 0;
-    this.ship.setPosition(this.defaultTarget.x, this.defaultTarget.y);
+    this.ship.graphics.setAlpha(1);
+    this.ship.setPosition(
+      this.defaultTarget.x,
+      this.playArea.y + this.playArea.height + this.ship.radius * 2.4,
+    );
     this.target.copy(this.defaultTarget);
 
     this.fpsText = this.add
@@ -394,7 +439,7 @@ export class PlayScene extends Phaser.Scene {
         spawnEnemy: (enemyId, x, y, hpMultiplier, overrides) =>
           this.spawnEnemy(enemyId, x, y, hpMultiplier, overrides),
       });
-      this.levelRunner.start();
+      this.startMissionIntro(activeLevel.title);
     } else {
       this.game.events.emit("ui:route", "menu");
       return;
@@ -453,7 +498,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateShip(delta: number): void {
-    if (!this.shipAlive) return;
+    if (!this.shipAlive || this.introSequenceActive) return;
     if (this.ship.hp < this.ship.maxHp) {
       this.ship.hp = Math.min(
         this.ship.maxHp,
@@ -470,7 +515,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateFiring(delta: number): void {
-    if (!this.shipAlive) return;
+    if (!this.shipAlive || this.introSequenceActive) return;
     this.playerFiring.update(
       delta,
       this.ship.x,
@@ -531,8 +576,7 @@ export class PlayScene extends Phaser.Scene {
       },
       onEnemyCharging: (enemy) => this.vfx.onEnemyCharging(enemy, deltaMs),
       onEnemyContact: (index, enemy, push, contactDamage) => {
-        const fxColor =
-          enemy.def.style?.lineColor ?? enemy.def.style?.fillColor ?? 0xff6b6b;
+        const fxColor = parseVectorColor(enemy.def.style?.color ?? 0xff6b6b);
         const contactX = push.contactX;
         const contactY = push.contactY;
         this.vfx.onPlayerContact(contactX, contactY, fxColor);
@@ -703,7 +747,10 @@ export class PlayScene extends Phaser.Scene {
 
   private dropGold(enemy: Enemy): void {
     const { max, min } = enemy.def.goldDrop;
-    const total = Phaser.Math.Between(min, max);
+    const totalRaw = Phaser.Math.Between(min, max);
+    const goldScale =
+      enemy.def.id === "boss" ? BOSS_GOLD_MULTIPLIER : KILL_GOLD_MULTIPLIER;
+    const total = Math.max(1, Math.round(totalRaw * goldScale));
     if (enemy.def.id !== "boss") {
       const pickup = this.goldPickups.acquire();
       pickup.spawn(enemy.x, enemy.y, Math.max(1, total));
@@ -857,6 +904,7 @@ export class PlayScene extends Phaser.Scene {
   private setupInput(): void {
     this.input.addPointer(2);
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (this.isGameOver || this.overlayShown) return;
       const touch = this.isTouchPointer(pointer);
       if (touch) {
         this.pointerActive = true;
@@ -865,6 +913,8 @@ export class PlayScene extends Phaser.Scene {
       this.setTargetFromPointer(pointer);
     });
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (this.introSequenceActive || this.isGameOver || this.overlayShown)
+        return;
       const touch = this.isTouchPointer(pointer);
       if (touch && !this.pointerActive) return;
       this.setTargetFromPointer(pointer);
@@ -930,7 +980,7 @@ export class PlayScene extends Phaser.Scene {
     );
     this.damageJoltX = 0;
     this.damageJoltY = 0;
-    this.drawPlayAreaFrame(this.healthPulseStrength);
+    this.applyCanvasFx();
     this.updateOuterFrameVars();
     this.touchOffsetY = Math.round(
       Phaser.Math.Clamp(this.playArea.height * 0.12, 40, 120),
@@ -961,40 +1011,12 @@ export class PlayScene extends Phaser.Scene {
     this.fpsText.setPosition(x, y);
   }
 
-  private drawPlayAreaFrame(pulseStrength: number): void {
-    if (!this.playAreaFrame) {
-      this.playAreaFrame = this.add.graphics();
-      this.playAreaFrame.setDepth(30);
-    }
-    const inset = 1;
-    this.playAreaFrame.clear();
-    if (pulseStrength > 0) {
-      const glowAlpha = 0.12 + pulseStrength * 0.35;
-      this.playAreaFrame.lineStyle(7, this.framePulseColor, glowAlpha);
-      this.playAreaFrame.strokeRoundedRect(
-        this.playArea.x + inset - 2,
-        this.playArea.y + inset - 2,
-        this.playArea.width - inset * 2 + 4,
-        this.playArea.height - inset * 2 + 4,
-        PLAYFIELD_CORNER_RADIUS + 2,
-      );
-    }
-    this.playAreaFrame.lineStyle(2, 0x2b415f, 1);
-    this.playAreaFrame.strokeRoundedRect(
-      this.playArea.x + inset,
-      this.playArea.y + inset,
-      this.playArea.width - inset * 2,
-      this.playArea.height - inset * 2,
-      PLAYFIELD_CORNER_RADIUS,
-    );
-  }
-
   private updateLowHealthEffect(delta: number): void {
     this.framePulseBoost = Math.max(0, this.framePulseBoost - delta * 0.65);
     const strength = this.framePulseBoost;
     if (Math.abs(strength - this.healthPulseStrength) > 0.02) {
       this.healthPulseStrength = strength;
-      this.drawPlayAreaFrame(this.healthPulseStrength);
+      this.applyCanvasFx();
     }
   }
 
@@ -1012,22 +1034,44 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private onResize = (_gameSize: Phaser.Structs.Size): void => {
+    const prevShipX = this.ship?.x ?? this.defaultTarget.x;
+    const prevShipY = this.ship?.y ?? this.defaultTarget.y;
     this.updatePlayArea();
     if (this.ship) {
-      this.ship.setPosition(this.defaultTarget.x, this.defaultTarget.y);
+      if (this.introSequenceActive) {
+        this.ship.setPosition(
+          this.defaultTarget.x,
+          this.playArea.y + this.playArea.height + this.ship.radius * 2.4,
+        );
+      } else {
+        const minX = this.playArea.x + this.playArea.width * PADDING;
+        const maxX = this.playArea.x + this.playArea.width * (1 - PADDING);
+        const minY = this.playArea.y + this.playArea.height * PADDING;
+        const maxY = this.playArea.y + this.playArea.height * (1 - PADDING);
+        const nextX = Phaser.Math.Clamp(prevShipX, minX, maxX);
+        const nextY = Phaser.Math.Clamp(prevShipY, minY, maxY);
+        this.ship.setPosition(nextX, nextY);
+        this.target.set(
+          Phaser.Math.Clamp(this.target.x, minX, maxX),
+          Phaser.Math.Clamp(this.target.y, minY, maxY),
+        );
+      }
     }
   };
 
   private handleLevelVictory(): void {
     if (this.isGameOver || this.overlayShown) return;
     this.overlayShown = true;
+    this.introSequenceActive = false;
     this.pointerActive = false;
+    this.firingInputActive = false;
     this.triggerFramePulse(0.9, FRAME_SUCCESS_COLOR);
     this.clearWaveEntities();
     this.bankRunGold();
     const activeSession = getActiveLevelSession();
+    const starsBefore = activeSession?.id ? getLevelStars(activeSession.id) : 0;
     if (activeSession?.id) {
-      recordLevelCompletion(activeSession.id, {
+      const completion = recordLevelCompletion(activeSession.id, {
         damageTaken: this.runDamageTaken,
         elapsedMs: this.runElapsedMs,
         enemiesDefeated: this.runEnemiesDefeated,
@@ -1035,6 +1079,16 @@ export class PlayScene extends Phaser.Scene {
         hp: this.ship.hp,
         maxHp: this.ship.maxHp,
       });
+      if (starsBefore <= 0 && completion.starsBest > 0) {
+        const firstClearBonus = computeFirstClearGoldBonus(activeSession.id);
+        mutateSave((save) => {
+          addResourceInSave(save, "gold", firstClearBonus);
+        });
+        this.showMissionRewardText(
+          `FIRST CLEAR +$${firstClearBonus}`,
+          "#ffd166",
+        );
+      }
       if (activeSession.returnRoute === "progression") {
         advanceActiveGalaxyOnLevelClear(activeSession.id);
       }
@@ -1042,8 +1096,203 @@ export class PlayScene extends Phaser.Scene {
     const beatId = activeSession?.level.postBeatId;
     const nextRoute = activeSession?.returnRoute ?? "menu";
     clearActiveLevel();
-    this.time.delayedCall(700, () => {
+    this.particles.spawnRing(
+      this.ship.x,
+      this.ship.y,
+      this.ship.radius * 2.4,
+      0x7df9ff,
+      2.4,
+      0.26,
+      true,
+    );
+    this.particles.spawnSparks(this.ship.x, this.ship.y, 14, {
+      colors: [0x7df9ff, 0xdffbff, 0x9ee9ff],
+      drag: 0.9,
+      lengthMax: 12,
+      lengthMin: 5,
+      lifeMax: 0.32,
+      lifeMin: 0.16,
+      priority: true,
+      speedMax: 260,
+      speedMin: 120,
+      thicknessMax: 1.6,
+      thicknessMin: 0.9,
+    });
+    this.tweens.addCounter({
+      duration: PLAYER_VICTORY_EXIT_MS,
+      ease: "Sine.easeIn",
+      from: 0,
+      onUpdate: (tween) => {
+        const progress = tween.getValue() ?? 0;
+        const y = Phaser.Math.Linear(
+          this.defaultTarget.y,
+          this.playArea.y - this.ship.radius * 3.6,
+          progress,
+        );
+        this.ship.graphics.setAlpha(1 - progress);
+        this.ship.setPosition(this.defaultTarget.x, y);
+      },
+      to: 1,
+    });
+    this.time.delayedCall(VICTORY_ROUTE_DELAY_MS, () => {
       emitVictoryRoute(this.game, beatId, nextRoute);
+    });
+  }
+
+  private startMissionIntro(levelTitle: string): void {
+    this.introSequenceActive = true;
+    this.pointerActive = false;
+    this.firingInputActive = false;
+    this.target.copy(this.defaultTarget);
+    this.showMissionIntroText(levelTitle);
+    this.ship.graphics.setAlpha(0.28);
+    this.tweens.addCounter({
+      delay: PLAYER_ENTRY_DELAY_MS,
+      duration: PLAYER_ENTRY_DURATION_MS,
+      ease: "Cubic.easeOut",
+      from: 0,
+      onComplete: () => {
+        this.ship.graphics.setAlpha(1);
+        this.ship.setPosition(this.defaultTarget.x, this.defaultTarget.y);
+        this.particles.spawnRing(
+          this.ship.x,
+          this.ship.y,
+          this.ship.radius * 1.9,
+          0x7df9ff,
+          2,
+          0.2,
+          true,
+        );
+        this.time.delayedCall(PLAYER_ENTRY_LAUNCH_RING_MS, () => {
+          this.levelRunner?.start();
+          this.introSequenceActive = false;
+        });
+      },
+      onUpdate: (tween) => {
+        const progress = tween.getValue() ?? 0;
+        const y = Phaser.Math.Linear(
+          this.playArea.y + this.playArea.height + this.ship.radius * 2.4,
+          this.defaultTarget.y,
+          progress,
+        );
+        this.ship.graphics.setAlpha(0.28 + progress * 0.72);
+        this.ship.setPosition(this.defaultTarget.x, y);
+      },
+      to: 1,
+    });
+  }
+
+  private showMissionIntroText(levelTitle: string): void {
+    this.missionIntroTag?.destroy();
+    this.missionIntroTitle?.destroy();
+    const centerX = this.playArea.x + this.playArea.width * 0.5;
+    const tagY = this.playArea.y + this.playArea.height * 0.24;
+    const titleY = tagY + 28;
+    this.missionIntroTag = this.add
+      .text(centerX, tagY, "MISSION START", {
+        color: "#7df9ff",
+        fontFamily: "Orbitron, Arial, sans-serif",
+        fontSize: "12px",
+        fontStyle: "700",
+        letterSpacing: 4,
+      })
+      .setAlpha(0)
+      .setDepth(34)
+      .setOrigin(0.5, 0.5);
+    this.missionIntroTitle = this.add
+      .text(centerX, titleY + 8, levelTitle.toUpperCase(), {
+        color: "#e8f3ff",
+        fontFamily: "Orbitron, Arial, sans-serif",
+        fontSize: "20px",
+        fontStyle: "700",
+        letterSpacing: 2,
+      })
+      .setAlpha(0)
+      .setDepth(34)
+      .setOrigin(0.5, 0.5);
+
+    this.tweens.addCounter({
+      duration: 280,
+      ease: "Sine.easeOut",
+      from: 0,
+      onUpdate: (tween) => {
+        const progress = tween.getValue() ?? 0;
+        if (this.missionIntroTag) {
+          this.missionIntroTag.setAlpha(progress);
+          this.missionIntroTag.setY(tagY - progress * 5);
+        }
+        if (this.missionIntroTitle) {
+          this.missionIntroTitle.setAlpha(progress);
+          this.missionIntroTitle.setY(titleY - progress * 7);
+        }
+      },
+      to: 1,
+    });
+
+    this.time.delayedCall(LEVEL_INTRO_HOLD_MS, () => {
+      this.tweens.addCounter({
+        duration: 340,
+        ease: "Sine.easeIn",
+        from: 0,
+        onComplete: () => {
+          this.missionIntroTag?.destroy();
+          this.missionIntroTag = undefined;
+          this.missionIntroTitle?.destroy();
+          this.missionIntroTitle = undefined;
+        },
+        onUpdate: (tween) => {
+          const alpha = 1 - (tween.getValue() ?? 0);
+          if (this.missionIntroTag) this.missionIntroTag.setAlpha(alpha);
+          if (this.missionIntroTitle) this.missionIntroTitle.setAlpha(alpha);
+        },
+        to: 1,
+      });
+    });
+  }
+
+  private showMissionRewardText(text: string, color: string): void {
+    const label = this.add
+      .text(
+        this.playArea.x + this.playArea.width * 0.5,
+        this.playArea.y + this.playArea.height * 0.28,
+        text,
+        {
+          color,
+          fontFamily: "Orbitron, Arial, sans-serif",
+          fontSize: "16px",
+          fontStyle: "700",
+          letterSpacing: 1.6,
+        },
+      )
+      .setAlpha(0)
+      .setDepth(35)
+      .setOrigin(0.5, 0.5);
+
+    this.tweens.addCounter({
+      duration: 780,
+      ease: "Sine.easeOut",
+      from: 0,
+      onUpdate: (tween) => {
+        const progress = tween.getValue() ?? 0;
+        label.setAlpha(0.95 * (1 - progress * 0.4));
+        label.setY(
+          this.playArea.y + this.playArea.height * 0.28 - progress * 24,
+        );
+      },
+      to: 1,
+    });
+
+    this.time.delayedCall(820, () => {
+      this.tweens.addCounter({
+        duration: 220,
+        ease: "Sine.easeIn",
+        from: 0,
+        onComplete: () => label.destroy(),
+        onUpdate: (tween) => {
+          label.setAlpha(0.58 * (1 - (tween.getValue() ?? 0)));
+        },
+        to: 1,
+      });
     });
   }
 
@@ -1053,15 +1302,26 @@ export class PlayScene extends Phaser.Scene {
       Phaser.Math.Clamp(strength, 0, 1),
     );
     this.framePulseColor = color;
-    this.drawPlayAreaFrame(
-      Math.max(this.healthPulseStrength, this.framePulseBoost),
-    );
+    this.applyCanvasFx();
   }
 
   private triggerImpactShake(intensity: number, durationMs: number): void {
     if (this.shakeCooldownMs > 0) return;
     this.shakeCooldownMs = SHAKE_COOLDOWN_MS;
-    this.cameras.main.shake(durationMs, intensity, true);
+    const durationFactor = Phaser.Math.Clamp(durationMs / 420, 0.35, 2.4);
+    const amplitude = Phaser.Math.Clamp(
+      this.playArea.width * intensity * durationFactor,
+      0.08,
+      DAMAGE_JOLT_MAX_ADD * 1.6,
+    );
+    this.damageJoltAmplitude = Math.min(
+      DAMAGE_JOLT_MAX_AMP,
+      this.damageJoltAmplitude + amplitude,
+    );
+    this.damageJoltFreqHz = Math.max(
+      this.damageJoltFreqHz,
+      Phaser.Math.Linear(DAMAGE_JOLT_FREQ_MIN, DAMAGE_JOLT_FREQ_MAX, 0.8),
+    );
   }
 
   private registerDamageJolt(damageTaken: number): void {
@@ -1095,12 +1355,11 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateDamageJolt(delta: number): void {
-    const camera = this.cameras.main;
     if (this.damageJoltAmplitude <= DAMAGE_JOLT_STOP_EPS) {
       if (this.damageJoltX !== 0 || this.damageJoltY !== 0) {
         this.damageJoltX = 0;
         this.damageJoltY = 0;
-        camera.setScroll(this.playArea.x, this.playArea.y);
+        this.applyCanvasFx();
       }
       return;
     }
@@ -1112,11 +1371,42 @@ export class PlayScene extends Phaser.Scene {
       Math.sin(this.damageJoltPhase * 0.5 + 0.7) *
       this.damageJoltAmplitude *
       DAMAGE_JOLT_Y_RATIO;
-    camera.setScroll(
-      this.playArea.x + this.damageJoltX,
-      this.playArea.y + this.damageJoltY,
-    );
+    this.applyCanvasFx();
     this.damageJoltAmplitude *= Math.exp(-delta * DAMAGE_JOLT_DECAY);
+  }
+
+  private applyCanvasFx(): void {
+    const canvas = this.game?.canvas;
+    if (!canvas) return;
+    const glowStrength = Phaser.Math.Clamp(
+      Math.max(this.healthPulseStrength, this.framePulseBoost),
+      0,
+      1,
+    );
+    const glowColor = Phaser.Display.Color.ValueToColor(this.framePulseColor);
+    canvas.style.setProperty("--canvas-glow-strength", glowStrength.toFixed(3));
+    canvas.style.setProperty("--canvas-glow-r", `${glowColor.red}`);
+    canvas.style.setProperty("--canvas-glow-g", `${glowColor.green}`);
+    canvas.style.setProperty("--canvas-glow-b", `${glowColor.blue}`);
+    canvas.style.setProperty(
+      "--canvas-jolt-x",
+      `${this.damageJoltX.toFixed(3)}px`,
+    );
+    canvas.style.setProperty(
+      "--canvas-jolt-y",
+      `${this.damageJoltY.toFixed(3)}px`,
+    );
+  }
+
+  private clearCanvasFx(): void {
+    const canvas = this.game?.canvas;
+    if (!canvas) return;
+    canvas.style.setProperty("--canvas-glow-strength", "0");
+    canvas.style.setProperty("--canvas-glow-r", "125");
+    canvas.style.setProperty("--canvas-glow-g", "249");
+    canvas.style.setProperty("--canvas-glow-b", "255");
+    canvas.style.setProperty("--canvas-jolt-x", "0px");
+    canvas.style.setProperty("--canvas-jolt-y", "0px");
   }
 
   private getLowHealthState(): "critical" | "warning" | undefined {

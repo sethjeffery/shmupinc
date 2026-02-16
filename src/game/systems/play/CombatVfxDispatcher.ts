@@ -3,6 +3,7 @@ import type { BulletOwner } from "../../entities/Bullet";
 import type { Enemy } from "../../entities/Enemy";
 import type { ParticleSystem } from "../Particles";
 
+import { parseVectorColor } from "../../data/vectorShape";
 import {
   getBulletExplosionInfo,
   type BulletExplosionInfo,
@@ -195,7 +196,7 @@ export class CombatVfxDispatcher {
     const progress = clamp(enemy.chargeProgress, 0, 1);
     const style = enemy.def.style;
     const chargeFx = style?.fx?.charge;
-    const color = style?.lineColor ?? ENEMY_DEATH_COLOR;
+    const color = parseVectorColor(style?.color) ?? ENEMY_DEATH_COLOR;
     const minCount = clamp(
       Math.round(chargeFx?.inwardCountMinMax?.[0] ?? 2),
       1,
@@ -245,7 +246,7 @@ export class CombatVfxDispatcher {
 
   onEnemyDeath(enemy: Enemy, dropGold: boolean): void {
     const deathFx = enemy.def.style?.fx?.death;
-    const color = enemy.def.style?.lineColor ?? ENEMY_DEATH_COLOR;
+    const color = parseVectorColor(enemy.def.style?.color) ?? ENEMY_DEATH_COLOR;
     if (dropGold) {
       const isBoss = enemy.def.id === "boss";
       const primaryBurst = clamp(
@@ -319,7 +320,8 @@ export class CombatVfxDispatcher {
     const hpRatio = enemy.hpRatio;
     const deathProgress = clamp(1 - hpRatio / 0.25, 0, 1);
     const smokeColor = 0x394553;
-    const sparkColor = enemy.def.style?.lineColor ?? ENEMY_DEATH_COLOR;
+    const sparkColor =
+      parseVectorColor(enemy.def.style?.color) ?? ENEMY_DEATH_COLOR;
 
     if (!this.dyingEntered.has(enemy)) {
       this.dyingEntered.add(enemy);

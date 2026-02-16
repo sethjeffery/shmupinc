@@ -7,4 +7,3 @@ export const getGalaxies = (): Record<string, GalaxyDefinition> =>
 
 export const getFirstGalaxyId = (): null | string =>
   Object.keys(getGalaxies()).sort((a, b) => a.localeCompare(b))[0] ?? null;
-

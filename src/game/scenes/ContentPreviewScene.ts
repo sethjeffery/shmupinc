@@ -40,7 +40,7 @@ const PLAYER_Y_RATIO = 0.84;
 const WEAPON_PREVIEW_ZOOM = 2;
 const WEAPON_PREVIEW_DUMMY_HP = 14;
 
-const createWeaponPreviewDummy = (id: string, lineColor: number): EnemyDef => ({
+const createWeaponPreviewDummy = (id: string): EnemyDef => ({
   fire: { loop: false, steps: [] },
   goldDrop: { max: 0, min: 0 },
   hitbox: { kind: "circle", radius: 14 },
@@ -52,25 +52,23 @@ const createWeaponPreviewDummy = (id: string, lineColor: number): EnemyDef => ({
   },
   radius: 14,
   style: {
-    fillColor: 0x151b27,
-    lineColor,
     vector: DEFAULT_ENEMY_VECTOR,
   },
 });
 
 const WEAPON_PREVIEW_DUMMIES: { def: EnemyDef; x: number; y: number }[] = [
   {
-    def: createWeaponPreviewDummy("previewDummyA", 0x7fa8ff),
+    def: createWeaponPreviewDummy("previewDummyA"),
     x: -0.24,
     y: 0.33,
   },
   {
-    def: createWeaponPreviewDummy("previewDummyB", 0xff8ab6),
+    def: createWeaponPreviewDummy("previewDummyB"),
     x: 0.02,
     y: 0.36,
   },
   {
-    def: createWeaponPreviewDummy("previewDummyC", 0x85ffd6),
+    def: createWeaponPreviewDummy("previewDummyC"),
     x: 0.18,
     y: 0.34,
   },
@@ -177,7 +175,6 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.playerMarker.setDepth(2);
     this.drawPlayerMarker();
     this.playerShip = new Ship(this, {
-      color: 0x7df9ff,
       hitbox: { kind: "circle", radius: 17 },
       maxHp: 6,
       moveSpeed: 0,
@@ -595,7 +592,7 @@ export class ContentPreviewScene extends Phaser.Scene {
       this.playerShip.graphics.setVisible(show);
       if (show && this.shipDef) {
         const radius = resolveShipRadius(this.shipDef);
-        this.playerShip.setAppearance(this.shipDef.color, this.shipDef.vector);
+        this.playerShip.setAppearance(this.shipDef.vector);
         this.playerShip.setHitbox(resolveShipHitbox(this.shipDef));
         this.playerShip.setRadius(radius);
         this.playerShip.setMountedWeapons(this.mountedWeapons);

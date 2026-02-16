@@ -1,0 +1,117 @@
+{
+  "id": "remix-overload",
+  "spawns": [
+    {
+      "atMs": 0,
+      "enemyId": "crossfire",
+      "x": -0.24,
+      "y": -0.1,
+      "overrides": { "hp": 5 }
+    },
+    {
+      "atMs": 500,
+      "enemyId": "crossfire",
+      "x": 0.24,
+      "y": -0.1,
+      "overrides": { "hp": 5 }
+    },
+    {
+      "atMs": 1650,
+      "enemyId": "sine",
+      "x": -0.28,
+      "y": -0.08,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 2050,
+      "enemyId": "sine",
+      "x": 0,
+      "y": -0.08,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 2450,
+      "enemyId": "sine",
+      "x": 0.28,
+      "y": -0.08,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 3900,
+      "enemyId": "skitter",
+      "x": -0.24,
+      "y": -0.1,
+      "overrides": { "hp": 4 }
+    },
+    {
+      "atMs": 4550,
+      "enemyId": "skitter",
+      "x": 0.24,
+      "y": -0.1,
+      "overrides": { "hp": 4 }
+    },
+    {
+      "atMs": 6200,
+      "enemyId": "sniper",
+      "x": -0.22,
+      "y": -0.08,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 6900,
+      "enemyId": "sniper",
+      "x": 0.22,
+      "y": -0.08,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 8300,
+      "enemyId": "spinner",
+      "x": 0,
+      "y": -0.12,
+      "overrides": { "hp": 6 }
+    },
+    {
+      "atMs": 9850,
+      "enemyId": "swooper",
+      "x": -0.32,
+      "y": -0.12,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 10300,
+      "enemyId": "swooper",
+      "x": 0,
+      "y": -0.12,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 10750,
+      "enemyId": "swooper",
+      "x": 0.32,
+      "y": -0.12,
+      "overrides": { "hp": 3 }
+    },
+    {
+      "atMs": 12300,
+      "enemyId": "bomber",
+      "x": -0.2,
+      "y": -0.1,
+      "overrides": { "hp": 7 }
+    },
+    {
+      "atMs": 12900,
+      "enemyId": "bomber",
+      "x": 0.2,
+      "y": -0.1,
+      "overrides": { "hp": 7 }
+    },
+    {
+      "atMs": 14700,
+      "enemyId": "crossfire",
+      "x": 0,
+      "y": -0.12,
+      "overrides": { "hp": 6 }
+    }
+  ]
+}

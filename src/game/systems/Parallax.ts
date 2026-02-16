@@ -1,23 +1,23 @@
 import Phaser from "phaser";
 
 interface Star {
-  x: number;
-  y: number;
-  size: number;
   alpha: number;
+  size: number;
   stretch: boolean;
   twinklePhase: number;
   twinkleSpeed: number;
+  x: number;
+  y: number;
 }
 
 interface ParallaxLayer {
-  speed: number;
   color: number;
+  gfx: Phaser.GameObjects.Graphics;
+  speed: number;
+  stars: Star[];
   windAmp: number;
   windFreq: number;
   windPhase: number;
-  stars: Star[];
-  gfx: Phaser.GameObjects.Graphics;
 }
 
 function randRange(min: number, max: number): number {
@@ -25,10 +25,10 @@ function randRange(min: number, max: number): number {
 }
 
 export class ParallaxBackground {
-  private scene: Phaser.Scene;
-  private layers: ParallaxLayer[] = [];
   private bounds: Phaser.Geom.Rectangle;
   private elapsedSec = 0;
+  private layers: ParallaxLayer[] = [];
+  private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, bounds?: Phaser.Geom.Rectangle) {
     this.scene = scene;
@@ -44,11 +44,34 @@ export class ParallaxBackground {
   }
 
   setBounds(bounds: Phaser.Geom.Rectangle): void {
+    const oldWidth = this.bounds.width;
+    const oldHeight = this.bounds.height;
+    const unchanged =
+      this.bounds.x === bounds.x &&
+      this.bounds.y === bounds.y &&
+      oldWidth === bounds.width &&
+      oldHeight === bounds.height;
+    if (unchanged) return;
+
     this.bounds.setTo(bounds.x, bounds.y, bounds.width, bounds.height);
+
     for (const layer of this.layers) {
       for (const star of layer.stars) {
-        star.x = randRange(0, this.bounds.width);
-        star.y = randRange(0, this.bounds.height);
+        if (oldWidth > 0 && oldHeight > 0) {
+          star.x = Phaser.Math.Clamp(
+            (star.x / oldWidth) * this.bounds.width,
+            0,
+            this.bounds.width,
+          );
+          star.y = Phaser.Math.Clamp(
+            (star.y / oldHeight) * this.bounds.height,
+            0,
+            this.bounds.height,
+          );
+        } else {
+          star.x = randRange(0, this.bounds.width);
+          star.y = randRange(0, this.bounds.height);
+        }
       }
     }
   }

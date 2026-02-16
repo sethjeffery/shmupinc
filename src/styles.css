@@ -19,6 +19,12 @@
   --play-cx: 50vw;
   --play-cy: 50vh;
   --play-r: 18px;
+  --canvas-jolt-x: 0px;
+  --canvas-jolt-y: 0px;
+  --canvas-glow-strength: 0;
+  --canvas-glow-r: 125;
+  --canvas-glow-g: 249;
+  --canvas-glow-b: 255;
 }
 
 canvas {
@@ -49,6 +55,34 @@ body.game-locked {
   height: 100vh;
   position: relative;
   z-index: 2;
+  display: flex;
+}
+
+#app canvas {
+  display: block;
+  border-radius: var(--play-r);
+  border: 1px solid rgba(67, 98, 134, 0.92);
+  transform: translate3d(var(--canvas-jolt-x), var(--canvas-jolt-y), 0);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.52),
+    0 0 calc(10px + var(--canvas-glow-strength) * 34px)
+      rgba(
+        var(--canvas-glow-r),
+        var(--canvas-glow-g),
+        var(--canvas-glow-b),
+        calc(0.11 + var(--canvas-glow-strength) * 0.44)
+      ),
+    inset 0 0 calc(8px + var(--canvas-glow-strength) * 20px)
+      rgba(
+        var(--canvas-glow-r),
+        var(--canvas-glow-g),
+        var(--canvas-glow-b),
+        calc(0.06 + var(--canvas-glow-strength) * 0.18)
+      );
+  transition:
+    box-shadow 60ms linear,
+    border-color 100ms linear;
+  will-change: transform, box-shadow;
 }
 
 #content-root {
@@ -248,6 +282,129 @@ body.ui-open canvas {
   display: flex;
 }
 
+.ui-overlay--menu {
+  background:
+    radial-gradient(
+      circle at 22% 16%,
+      rgba(125, 249, 255, 0.14),
+      transparent 56%
+    ),
+    radial-gradient(
+      circle at 82% 74%,
+      rgba(255, 209, 102, 0.12),
+      transparent 50%
+    ),
+    linear-gradient(152deg, rgba(7, 10, 17, 0.94), rgba(4, 6, 11, 0.97));
+}
+
+.menu-shell {
+  position: relative;
+  width: min(560px, 94vw);
+  padding: 28px 26px 24px;
+  border-radius: 20px;
+  background: linear-gradient(
+    150deg,
+    rgba(14, 22, 38, 0.95),
+    rgba(8, 12, 22, 0.97)
+  );
+  border: 1px solid rgba(125, 249, 255, 0.26);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.56),
+    inset 0 0 26px rgba(125, 249, 255, 0.09);
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  gap: 12px;
+}
+
+.menu-shell__halo,
+.menu-shell__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.menu-shell__halo {
+  background:
+    radial-gradient(
+      circle at 28% 26%,
+      rgba(125, 249, 255, 0.18),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 76% 78%,
+      rgba(255, 209, 102, 0.15),
+      transparent 40%
+    );
+  filter: blur(1px);
+}
+
+.menu-shell__grid {
+  background-image:
+    linear-gradient(rgba(125, 249, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 249, 255, 0.06) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0.24)
+  );
+}
+
+.menu-shell__badge,
+.menu-shell__title,
+.menu-shell__subtitle,
+.menu-shell__actions,
+.menu-shell__hint,
+.menu-shell__divider {
+  position: relative;
+  z-index: 1;
+}
+
+.menu-shell__badge {
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(125, 249, 255, 0.88);
+}
+
+.menu-shell__title {
+  font-family: "Orbitron", sans-serif;
+  font-size: clamp(30px, 7vw, 44px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f1f8ff;
+  text-shadow: 0 0 16px rgba(125, 249, 255, 0.24);
+}
+
+.menu-shell__subtitle {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #c1d5eb;
+  max-width: 45ch;
+}
+
+.menu-shell__divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(125, 249, 255, 0),
+    rgba(125, 249, 255, 0.5),
+    rgba(125, 249, 255, 0)
+  );
+}
+
+.menu-shell__actions {
+  margin-top: 2px;
+}
+
+.menu-shell__hint {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
 .ui-overlay--story {
   background:
     radial-gradient(
@@ -429,8 +586,16 @@ body.ui-open canvas {
   overflow: hidden;
   border: 1px solid rgba(125, 249, 255, 0.18);
   background:
-    radial-gradient(circle at 20% 20%, rgba(125, 249, 255, 0.08), transparent 50%),
-    radial-gradient(circle at 80% 65%, rgba(255, 209, 102, 0.09), transparent 45%),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(125, 249, 255, 0.08),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 65%,
+      rgba(255, 209, 102, 0.09),
+      transparent 45%
+    ),
     linear-gradient(165deg, rgba(9, 14, 24, 0.96), rgba(6, 10, 16, 0.98));
   box-shadow:
     0 16px 34px rgba(0, 0, 0, 0.45),
@@ -575,6 +740,26 @@ body.ui-open canvas {
 }
 
 @media (max-width: 640px) {
+  .menu-shell {
+    width: min(560px, 94vw);
+    padding: 20px 18px 18px;
+    border-radius: 16px;
+    gap: 10px;
+  }
+
+  .menu-shell__badge {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+
+  .menu-shell__title {
+    letter-spacing: 0.11em;
+  }
+
+  .menu-shell__subtitle {
+    font-size: 13px;
+  }
+
   .ui-panel {
     width: min(520px, 92vw);
     padding: 20px;

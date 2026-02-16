@@ -8,8 +8,8 @@ export const DEFAULT_ENEMY_VECTOR: EnemyVector = {
   items: [
     {
       c: [["M", 0, -1], ["L", 0.82, 0], ["L", 0, 1], ["L", -0.82, 0], ["Z"]],
-      f: true,
-      s: true,
+      f: "#1c0f1a",
+      s: "#ff6b6b",
       t: "p",
     },
   ],

@@ -239,7 +239,7 @@ const coerceEnemyStyle = (
   if (!style) return undefined;
   return {
     ...style,
-    fillColor: resolveColor(style.fillColor),
+    color: resolveColor(style.color),
     fx: style.fx
       ? {
           charge: style.fx.charge
@@ -256,7 +256,7 @@ const coerceEnemyStyle = (
           death: style.fx.death ? { ...style.fx.death } : undefined,
         }
       : undefined,
-    lineColor: resolveColor(style.lineColor),
+    vector: style.vector,
   };
 };
 
@@ -624,9 +624,11 @@ export const buildContentRegistry = (
 
   const resolvedShips: Record<string, ShipDefinition> = {};
   for (const [id, ship] of Object.entries(shipsById)) {
+    const stroke = resolveColor(ship.color) ?? 0x9fb7ff;
     resolvedShips[id] = {
       ...ship,
-      color: resolveColor(ship.color) ?? 0xffffff,
+      color: stroke,
+      vector: ship.vector,
     };
   }
 
@@ -634,8 +636,7 @@ export const buildContentRegistry = (
   for (const [id, gun] of Object.entries(gunsById)) {
     resolvedGuns[id] = {
       ...gun,
-      fillColor: resolveColor(gun.fillColor),
-      lineColor: resolveColor(gun.lineColor),
+      vector: gun.vector,
     };
   }
 
@@ -734,6 +735,7 @@ export const buildContentRegistry = (
   for (const [id, mod] of Object.entries(modsById)) {
     resolvedMods[id] = {
       ...mod,
+      icon: mod.icon,
     };
   }
 

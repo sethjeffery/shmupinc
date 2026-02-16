@@ -238,8 +238,8 @@ export class Enemy {
   private redraw(flashStrength: number): void {
     this.graphics.clear();
     const style = this.def.style ?? {};
-    const baseFill = style.fillColor ?? 0x1c0f1a;
-    const baseLine = style.lineColor ?? 0xff6b6b;
+    const baseFill = style.vector?.items[0].f ?? 0x1c0f1a;
+    const baseLine = style.color ?? 0xff6b6b;
     const flashBlend = Phaser.Math.Clamp(flashStrength * 1.55, 0, 1);
     const dyingProgress = Phaser.Math.Clamp(
       (DYING_HP_RATIO - this.hpRatio) / DYING_HP_RATIO,

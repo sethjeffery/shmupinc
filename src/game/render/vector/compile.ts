@@ -6,6 +6,8 @@ import type {
   VectorShape,
 } from "../../data/vectorShape";
 
+import { parseVectorColor } from "../../data/vectorShape";
+
 export interface VectorBounds {
   maxX: number;
   maxY: number;
@@ -56,16 +58,16 @@ export type CompiledPathCommand =
 
 export interface CompiledPathItem {
   c: CompiledPathCommand[];
-  f: boolean;
-  s: boolean;
+  fillColor?: number;
+  lineColor?: number;
   t: "p";
   w?: number;
 }
 
 export interface CompiledCircleItem {
-  f: boolean;
+  fillColor?: number;
   r: number;
-  s: boolean;
+  lineColor?: number;
   t: "c";
   w?: number;
   x: number;
@@ -73,10 +75,10 @@ export interface CompiledCircleItem {
 }
 
 export interface CompiledEllipseItem {
-  f: boolean;
+  fillColor?: number;
+  lineColor?: number;
   rx: number;
   ry: number;
-  s: boolean;
   t: "e";
   w?: number;
   x: number;
@@ -146,6 +148,8 @@ const compilePathItem = (
   bounds: VectorBounds,
 ): { bounds: VectorBounds; item: CompiledPathItem } => {
   const commands = item.c.map(commandToCompiled);
+  const fillColor = parseVectorColor(item.f);
+  const lineColor = parseVectorColor(item.s);
   let nextBounds = bounds;
   for (const command of commands) {
     switch (command.k) {
@@ -170,8 +174,8 @@ const compilePathItem = (
     bounds: nextBounds,
     item: {
       c: commands,
-      f: item.f === true,
-      s: item.s !== false,
+      fillColor,
+      lineColor,
       t: "p",
       w: item.w,
     },
@@ -182,6 +186,8 @@ const compileCircleItem = (
   item: VectorCircleItem,
   bounds: VectorBounds,
 ): { bounds: VectorBounds; item: CompiledCircleItem } => {
+  const fillColor = parseVectorColor(item.f);
+  const lineColor = parseVectorColor(item.s);
   const nextBounds = includeBounds(
     includeBounds(bounds, item.x - item.r, item.y - item.r),
     item.x + item.r,
@@ -190,9 +196,9 @@ const compileCircleItem = (
   return {
     bounds: nextBounds,
     item: {
-      f: item.f === true,
+      fillColor,
+      lineColor,
       r: item.r,
-      s: item.s !== false,
       t: "c",
       w: item.w,
       x: item.x,
@@ -205,6 +211,8 @@ const compileEllipseItem = (
   item: VectorEllipseItem,
   bounds: VectorBounds,
 ): { bounds: VectorBounds; item: CompiledEllipseItem } => {
+  const fillColor = parseVectorColor(item.f);
+  const lineColor = parseVectorColor(item.s);
   const nextBounds = includeBounds(
     includeBounds(bounds, item.x - item.rx, item.y - item.ry),
     item.x + item.rx,
@@ -213,10 +221,10 @@ const compileEllipseItem = (
   return {
     bounds: nextBounds,
     item: {
-      f: item.f === true,
+      fillColor,
+      lineColor,
       rx: item.rx,
       ry: item.ry,
-      s: item.s !== false,
       t: "e",
       w: item.w,
       x: item.x,

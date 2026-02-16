@@ -84,6 +84,37 @@ const UiPanel = (props: {
   </div>
 );
 
+const MenuOverlay = (props: {
+  actions: PanelAction[];
+  onAction: (action: string, levelId?: string) => void;
+}) => (
+  <div className="menu-shell">
+    <div className="menu-shell__halo" />
+    <div className="menu-shell__grid" />
+    <div className="menu-shell__badge">Vector Combat Campaign</div>
+    <div className="menu-shell__title">Shmup Inc</div>
+    <div className="menu-shell__subtitle">
+      Push through branching sectors, unlock loadouts, and keep the run clean.
+    </div>
+    <div className="menu-shell__divider" />
+    <div className="ui-actions menu-shell__actions">
+      {props.actions.map((item) => (
+        <button
+          className={panelButtonClass(item)}
+          disabled={Boolean(item.disabled)}
+          onClick={() => props.onAction(item.action, item.levelId)}
+          type="button"
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+    <div className="menu-shell__hint">
+      Drag to move. Auto-fire engages on hold.
+    </div>
+  </div>
+);
+
 const PROGRESSION_MAP_WIDTH = 1000;
 const PROGRESSION_MAP_HEIGHT = 640;
 
@@ -181,7 +212,11 @@ const ProgressionOverlay = (props: {
             const x2 = to.pos.x * PROGRESSION_MAP_WIDTH;
             const y2 = to.pos.y * PROGRESSION_MAP_HEIGHT;
             const className = `progression-edge${
-              edge.isCompleted ? " is-complete" : edge.isUnlocked ? " is-unlocked" : ""
+              edge.isCompleted
+                ? " is-complete"
+                : edge.isUnlocked
+                  ? " is-unlocked"
+                  : ""
             }`;
             return (
               <line
@@ -238,7 +273,9 @@ const ProgressionOverlay = (props: {
       <div className="progression-side">
         <div className="progression-title">{props.view.name}</div>
         {props.view.description ? (
-          <div className="progression-description">{props.view.description}</div>
+          <div className="progression-description">
+            {props.view.description}
+          </div>
         ) : null}
         <div className="progression-status">
           {props.view.isComplete
@@ -295,11 +332,9 @@ const UiRoot = (props: {
       <div
         className={`ui-overlay ui-overlay--menu${route === "menu" ? " is-active" : ""}`}
       >
-        <UiPanel
+        <MenuOverlay
           actions={props.signals.menuActions.value}
-          hint="How to play: Drag to move, auto-fire."
           onAction={props.onAction}
-          title="Shmup Inc"
         />
       </div>
 
@@ -703,9 +738,7 @@ export class UiRouter {
       {
         action: currentNode ? "galaxy-node" : "progression",
         disabled: !progression,
-        label: currentNode
-          ? `Continue: ${currentNode.name}`
-          : "Open Star Map",
+        label: currentNode ? `Continue: ${currentNode.name}` : "Open Star Map",
         levelId: currentNode?.id,
         primary: true,
       },

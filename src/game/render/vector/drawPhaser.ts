@@ -7,10 +7,10 @@ import { getCompiledVectorShape } from "./cache";
 
 export interface PhaserVectorStyle {
   fillAlpha?: number;
-  fillColor: number;
+  fillColor?: number;
   lineAlpha?: number;
-  lineColor: number;
-  lineWidth: number;
+  lineColor?: number;
+  lineWidth?: number;
 }
 
 const transformPoint = (
@@ -36,7 +36,12 @@ const drawPathItem = (
   transform: VectorTransform,
   style: PhaserVectorStyle | undefined,
 ): void => {
-  if (!item.c.length || (!item.f && !item.s)) return;
+  if (
+    !item.c.length ||
+    (item.fillColor === undefined && item.lineColor === undefined)
+  ) {
+    return;
+  }
   let currentX = 0;
   let currentY = 0;
   let hasCurrentPoint = false;
@@ -107,20 +112,19 @@ const drawPathItem = (
         break;
     }
   }
-  if (item.f) {
-    if (style) {
-      graphics.fillStyle(style.fillColor, style.fillAlpha ?? 1);
-    }
+  if (item.fillColor !== undefined) {
+    graphics.fillStyle(
+      item.fillColor,
+      style?.fillAlpha ?? graphics.defaultFillAlpha,
+    );
     graphics.fillPath();
   }
-  if (item.s) {
-    if (style) {
-      graphics.lineStyle(
-        item.w ?? style.lineWidth,
-        style.lineColor,
-        style.lineAlpha ?? 1,
-      );
-    }
+  if (item.lineColor !== undefined) {
+    graphics.lineStyle(
+      item.w ?? style?.lineWidth ?? graphics.defaultStrokeWidth,
+      item.lineColor,
+      style?.lineAlpha ?? graphics.defaultStrokeAlpha,
+    );
     graphics.strokePath();
   }
 };
@@ -134,20 +138,19 @@ const drawCircleItem = (
   const center = transformPoint(transform, item.x, item.y);
   const radius = Math.abs(item.r * transform.scale);
   if (radius <= 0) return;
-  if (item.f) {
-    if (style) {
-      graphics.fillStyle(style.fillColor, style.fillAlpha ?? 1);
-    }
+  if (item.fillColor !== undefined) {
+    graphics.fillStyle(
+      item.fillColor,
+      style?.fillAlpha ?? graphics.defaultFillAlpha,
+    );
     graphics.fillCircle(center.x, center.y, radius);
   }
-  if (item.s) {
-    if (style) {
-      graphics.lineStyle(
-        item.w ?? style.lineWidth,
-        style.lineColor,
-        style.lineAlpha ?? 1,
-      );
-    }
+  if (item.lineColor !== undefined) {
+    graphics.lineStyle(
+      item.w ?? style?.lineWidth ?? graphics.defaultStrokeWidth,
+      item.lineColor,
+      style?.lineAlpha ?? graphics.defaultStrokeAlpha,
+    );
     graphics.strokeCircle(center.x, center.y, radius);
   }
 };
@@ -162,20 +165,19 @@ const drawEllipseItem = (
   const width = Math.abs(item.rx * transform.scale) * 2;
   const height = Math.abs(item.ry * transform.scale) * 2;
   if (width <= 0 || height <= 0) return;
-  if (item.f) {
-    if (style) {
-      graphics.fillStyle(style.fillColor, style.fillAlpha ?? 1);
-    }
+  if (item.fillColor !== undefined) {
+    graphics.fillStyle(
+      item.fillColor,
+      style?.fillAlpha ?? graphics.defaultFillAlpha,
+    );
     graphics.fillEllipse(center.x, center.y, width, height);
   }
-  if (item.s) {
-    if (style) {
-      graphics.lineStyle(
-        item.w ?? style.lineWidth,
-        style.lineColor,
-        style.lineAlpha ?? 1,
-      );
-    }
+  if (item.lineColor !== undefined) {
+    graphics.lineStyle(
+      item.w ?? style?.lineWidth ?? graphics.defaultStrokeWidth,
+      item.lineColor,
+      style?.lineAlpha ?? graphics.defaultStrokeAlpha,
+    );
     graphics.strokeEllipse(center.x, center.y, width, height);
   }
 };

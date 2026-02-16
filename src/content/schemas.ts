@@ -65,12 +65,18 @@ const vectorPathCommandSchema = z.union([
   z.tuple([z.literal("Z")]),
 ]);
 
+const vectorPaintSchema = colorSchema.describe("Hex color for this paint.");
+
 const vectorPathItemSchema = z.object({
   c: z
     .array(vectorPathCommandSchema)
     .describe("Path commands using M/L/Q/C/Z commands."),
-  f: z.boolean().describe("Fill this primitive.").optional(),
-  s: z.boolean().describe("Stroke this primitive.").optional(),
+  f: vectorPaintSchema
+    .describe("Fill color for this primitive. Omit for no fill.")
+    .optional(),
+  s: vectorPaintSchema
+    .describe("Stroke color for this primitive. Omit for no stroke.")
+    .optional(),
   t: z.literal("p").describe("Path primitive."),
   w: z
     .number()
@@ -80,9 +86,13 @@ const vectorPathItemSchema = z.object({
 });
 
 const vectorCircleItemSchema = z.object({
-  f: z.boolean().describe("Fill this primitive.").optional(),
+  f: vectorPaintSchema
+    .describe("Fill color for this primitive. Omit for no fill.")
+    .optional(),
   r: z.number().positive().describe("Radius."),
-  s: z.boolean().describe("Stroke this primitive.").optional(),
+  s: vectorPaintSchema
+    .describe("Stroke color for this primitive. Omit for no stroke.")
+    .optional(),
   t: z.literal("c").describe("Circle primitive."),
   w: z
     .number()
@@ -94,10 +104,14 @@ const vectorCircleItemSchema = z.object({
 });
 
 const vectorEllipseItemSchema = z.object({
-  f: z.boolean().describe("Fill this primitive.").optional(),
+  f: vectorPaintSchema
+    .describe("Fill color for this primitive. Omit for no fill.")
+    .optional(),
   rx: z.number().positive().describe("Radius X."),
   ry: z.number().positive().describe("Radius Y."),
-  s: z.boolean().describe("Stroke this primitive.").optional(),
+  s: vectorPaintSchema
+    .describe("Stroke color for this primitive. Omit for no stroke.")
+    .optional(),
   t: z.literal("e").describe("Ellipse primitive."),
   w: z
     .number()
@@ -123,9 +137,7 @@ const vectorShapeSchema = z.object({
 
 const gunSchema = z.object({
   description: z.string().describe("Player-facing description."),
-  fillColor: colorField("Optional fill color override.").optional(),
   id: idField("Unique gun id."),
-  lineColor: colorField("Optional line color override.").optional(),
   name: z.string().describe("Display name."),
   vector: vectorShapeSchema.describe("Gun vector shape."),
 });
@@ -519,16 +531,14 @@ const enemyStyleFxSchema = z
   .optional();
 
 const enemyStyleSchema = z.object({
-  fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
+  color: colorField("Enemy accent color, for effects and explosions."),
   fx: enemyStyleFxSchema,
-  lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
   vector: vectorShapeSchema.describe("Enemy vector silhouette."),
 });
 
 const enemyStyleOverrideSchema = z.object({
-  fillColor: colorField("Fill color for the shape.").default("#1c0f1a"),
+  color: colorField("Override primary color.").optional(),
   fx: enemyStyleFxSchema,
-  lineColor: colorField("Outline color for the shape.").default("#ff6b6b"),
   vector: vectorShapeSchema.describe("Enemy vector silhouette.").optional(),
 });
 
@@ -1014,7 +1024,7 @@ const weaponSchema = z.object({
 
 const shipSchema = z
   .object({
-    color: colorField("Ship fill color."),
+    color: colorField("Ship accent color, for effects and explosions."),
     cost: z.number().min(0).describe("Unlock cost."),
     costResource: idField("Resource id used to buy this ship.")
       .default("gold")

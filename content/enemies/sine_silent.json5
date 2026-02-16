@@ -41,8 +41,7 @@
     "radiusY": 16
   },
   "style": {
-    "fillColor": "#0f1a2b",
-    "lineColor": "#6cf2ff",
+    "color": "#0f1a2b",
     "vector": {
       "items": [
         {
@@ -58,8 +57,8 @@
             ["Q", -0.6, -0.8, 0, -1.18],
             ["Z"]
           ],
-          "f": true,
-          "s": true,
+          "f": "#0f1a2b",
+          "s": "#6cf2ff",
           "t": "p"
         },
         {
@@ -67,7 +66,7 @@
             ["M", -0.3, -0.2],
             ["L", 0.3, -0.2]
           ],
-          "s": true,
+          "s": "#eeeeee",
           "t": "p",
           "w": 1.5
         }

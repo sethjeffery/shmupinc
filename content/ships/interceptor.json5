@@ -2,7 +2,7 @@
   "color": "#7df9ff",
   "cost": 220,
   "requiresUnlocks": ["bp_ship_interceptor"],
-  "description": "Initially used by space pirates, the interceptor has been well adopted due to its excellent tractor beam.",
+  "description": "Initially used by space pirates, the interceptor has been recomissioned due to its excellent tractor beam.",
   "id": "interceptor",
   "magnetMultiplier": 2.5,
   "maxHp": 7,
@@ -35,27 +35,51 @@
       {
         "t": "p",
         "c": [
+          ["M", -0.8, 0.7],
+          ["L", -0.8, -0.2],
+          ["L", -1, -0.1],
+          ["L", -1, 0.7],
+          ["Z"],
+          ["M", 0.8, 0.7],
+          ["L", 0.8, -0.2],
+          ["L", 1, -0.1],
+          ["L", 1, 0.7],
+          ["Z"],
+          ["M", 0.4, 0.8],
+          ["Q", 0, 0.7, -0.4, 0.8],
+          ["L", -0.4, 0.5],
+          ["L", 0.4, 0.5],
+          ["Z"]
+        ],
+        "s": "#a0a0a0",
+        "f": "#606060"
+      },
+      {
+        "t": "p",
+        "c": [
           ["M", 0, -1],
-          ["Q", 0.3, -0.9, 0.5, -0.3],
-          ["L", 0.9, 0],
-          ["L", 0.9, -0.5],
-          ["L", 1, -0.5],
+          ["Q", 0.3, -0.9, 0.5, -0.2],
+          ["L", 1, 0.1],
           ["L", 1, 0.6],
-          ["L", 0.5, 0.6],
-          ["L", 0.5, 0.9],
-          ["L", 0, 1],
-          ["L", -0.5, 0.9],
-          ["L", -0.5, 0.6],
-          ["L", -1, 0.6],
-          ["L", -1, -0.5],
-          ["L", -0.9, -0.5],
-          ["L", -0.9, 0],
-          ["L", -0.5, -0.3],
+          ["Q", 0, 0.5, -1, 0.6],
+          ["L", -1, 0.1],
+          ["L", -0.5, -0.2],
           ["Q", -0.3, -0.9, 0, -1],
           ["Z"]
         ],
-        "f": true,
-        "s": true
+        "f": "#1f3e40",
+        "s": "#7df9ff"
+      },
+      {
+        "t": "p",
+        "c": [
+          ["M", -0.5, 0],
+          ["L", -0.5, 0.4],
+          ["M", 0.5, 0],
+          ["L", 0.5, 0.4]
+        ],
+        "s": "#7df9ff",
+        "w": 1.5
       }
     ]
   }

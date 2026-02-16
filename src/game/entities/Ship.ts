@@ -21,7 +21,6 @@ export interface ShipConfig {
   hitbox: ShipHitbox;
   maxHp: number;
   moveSpeed: number;
-  color: number;
   vector: ShipVector;
 }
 
@@ -34,7 +33,6 @@ export class Ship {
   maxHp: number;
   moveSpeed: number;
   graphics: Phaser.GameObjects.Graphics;
-  color: number;
   vector: ShipVector;
   hitbox: ShipHitbox;
   private flashTimer = 0;
@@ -46,7 +44,6 @@ export class Ship {
     this.maxHp = config.maxHp;
     this.hp = config.maxHp;
     this.moveSpeed = config.moveSpeed;
-    this.color = config.color;
     this.vector = config.vector;
     this.hitbox = config.hitbox;
 
@@ -91,8 +88,7 @@ export class Ship {
     this.maxHp = maxHp;
   }
 
-  setAppearance(color: number, vector: ShipVector): void {
-    this.color = color;
+  setAppearance(vector: ShipVector): void {
     this.vector = vector;
     this.redraw(this.flashTimer);
   }
@@ -142,31 +138,17 @@ export class Ship {
 
   private redraw(flashStrength: number): void {
     this.graphics.clear();
-    const baseFill = this.scaleColor(this.color, 0.18);
-    const flashColor = this.scaleColor(this.color, 1.1);
-    const innerColor = Phaser.Display.Color.Interpolate.ColorWithColor(
-      Phaser.Display.Color.ValueToColor(baseFill),
-      Phaser.Display.Color.ValueToColor(flashColor),
-      1,
-      Phaser.Math.Clamp(flashStrength, 0, 1),
-    );
-    const fill = Phaser.Display.Color.GetColor(
-      innerColor.r,
-      innerColor.g,
-      innerColor.b,
-    );
-
-    this.graphics.lineStyle(2, this.color, 1);
-    this.graphics.fillStyle(fill, 1);
-    drawShipToGraphics(this.graphics, this.vector, this.radius);
     this.drawGuns();
-  }
-
-  private scaleColor(color: number, factor: number): number {
-    const r = Math.min(255, Math.round(((color >> 16) & 0xff) * factor));
-    const g = Math.min(255, Math.round(((color >> 8) & 0xff) * factor));
-    const b = Math.min(255, Math.round((color & 0xff) * factor));
-    return (r << 16) | (g << 8) | b;
+    drawShipToGraphics(this.graphics, this.vector, this.radius);
+    if (flashStrength > 0.03) {
+      const intensity = Phaser.Math.Clamp(flashStrength, 0, 1);
+      this.graphics.lineStyle(
+        1.2 + intensity * 0.9,
+        0xe8f3ff,
+        intensity * 0.52,
+      );
+      this.graphics.strokeCircle(0, 0, this.radius * (1.05 + intensity * 0.08));
+    }
   }
 
   private drawGuns(): void {

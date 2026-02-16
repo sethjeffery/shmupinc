@@ -2,9 +2,7 @@ import type * as monaco from "monaco-editor";
 
 export const CONTENT_EDITOR_MONACO_THEME = "shmupinc-dark";
 
-export const configureContentEditorTheme = (
-  monacoApi: typeof monaco,
-): void => {
+export const configureContentEditorTheme = (monacoApi: typeof monaco): void => {
   monacoApi.editor.defineTheme(CONTENT_EDITOR_MONACO_THEME, {
     base: "vs-dark",
     colors: {

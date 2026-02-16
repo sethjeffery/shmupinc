@@ -2,44 +2,7 @@
   "id": "intro-intro",
   "spawns": [
     {
-      "atMs": 0,
-      "enemyId": "sine_silent",
-      "x": -0.28,
-      "y": -0.08,
-      "overrides": { "hp": 1 }
-    },
-    {
-      "atMs": 450,
-      "enemyId": "sine_silent",
-      "x": 0.28,
-      "y": -0.08,
-      "overrides": { "hp": 1 }
-    },
-    {
-      "atMs": 900,
-      "enemyId": "sine_silent",
-      "x": 0,
-      "y": -0.08,
-      "overrides": {
-        "hp": 1,
-        "fire": {
-          "loop": false,
-          "steps": [
-            { "kind": "cooldown", "durationMs": 900 },
-            {
-              "kind": "burst",
-              "aim": { "kind": "fixed", "angleDeg": 90 },
-              "bulletId": "orb",
-              "count": 1,
-              "intervalMs": 1,
-              "speed": 170
-            }
-          ]
-        }
-      }
-    },
-    {
-      "atMs": 1900,
+      "atMs": 10000,
       "enemyId": "swooper",
       "x": -0.34,
       "y": -0.16,
@@ -66,7 +29,7 @@
       }
     },
     {
-      "atMs": 2500,
+      "atMs": 12500,
       "enemyId": "swooper",
       "x": 0.34,
       "y": -0.16,
@@ -167,7 +130,7 @@
       }
     },
     {
-      "atMs": 7600,
+      "atMs": 9600,
       "enemyId": "crossfire",
       "x": 0,
       "y": -0.12,
@@ -190,21 +153,21 @@
       }
     },
     {
-      "atMs": 9000,
+      "atMs": 14000,
       "enemyId": "sine_silent",
       "x": -0.26,
       "y": -0.08,
       "overrides": { "hp": 1 }
     },
     {
-      "atMs": 9550,
+      "atMs": 14550,
       "enemyId": "sine_silent",
       "x": 0.26,
       "y": -0.08,
       "overrides": { "hp": 1 }
     },
     {
-      "atMs": 10400,
+      "atMs": 16400,
       "enemyId": "swooper",
       "x": 0,
       "y": -0.14,
@@ -225,6 +188,43 @@
               "ease": "in",
               "durationMs": 1200,
               "to": { "x": 0, "y": 0.36 }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "atMs": 19000,
+      "enemyId": "sine_silent",
+      "x": -0.28,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 19450,
+      "enemyId": "sine_silent",
+      "x": 0.28,
+      "y": -0.08,
+      "overrides": { "hp": 1 }
+    },
+    {
+      "atMs": 19900,
+      "enemyId": "sine_silent",
+      "x": 0,
+      "y": -0.08,
+      "overrides": {
+        "hp": 1,
+        "fire": {
+          "loop": false,
+          "steps": [
+            { "kind": "cooldown", "durationMs": 900 },
+            {
+              "kind": "burst",
+              "aim": { "kind": "fixed", "angleDeg": 90 },
+              "bulletId": "orb",
+              "count": 1,
+              "intervalMs": 1,
+              "speed": 170
             }
           ]
         }

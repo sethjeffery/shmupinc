@@ -7,6 +7,4 @@ export interface GunDefinition {
   name: string;
   description: string;
   vector: VectorShape;
-  fillColor?: number;
-  lineColor?: number;
 }

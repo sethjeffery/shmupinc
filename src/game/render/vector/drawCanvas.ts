@@ -4,9 +4,9 @@ import type { CompiledPathItem, CompiledVectorItem } from "./compile";
 import { getCompiledVectorShape } from "./cache";
 
 export interface CanvasVectorStyle {
-  fillStyle: string;
+  fillStyle?: string;
   lineWidth: number;
-  strokeStyle: string;
+  strokeStyle?: string;
 }
 
 export interface VectorTransform {
@@ -34,13 +34,21 @@ const transformPoint = (
   };
 };
 
+const toCssColor = (value: number): string =>
+  `#${value.toString(16).padStart(6, "0")}`;
+
 const drawPathItem = (
   ctx: CanvasRenderingContext2D,
   item: CompiledPathItem,
   transform: VectorTransform,
   style: CanvasVectorStyle | undefined,
 ): void => {
-  if (!item.c.length || (!item.f && !item.s)) return;
+  if (
+    !item.c.length ||
+    (item.fillColor === undefined && item.lineColor === undefined)
+  ) {
+    return;
+  }
   ctx.beginPath();
   for (const command of item.c) {
     switch (command.k) {
@@ -80,17 +88,19 @@ const drawPathItem = (
     }
   }
   const lineWidth = item.w ?? style?.lineWidth ?? ctx.lineWidth;
-  if (item.f) {
-    if (style) {
-      ctx.fillStyle = style.fillStyle;
-    }
+  const fillStyle =
+    item.fillColor !== undefined ? toCssColor(item.fillColor) : undefined;
+  const strokeStyle =
+    item.lineColor !== undefined ? toCssColor(item.lineColor) : undefined;
+  const canFill = fillStyle !== undefined;
+  const canStroke = strokeStyle !== undefined;
+  if (canFill) {
+    ctx.fillStyle = fillStyle;
     ctx.fill();
   }
-  if (item.s) {
+  if (canStroke) {
     ctx.lineWidth = lineWidth;
-    if (style) {
-      ctx.strokeStyle = style.strokeStyle;
-    }
+    ctx.strokeStyle = strokeStyle;
     ctx.stroke();
   }
 };
@@ -106,17 +116,19 @@ const drawCircleItem = (
   if (radius <= 0) return;
   ctx.beginPath();
   ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
-  if (item.f) {
-    if (style) {
-      ctx.fillStyle = style.fillStyle;
-    }
+  const fillStyle =
+    item.fillColor !== undefined ? toCssColor(item.fillColor) : undefined;
+  const strokeStyle =
+    item.lineColor !== undefined ? toCssColor(item.lineColor) : undefined;
+  const canFill = fillStyle !== undefined;
+  const canStroke = strokeStyle !== undefined;
+  if (canFill) {
+    ctx.fillStyle = fillStyle;
     ctx.fill();
   }
-  if (item.s) {
+  if (canStroke) {
     ctx.lineWidth = item.w ?? style?.lineWidth ?? ctx.lineWidth;
-    if (style) {
-      ctx.strokeStyle = style.strokeStyle;
-    }
+    ctx.strokeStyle = strokeStyle;
     ctx.stroke();
   }
 };
@@ -134,17 +146,19 @@ const drawEllipseItem = (
   if (radiusX <= 0 || radiusY <= 0) return;
   ctx.beginPath();
   ctx.ellipse(center.x, center.y, radiusX, radiusY, rotation, 0, Math.PI * 2);
-  if (item.f) {
-    if (style) {
-      ctx.fillStyle = style.fillStyle;
-    }
+  const fillStyle =
+    item.fillColor !== undefined ? toCssColor(item.fillColor) : undefined;
+  const strokeStyle =
+    item.lineColor !== undefined ? toCssColor(item.lineColor) : undefined;
+  const canFill = fillStyle !== undefined;
+  const canStroke = strokeStyle !== undefined;
+  if (canFill) {
+    ctx.fillStyle = fillStyle;
     ctx.fill();
   }
-  if (item.s) {
+  if (canStroke) {
     ctx.lineWidth = item.w ?? style?.lineWidth ?? ctx.lineWidth;
-    if (style) {
-      ctx.strokeStyle = style.strokeStyle;
-    }
+    ctx.strokeStyle = strokeStyle;
     ctx.stroke();
   }
 };

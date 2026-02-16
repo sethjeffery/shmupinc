@@ -76,7 +76,6 @@ export class PreviewScene extends Phaser.Scene {
     this.parallax = new ParallaxBackground(this, this.bounds);
     this.particles = new ParticleSystem(this);
     this.ship = new Ship(this, {
-      color: 0x7df9ff,
       hitbox: { kind: "circle", radius: this.baseRadius },
       maxHp: 6,
       moveSpeed: 0,
@@ -119,7 +118,7 @@ export class PreviewScene extends Phaser.Scene {
     }
     this.mountedWeapons = mountedWeapons;
     this.currentShip = ship;
-    this.ship.setAppearance(ship.color, ship.vector);
+    this.ship.setAppearance(ship.vector);
     this.ship.setRadius(resolveShipRadius(ship, this.baseRadius));
     this.ship.setHitbox(resolveShipHitbox(ship, this.baseRadius));
     this.ship.setMountedWeapons(this.mountedWeapons);

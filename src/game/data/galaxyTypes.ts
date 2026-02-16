@@ -35,4 +35,3 @@ export interface GalaxyDefinition {
   edges: GalaxyEdgeDefinition[];
   decorations?: GalaxyDecorationDefinition[];
 }
-
