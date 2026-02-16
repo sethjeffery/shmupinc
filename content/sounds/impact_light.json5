@@ -1,0 +1,28 @@
+{
+  "id": "impact_light",
+  "name": "Impact Light",
+  "category": "impact",
+  "description": "Small hit impact for bullet contact.",
+  "gain": 0.2,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "square",
+      "startHz": 720,
+      "endHz": 420,
+      "attackMs": 1,
+      "holdMs": 40,
+      "releaseMs": 38,
+      "gain": 0.14
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 2,
+      "releaseMs": 540,
+      "highpassHz": 540,
+      "lowpassHz": 8200,
+      "gain": 0.55
+    }
+  ]
+}

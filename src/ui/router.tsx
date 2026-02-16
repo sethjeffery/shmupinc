@@ -3,6 +3,7 @@ import type Phaser from "phaser";
 import { signal, type Signal } from "@preact/signals";
 import { render } from "preact";
 
+import { getAudioDirector } from "../game/audio/audioDirector";
 import {
   buildActiveGalaxyView,
   ensureActiveGalaxy,
@@ -415,6 +416,7 @@ const UiRoot = (props: {
 };
 
 export class UiRouter {
+  private readonly audio = getAudioDirector();
   private game: Phaser.Game;
   private route: UiRoute = "menu";
   private root: HTMLElement;
@@ -432,6 +434,7 @@ export class UiRouter {
 
   constructor(game: Phaser.Game) {
     this.game = game;
+    this.audio.attachUnlockHandlers();
     const root = document.getElementById("ui-root");
     if (!root) {
       throw new Error("Missing #ui-root host.");
@@ -486,6 +489,10 @@ export class UiRouter {
     const previous = this.route;
     this.route = route;
     this.routeSignal.value = route;
+    this.audio.setMusicMode(
+      route === "play" || route === "pause" ? "game" : "menu",
+    );
+    this.audio.setPauseLowPass(route === "pause");
 
     const uiOpen =
       route === "menu" ||

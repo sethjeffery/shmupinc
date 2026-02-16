@@ -1,0 +1,28 @@
+{
+  "id": "enemy_death_small",
+  "name": "Enemy Death Small",
+  "category": "enemy",
+  "description": "Death burst for small enemies.",
+  "gain": 0.22,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 320,
+      "endHz": 90,
+      "attackMs": 1,
+      "holdMs": 14,
+      "releaseMs": 96,
+      "gain": 0.18
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 4,
+      "releaseMs": 68,
+      "highpassHz": 140,
+      "lowpassHz": 3000,
+      "gain": 0.11
+    }
+  ]
+}

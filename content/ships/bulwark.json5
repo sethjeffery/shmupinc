@@ -3,7 +3,7 @@
   "cost": 260,
   "requiresUnlocks": ["bp_ship_bulwark"],
   "description": "Large and mighty. The Crab may be slow but nothing else delivers as much pure firepower.",
-  "id": "crab",
+  "id": "bulwark",
   "magnetMultiplier": 1,
   "maxHp": 10,
   "moveSpeed": 5.5,

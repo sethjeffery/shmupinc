@@ -1,0 +1,28 @@
+{
+  "id": "explosion_small",
+  "name": "Explosion Small",
+  "category": "impact",
+  "description": "Short explosion for non-boss detonations.",
+  "gain": 0.28,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 160,
+      "endHz": 64,
+      "attackMs": 2,
+      "holdMs": 22,
+      "releaseMs": 380,
+      "gain": 0.19
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 10,
+      "releaseMs": 810,
+      "highpassHz": 120,
+      "lowpassHz": 3600,
+      "gain": 0.32
+    }
+  ]
+}

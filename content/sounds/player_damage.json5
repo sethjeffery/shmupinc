@@ -1,0 +1,28 @@
+{
+  "id": "player_damage",
+  "name": "Player Damage",
+  "category": "system",
+  "description": "Damage warning sting for player hit feedback.",
+  "gain": 0.24,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "square",
+      "startHz": 460,
+      "endHz": 70,
+      "attackMs": 2,
+      "holdMs": 12,
+      "releaseMs": 292,
+      "gain": 0.27
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 3,
+      "releaseMs": 642,
+      "highpassHz": 320,
+      "lowpassHz": 4200,
+      "gain": 0.655
+    }
+  ]
+}

@@ -10,6 +10,7 @@ export const CONTENT_KINDS = [
   "mods",
   "objectives",
   "levels",
+  "sounds",
   "ships",
   "shops",
   "waves",
@@ -401,6 +402,261 @@ export const bulletSchema = z.object({
   thickness: z.number().describe("Stroke thickness in pixels.").optional(),
   trail: bulletTrailSchema.describe("Trail settings.").optional(),
   vfx: bulletVfxSchema.describe("Optional VFX overrides.").optional(),
+});
+
+const panSchema = z
+  .union([
+    z.number().min(-1).max(1).describe("Stereo pan (-1..1)."),
+    z
+      .object({
+        max: z.number().min(-1).max(1),
+        min: z.number().min(-1).max(1),
+      })
+      .describe("Random pan range per play."),
+  ])
+  .optional();
+
+const randomizeSchema = z
+  .object({
+    bandpassHz: z.number().min(0).max(2).optional(),
+    endHz: z.number().min(0).max(2).optional(),
+    gain: z
+      .number()
+      .min(0)
+      .max(2)
+      .optional()
+      .describe("± multiplier amount (e.g. 0.12 => ±12%)."),
+    highpassHz: z.number().min(0).max(2).optional(),
+    lowpassHz: z.number().min(0).max(2).optional(),
+    releaseMs: z.number().min(0).max(2).optional(),
+    startHz: z.number().min(0).max(2).optional(),
+  })
+  .describe("Per-play randomization multipliers (all optional).")
+  .optional();
+
+const fxSchema = z
+  .discriminatedUnion("type", [
+    z.object({
+      attackMs: z.number().min(0).optional(),
+      kneeDb: z.number().min(0).optional(),
+      makeupGain: z.number().min(0).optional(),
+      ratio: z.number().min(1).optional(),
+      releaseMs: z.number().min(0).optional(),
+      thresholdDb: z.number().optional(),
+      type: z.literal("compressor"),
+    }),
+    z.object({
+      drive: z.number().min(0).max(2).optional(),
+      mix: z.number().min(0).max(1).optional(),
+      type: z.literal("waveshaper"),
+    }),
+    z.object({
+      feedback: z.number().min(0).max(0.98).optional(),
+      highpassHz: z.number().positive().optional(),
+      lowpassHz: z.number().positive().optional(),
+      mix: z.number().min(0).max(1).optional(),
+      timeMs: z.number().min(0).max(1000).optional(),
+      type: z.literal("delay"),
+    }),
+    z.object({
+      damping: z.number().min(0).max(1).optional(),
+      highpassHz: z.number().positive().optional(),
+      lowpassHz: z.number().positive().optional(),
+      mix: z.number().min(0).max(1).optional(),
+      roomMs: z.number().min(30).max(2000).optional(),
+      type: z.literal("reverb"),
+    }),
+    z.object({
+      hz: z.number().positive(),
+      q: z.number().positive().optional(),
+      type: z.literal("lowpass"),
+    }),
+    z.object({
+      hz: z.number().positive(),
+      q: z.number().positive().optional(),
+      type: z.literal("highpass"),
+    }),
+    z.object({
+      hz: z.number().positive(),
+      q: z.number().positive().optional(),
+      type: z.literal("bandpass"),
+    }),
+  ])
+  .describe("Optional effect to apply (layer-level or sound-level).");
+
+const fxListSchema = z.array(fxSchema).max(8).optional();
+
+const proceduralToneSoundLayerSchema = z.object({
+  attackMs: z
+    .number()
+    .min(0)
+    .describe("Attack envelope duration in milliseconds.")
+    .default(2),
+  effects: fxListSchema,
+  endHz: z
+    .number()
+    .positive()
+    .describe("End frequency for sweep. Defaults to startHz.")
+    .optional(),
+  gain: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("Layer gain scalar (0..1).")
+    .default(0.1),
+  holdMs: z
+    .number()
+    .min(0)
+    .describe("Sustain duration in milliseconds.")
+    .default(46),
+  pan: panSchema,
+  pitchCurve: z
+    .enum(["linear", "expFast"])
+    .describe("Sweep curve shaping.")
+    .default("linear")
+    .optional(),
+  randomize: randomizeSchema,
+  releaseMs: z
+    .number()
+    .min(0)
+    .describe("Release envelope duration in milliseconds.")
+    .default(64),
+
+  startHz: z.number().positive().describe("Start frequency in Hertz."),
+  startOffsetMs: z
+    .number()
+    .min(0)
+    .describe("Delay before this layer starts, in milliseconds.")
+    .default(0)
+    .optional(),
+  type: z.literal("tone").describe("Tonal oscillator layer."),
+  wave: z
+    .enum(["sawtooth", "sine", "square", "triangle"])
+    .describe("Oscillator waveform.")
+    .default("sine"),
+});
+
+const proceduralNoiseSoundLayerSchema = z.object({
+  attackMs: z
+    .number()
+    .min(0)
+    .describe("Attack envelope duration in milliseconds.")
+    .default(2),
+  bandpassHz: z
+    .number()
+    .positive()
+    .describe("Optional band-pass center frequency in Hertz.")
+    .optional(),
+  bandpassQ: z
+    .number()
+    .positive()
+    .describe("Band-pass Q (resonance).")
+    .default(1)
+    .optional(),
+  effects: fxListSchema,
+  gain: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("Layer gain scalar (0..1).")
+    .default(0.08),
+  highpassHz: z
+    .number()
+    .positive()
+    .describe("Optional high-pass cutoff in Hertz.")
+    .optional(),
+  holdMs: z
+    .number()
+    .min(0)
+    .describe("Sustain duration in milliseconds.")
+    .default(24),
+  lowpassHz: z
+    .number()
+    .positive()
+    .describe("Optional low-pass cutoff in Hertz.")
+    .optional(),
+
+  pan: panSchema,
+  randomize: randomizeSchema,
+  releaseMs: z
+    .number()
+    .min(0)
+    .describe("Release envelope duration in milliseconds.")
+    .default(54),
+  startOffsetMs: z
+    .number()
+    .min(0)
+    .describe("Delay before this layer starts, in milliseconds.")
+    .default(0)
+    .optional(),
+  type: z.literal("noise").describe("Noise layer."),
+});
+
+const proceduralEventGroupSoundLayerSchema = z.object({
+  count: z.number().int().min(1).max(64).describe("Number of events to spawn."),
+  event: z
+    .union([proceduralToneSoundLayerSchema, proceduralNoiseSoundLayerSchema])
+    .describe("Layer template for each event."),
+  jitterMs: z
+    .number()
+    .min(0)
+    .max(2000)
+    .describe("Random jitter (+/-) applied per event in ms.")
+    .default(0)
+    .optional(),
+  spacingMs: z
+    .number()
+    .min(1)
+    .max(2000)
+    .describe("Base spacing between events in ms."),
+  startOffsetMs: z
+    .number()
+    .min(0)
+    .describe("Delay before the group starts, in milliseconds.")
+    .default(0)
+    .optional(),
+  type: z
+    .literal("eventGroup")
+    .describe("Repeated sub-events (e.g. debris ticks)."),
+});
+
+const proceduralSoundLayerSchema = z.union([
+  proceduralToneSoundLayerSchema,
+  proceduralNoiseSoundLayerSchema,
+  proceduralEventGroupSoundLayerSchema,
+]);
+
+const proceduralSoundCategorySchema = z.enum([
+  "enemy",
+  "impact",
+  "system",
+  "ui",
+  "weapon",
+]);
+
+export const proceduralSoundSchema = z.object({
+  category: proceduralSoundCategorySchema
+    .describe("Category used to group sounds in editor/runtime.")
+    .default("weapon"),
+  description: z
+    .string()
+    .describe("Optional notes about usage and intent.")
+    .optional(),
+  effects: fxListSchema,
+  gain: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("Master gain scalar for the whole sound.")
+    .default(0.2),
+  id: idField("Unique sound id."),
+  layers: z
+    .array(proceduralSoundLayerSchema)
+    .min(1)
+    .max(12)
+    .describe("Ordered synthesis layers."),
+
+  name: z.string().describe("Display name in editor.").optional(),
 });
 
 const fireStepSchema = z.union([
@@ -1095,6 +1351,7 @@ export const contentSchemas = {
   objectives: objectiveSetSchema,
   ships: shipSchema,
   shops: shopSchema,
+  sounds: proceduralSoundSchema,
   waves: waveSchema,
   weapons: weaponSchema,
 } satisfies Record<ContentKind, z.ZodSchema>;
@@ -1110,5 +1367,6 @@ export type ObjectiveContent = z.infer<typeof objectiveSetSchema>;
 export type LevelContent = z.infer<typeof levelSchema>;
 export type ShipContent = z.infer<typeof shipSchema>;
 export type ShopContent = z.infer<typeof shopSchema>;
+export type SoundContent = z.infer<typeof proceduralSoundSchema>;
 export type WaveContent = z.infer<typeof waveSchema>;
 export type WeaponContent = z.infer<typeof weaponSchema>;

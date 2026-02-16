@@ -7,6 +7,7 @@ import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
 
+import { getAudioDirector } from "../audio/audioDirector";
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
 import { advanceActiveGalaxyOnLevelClear } from "../data/galaxyProgress";
 import { getLevelStars, recordLevelCompletion } from "../data/levelProgress";
@@ -121,6 +122,7 @@ const DAMAGE_JOLT_FREQ_BLEND = 0.45;
 const DAMAGE_JOLT_Y_RATIO = 0.14;
 const CHARGE_CUE_COOLDOWN_MIN_MS = 34;
 const CHARGE_CUE_COOLDOWN_MAX_MS = 165;
+const LARGE_ENEMY_EXPLOSION_HP_THRESHOLD = 12;
 
 const getLevelOrderNumber = (levelId: string): number => {
   const match = /^L(\d+)_/i.exec(levelId);
@@ -137,6 +139,7 @@ const computeFirstClearGoldBonus = (levelId: string): number => {
 };
 
 export class PlayScene extends Phaser.Scene {
+  private readonly audio = getAudioDirector();
   private hud!: HUD;
   private ship!: Ship;
   private playArea = new Phaser.Geom.Rectangle();
@@ -201,11 +204,13 @@ export class PlayScene extends Phaser.Scene {
   private vfx!: CombatVfxDispatcher;
   private emitPlayerBullet: EmitBullet = (x, y, angleRad, bullet) => {
     this.vfx.onShotEmit("player", x, y, bullet);
+    this.audio.playShot("player", bullet);
     const playerBullet = this.playerBullets.acquire();
     playerBullet.spawn(x, y, angleRad, bullet);
   };
   private emitEnemyBullet: EmitBullet = (x, y, angleRad, bullet) => {
     this.vfx.onShotEmit("enemy", x, y, bullet);
+    this.audio.playShot("enemy", bullet);
     const enemyBullet = this.enemyBullets.acquire();
     enemyBullet.spawn(x, y, angleRad, bullet);
   };
@@ -217,12 +222,22 @@ export class PlayScene extends Phaser.Scene {
   ): void => {
     this.vfx.onBulletTrail(x, y, angleRad, spec);
   };
+  private handleBulletImpact = (
+    x: number,
+    y: number,
+    spec: BulletSpec,
+    owner: "enemy" | "player",
+  ): void => {
+    this.vfx.onBulletImpact(x, y, spec, owner);
+    this.audio.playBulletImpact(owner, spec);
+  };
   private handleBulletExplosion = (
     x: number,
     y: number,
     spec: BulletSpec,
     owner: "enemy" | "player",
   ): void => {
+    this.audio.playBulletExplosion(owner, spec);
     const explosion = this.vfx.onBulletExplosion(x, y, spec, owner);
     if (owner === "player") {
       for (const enemy of this.enemies) {
@@ -315,6 +330,7 @@ export class PlayScene extends Phaser.Scene {
       this.missionIntroTag.destroy();
       this.missionIntroTag = undefined;
     }
+    this.audio.setPauseLowPass(false);
     this.applyCanvasFx();
     this.collisionResolver = undefined;
   }
@@ -544,8 +560,7 @@ export class PlayScene extends Phaser.Scene {
       enemies: this.enemies,
       enemyBullets: this.enemyBullets,
       handleExplosion: this.handleBulletExplosion,
-      onBulletImpact: (x, y, spec, owner) =>
-        this.vfx.onBulletImpact(x, y, spec, owner),
+      onBulletImpact: this.handleBulletImpact,
       onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
       onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
       playArea: this.playArea,
@@ -648,6 +663,7 @@ export class PlayScene extends Phaser.Scene {
       const damageTaken = beforeHp - afterHp;
       this.runDamageTaken += damageTaken;
       this.vfx.onPlayerDamage(fxX ?? this.ship.x, fxY ?? this.ship.y);
+      this.audio.playPlayerDamage(damageTaken);
       this.registerDamageJolt(damageTaken);
     }
   }
@@ -659,8 +675,7 @@ export class PlayScene extends Phaser.Scene {
       enemies: this.enemies,
       enemyBullets: this.enemyBullets,
       handleExplosion: this.handleBulletExplosion,
-      onBulletImpact: (x, y, spec, owner) =>
-        this.vfx.onBulletImpact(x, y, spec, owner),
+      onBulletImpact: this.handleBulletImpact,
       onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
       onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
       playArea: this.playArea,
@@ -680,6 +695,7 @@ export class PlayScene extends Phaser.Scene {
       magnetRadius: MAGNET_RADIUS * this.magnetMultiplier,
       onCollected: (value) => {
         this.gold += value;
+        this.audio.playCoinCollect(value);
       },
       playArea: this.playArea,
       playerAlive: this.shipAlive,
@@ -719,6 +735,13 @@ export class PlayScene extends Phaser.Scene {
     if (!enemy) return;
     this.vfx.onEnemyDeath(enemy, dropGold);
     if (dropGold) {
+      let deathClass: "boss" | "large" | "small" = "small";
+      if (enemy.def.id === "boss") {
+        deathClass = "boss";
+      } else if (enemy.maxHp >= LARGE_ENEMY_EXPLOSION_HP_THRESHOLD) {
+        deathClass = "large";
+      }
+      this.audio.playEnemyDeath(deathClass);
       this.runEnemiesDefeated += 1;
       if (enemy.def.id === "boss") {
         this.triggerFramePulse(0.95, FRAME_SUCCESS_COLOR);
@@ -741,6 +764,7 @@ export class PlayScene extends Phaser.Scene {
       const damageTaken = beforeHp - afterHp;
       this.runDamageTaken += damageTaken;
       this.vfx.onPlayerDamage(fxX ?? this.ship.x, fxY ?? this.ship.y);
+      this.audio.playPlayerDamage(damageTaken);
       this.registerDamageJolt(damageTaken);
     }
   }
@@ -793,6 +817,8 @@ export class PlayScene extends Phaser.Scene {
     this.pointerActive = false;
     const deathX = this.ship.x;
     const deathY = this.ship.y;
+    this.audio.setPauseLowPass(true);
+    this.audio.playPlayerDeath();
     this.bankRunGold();
     this.clearWaveEntities();
     this.ship.flash(0.32);

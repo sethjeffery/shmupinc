@@ -1,0 +1,28 @@
+{
+  "id": "impact_player_hit",
+  "name": "Impact Player Hit",
+  "category": "impact",
+  "description": "Impact when enemy bullets strike the player.",
+  "gain": 0.22,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "sawtooth",
+      "startHz": 980,
+      "endHz": 180,
+      "attackMs": 1,
+      "holdMs": 8,
+      "releaseMs": 68,
+      "gain": 0.18
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 5,
+      "releaseMs": 54,
+      "highpassHz": 260,
+      "lowpassHz": 4200,
+      "gain": 0.13
+    }
+  ]
+}

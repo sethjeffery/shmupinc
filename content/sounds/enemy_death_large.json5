@@ -1,0 +1,28 @@
+{
+  "id": "enemy_death_large",
+  "name": "Enemy Death Large",
+  "category": "enemy",
+  "description": "Heavier explosion for large non-boss enemies.",
+  "gain": 0.3,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "sawtooth",
+      "startHz": 190,
+      "endHz": 46,
+      "attackMs": 2,
+      "holdMs": 28,
+      "releaseMs": 260,
+      "gain": 0.24
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 12,
+      "releaseMs": 220,
+      "highpassHz": 70,
+      "lowpassHz": 2000,
+      "gain": 0.18
+    }
+  ]
+}

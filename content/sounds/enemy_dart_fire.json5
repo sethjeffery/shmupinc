@@ -1,0 +1,28 @@
+{
+  "id": "enemy_dart_fire",
+  "name": "Enemy Dart Fire",
+  "category": "enemy",
+  "description": "Sharp high-pitched enemy dart shot.",
+  "gain": 0.21,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "square",
+      "startHz": 2240,
+      "endHz": 980,
+      "attackMs": 1,
+      "holdMs": 6,
+      "releaseMs": 34,
+      "gain": 0.2
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 2,
+      "releaseMs": 18,
+      "highpassHz": 950,
+      "lowpassHz": 7600,
+      "gain": 0.08
+    }
+  ]
+}

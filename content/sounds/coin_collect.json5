@@ -1,0 +1,29 @@
+{
+  "id": "coin_collect",
+  "name": "Coin Collect",
+  "category": "ui",
+  "description": "Short bright pickup ping for currency collection.",
+  "gain": 0.22,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "square",
+      "startHz": 1320,
+      "endHz": 980,
+      "attackMs": 1,
+      "holdMs": 8,
+      "releaseMs": 46,
+      "gain": 0.18
+    },
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 1880,
+      "endHz": 1360,
+      "attackMs": 1,
+      "holdMs": 6,
+      "releaseMs": 64,
+      "gain": 0.12
+    }
+  ]
+}

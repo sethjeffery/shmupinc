@@ -12,6 +12,7 @@ import type {
   GalaxyContent,
   GunContent,
   ModContent,
+  SoundContent,
   ShipContent,
   WaveContent,
   WeaponContent,
@@ -66,6 +67,7 @@ import {
   configureContentEditorTheme,
 } from "./monacoTheme";
 import { parseJsonWithLocation } from "./parseJson";
+import { ProceduralSoundPreviewPlayer } from "./proceduralSoundPlayer";
 import { REFERENCE_PICKERS, type ReferencePicker } from "./referencePickers";
 import { buildSchemaExplorer } from "./schemaExplorer";
 import { CONTENT_KINDS, contentSchemas } from "./schemas";
@@ -428,6 +430,7 @@ export const initContentEditor = (): void => {
   let currentModDef: ModDefinition | null = null;
   let currentGunDef: GunDefinition | null = null;
   let currentGalaxyDef: GalaxyDefinition | null = null;
+  let currentSoundDef: null | SoundContent = null;
   let currentShipDef: null | ShipDefinition = null;
   let currentKind: ContentKind | null = null;
   let registryCache: ContentRegistryResponse | null = null;
@@ -460,6 +463,9 @@ export const initContentEditor = (): void => {
   let currentModPreviewShipId = "";
   let currentModPreviewWeaponId = "";
   let currentModPreviewMountId = "";
+  let soundPreviewSemitoneOffset = 0;
+  let soundPreviewGainScale = 1;
+  const soundPreviewPlayer = new ProceduralSoundPreviewPlayer();
   let bezierPanelWasVisible = false;
   const loadTree = async (): Promise<void> => {
     try {
@@ -1462,8 +1468,54 @@ export const initContentEditor = (): void => {
     );
   };
 
+  const getSoundLayerDurationMs = (
+    layer: SoundContent["layers"][number],
+  ): number => {
+    if (layer.type === "eventGroup") {
+      const eventDurationMs = getSoundLayerDurationMs(layer.event);
+      const count = Math.max(1, Math.floor(layer.count));
+      const spacingMs = Math.max(0, layer.spacingMs);
+      const jitterMs = Math.max(0, layer.jitterMs ?? 0);
+      return (
+        (layer.startOffsetMs ?? 0) +
+        (count - 1) * spacingMs +
+        jitterMs +
+        eventDurationMs
+      );
+    }
+    return (
+      (layer.startOffsetMs ?? 0) +
+      (layer.attackMs ?? 0) +
+      (layer.holdMs ?? 0) +
+      (layer.releaseMs ?? 0)
+    );
+  };
+
+  const getSoundDurationMs = (sound: SoundContent): number =>
+    sound.layers.reduce(
+      (max, layer) => Math.max(max, getSoundLayerDurationMs(layer)),
+      0,
+    );
+
+  const playSoundPreviewBurst = (sound: SoundContent, count = 1): void => {
+    const safeCount = Math.max(1, Math.min(8, count));
+    const durationMs = Math.max(80, getSoundDurationMs(sound));
+    for (let i = 0; i < safeCount; i += 1) {
+      window.setTimeout(
+        () => {
+          soundPreviewPlayer.play(sound, {
+            gainScale: soundPreviewGainScale,
+            semitoneOffset: soundPreviewSemitoneOffset,
+          });
+        },
+        i * Math.round(durationMs * 0.5),
+      );
+    }
+  };
+
   const renderPreview = (): void => {
     if (!currentPath) {
+      soundPreviewPlayer.stop();
       previewText.textContent = "";
       hidePreviewCanvas();
       hidePreviewTabs();
@@ -1475,6 +1527,9 @@ export const initContentEditor = (): void => {
       return;
     }
     setPanelVisible(modIconSection, false);
+    if (currentKind !== "sounds") {
+      soundPreviewPlayer.stop();
+    }
 
     if (currentKind === "levels") {
       setPreviewAspect(playfieldAspect);
@@ -1785,6 +1840,103 @@ export const initContentEditor = (): void => {
       return;
     }
 
+    if (currentKind === "sounds") {
+      if (!currentSoundDef) {
+        previewText.textContent = "Sound preview unavailable.";
+        hidePreviewCanvas();
+        hidePreviewTabs();
+        setPanelVisible(previewSection, true);
+        return;
+      }
+      const soundDef = currentSoundDef;
+      const layerCount = soundDef.layers.length;
+      const approxDurationMs = Math.round(getSoundDurationMs(soundDef));
+      previewText.textContent = [
+        `${soundDef.name ?? soundDef.id}`,
+        `Category: ${soundDef.category}`,
+        `Layers: ${layerCount}`,
+        `Approx length: ${approxDurationMs} ms`,
+      ].join("\n");
+      hidePreviewCanvas();
+      setPanelVisible(previewSection, true);
+      renderPreviewTabs([
+        buildPreviewControlGroup(
+          "Playback",
+          <>
+            <button
+              type="button"
+              className="content-editor__preview-tab"
+              onClick={() => {
+                playSoundPreviewBurst(soundDef, 1);
+              }}
+            >
+              Play
+            </button>
+            <button
+              type="button"
+              className="content-editor__preview-tab"
+              onClick={() => {
+                playSoundPreviewBurst(soundDef, 3);
+              }}
+            >
+              Burst x3
+            </button>
+            <button
+              type="button"
+              className="content-editor__preview-tab"
+              onClick={() => {
+                soundPreviewPlayer.stop();
+              }}
+            >
+              Stop
+            </button>
+          </>,
+        ),
+        buildPreviewControlGroup(
+          "Pitch",
+          <>
+            <input
+              type="range"
+              min={-24}
+              max={24}
+              step={1}
+              value={soundPreviewSemitoneOffset}
+              onInput={(event) => {
+                soundPreviewSemitoneOffset = Number(event.currentTarget.value);
+                renderPreview();
+              }}
+            />
+            <span className="content-editor__preview-empty">
+              {soundPreviewSemitoneOffset > 0
+                ? `+${soundPreviewSemitoneOffset}`
+                : soundPreviewSemitoneOffset}{" "}
+              st
+            </span>
+          </>,
+        ),
+        buildPreviewControlGroup(
+          "Preview Gain",
+          <>
+            <input
+              type="range"
+              min={0.2}
+              max={2}
+              step={0.05}
+              value={soundPreviewGainScale}
+              onInput={(event) => {
+                soundPreviewGainScale = Number(event.currentTarget.value);
+                renderPreview();
+              }}
+            />
+            <span className="content-editor__preview-empty">
+              {soundPreviewGainScale.toFixed(2)}x
+            </span>
+          </>,
+        ),
+      ]);
+      return;
+    }
+
     previewText.textContent = "";
     hidePreviewCanvas();
     hidePreviewTabs();
@@ -1815,6 +1967,7 @@ export const initContentEditor = (): void => {
     currentModDef = null;
     currentGunDef = null;
     currentGalaxyDef = null;
+    currentSoundDef = null;
     currentShipDef = null;
     if (!currentPath) {
       renderValidation(["No file selected."]);
@@ -1930,6 +2083,9 @@ export const initContentEditor = (): void => {
         },
       ]);
       currentGalaxyDef = build.registry.galaxiesById[result.data.id] ?? null;
+      setLevelButtonsEnabled(false);
+    } else if (kind === "sounds") {
+      currentSoundDef = result.data as SoundContent;
       setLevelButtonsEnabled(false);
     } else if (kind === "ships") {
       const build = buildContentRegistry([

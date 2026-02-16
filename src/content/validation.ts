@@ -35,6 +35,7 @@ import type {
   LevelContent,
   ModContent,
   ObjectiveContent,
+  SoundContent,
   ShipContent,
   ShopContent,
   WaveContent,
@@ -68,6 +69,7 @@ export interface ContentRegistry {
   levelsById: Record<string, LevelDefinition>;
   modsById: Record<string, ModDefinition>;
   objectivesById: Record<string, ObjectiveSetDefinition>;
+  soundsById: Record<string, SoundContent>;
   shipsById: Record<string, ShipDefinition>;
   shopsById: Record<string, ShopRules>;
   wavesById: Record<string, WaveDefinition>;
@@ -445,6 +447,7 @@ export const buildContentRegistry = (
   const levelsById: Record<string, LevelContent> = {};
   const modsById: Record<string, ModContent> = {};
   const objectiveSetsById: Record<string, ObjectiveContent> = {};
+  const soundsById: Record<string, SoundContent> = {};
   const shipsById: Record<string, ShipContent> = {};
   const shopsById: Record<string, ShopContent> = {};
   const wavesById: Record<string, WaveContent> = {};
@@ -538,6 +541,13 @@ export const buildContentRegistry = (
           break;
         }
         objectiveSetsById[id] = value as ObjectiveContent;
+        break;
+      case "sounds":
+        if (soundsById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        soundsById[id] = value as SoundContent;
         break;
       case "ships":
         if (shipsById[id]) {
@@ -939,6 +949,7 @@ export const buildContentRegistry = (
       objectivesById: objectiveSetsById,
       shipsById: resolvedShips,
       shopsById: resolvedShops,
+      soundsById,
       wavesById: resolvedWaves,
       weaponsById: resolvedWeapons,
     },

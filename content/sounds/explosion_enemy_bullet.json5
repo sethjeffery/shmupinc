@@ -1,0 +1,28 @@
+{
+  "id": "explosion_enemy_bullet",
+  "name": "Explosion Enemy Bullet",
+  "category": "impact",
+  "description": "Detonation used for enemy bullet explosions.",
+  "gain": 0.25,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 220,
+      "endHz": 70,
+      "attackMs": 2,
+      "holdMs": 16,
+      "releaseMs": 180,
+      "gain": 0.2
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 8,
+      "releaseMs": 170,
+      "highpassHz": 80,
+      "lowpassHz": 2200,
+      "gain": 0.14
+    }
+  ]
+}

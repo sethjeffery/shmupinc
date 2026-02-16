@@ -1,0 +1,28 @@
+{
+  "id": "enemy_orb_fire",
+  "name": "Enemy Orb Fire",
+  "category": "enemy",
+  "description": "Enemy orb release with a higher pew profile.",
+  "gain": 0.22,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 1240,
+      "endHz": 180,
+      "attackMs": 1,
+      "holdMs": 156,
+      "releaseMs": 58,
+      "gain": 0.3
+    },
+    {
+      "type": "noise",
+      "attackMs": 1,
+      "holdMs": 5,
+      "releaseMs": 20,
+      "highpassHz": 760,
+      "lowpassHz": 6200,
+      "gain": 0.33
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "player_orb_fire",
+  "name": "Player Orb Fire",
+  "category": "weapon",
+  "description": "Primary player orb shot. Slightly gritty with a short body tail.",
+  "gain": 0.24,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "sawtooth",
+      "startHz": 880,
+      "endHz": 100,
+      "attackMs": 2,
+      "holdMs": 80,
+      "releaseMs": 266,
+      "gain": 0.32
+    },
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 140,
+      "endHz": 570,
+      "attackMs": 3,
+      "holdMs": 14,
+      "releaseMs": 586,
+      "gain": 0.2
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 4,
+      "releaseMs": 20,
+      "highpassHz": 520,
+      "lowpassHz": 5800,
+      "gain": 0.44
+    }
+  ]
+}

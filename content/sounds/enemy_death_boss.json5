@@ -1,0 +1,28 @@
+{
+  "id": "enemy_death_boss",
+  "name": "Enemy Death Boss",
+  "category": "enemy",
+  "description": "Boss destruction detonation.",
+  "gain": 0.34,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "sawtooth",
+      "startHz": 170,
+      "endHz": 34,
+      "attackMs": 2,
+      "holdMs": 34,
+      "releaseMs": 360,
+      "gain": 0.28
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 14,
+      "releaseMs": 300,
+      "highpassHz": 60,
+      "lowpassHz": 1700,
+      "gain": 0.2
+    }
+  ]
+}

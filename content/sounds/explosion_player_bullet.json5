@@ -1,0 +1,28 @@
+{
+  "id": "explosion_player_bullet",
+  "name": "Explosion Player Bullet",
+  "category": "impact",
+  "description": "Detonation used for player bullet explosions.",
+  "gain": 0.27,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 260,
+      "endHz": 84,
+      "attackMs": 2,
+      "holdMs": 18,
+      "releaseMs": 190,
+      "gain": 0.22
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 10,
+      "releaseMs": 180,
+      "highpassHz": 90,
+      "lowpassHz": 2600,
+      "gain": 0.16
+    }
+  ]
+}

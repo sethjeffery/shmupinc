@@ -1,0 +1,28 @@
+{
+  "id": "enemy_bomb_fire",
+  "name": "Enemy Bomb Fire",
+  "category": "enemy",
+  "description": "Slow, weighty enemy bomb discharge.",
+  "gain": 0.26,
+  "layers": [
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 260,
+      "endHz": 86,
+      "attackMs": 2,
+      "holdMs": 32,
+      "releaseMs": 160,
+      "gain": 0.22
+    },
+    {
+      "type": "noise",
+      "attackMs": 0,
+      "holdMs": 10,
+      "releaseMs": 120,
+      "highpassHz": 90,
+      "lowpassHz": 2100,
+      "gain": 0.14
+    }
+  ]
+}
