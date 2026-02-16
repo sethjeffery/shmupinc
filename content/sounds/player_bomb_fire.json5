@@ -1,28 +1,27 @@
 {
   "id": "player_bomb_fire",
-  "name": "Player Bomb Fire",
   "category": "weapon",
-  "description": "Heavy bomb throw with low-end body.",
-  "gain": 0.28,
+  "gain": 0.32,
   "layers": [
     {
       "type": "tone",
-      "wave": "triangle",
-      "startHz": 300,
-      "endHz": 112,
-      "attackMs": 2,
-      "holdMs": 26,
-      "releaseMs": 156,
-      "gain": 0.24
+      "wave": "sine",
+      "startHz": 180,
+      "endHz": 150,
+      "pitchCurve": "expFast",
+      "attackMs": 0,
+      "holdMs": 30,
+      "releaseMs": 60,
+      "gain": 0.2
     },
     {
       "type": "noise",
       "attackMs": 0,
-      "holdMs": 8,
-      "releaseMs": 124,
-      "highpassHz": 110,
-      "lowpassHz": 2400,
-      "gain": 0.14
+      "holdMs": 30,
+      "releaseMs": 240,
+      "highpassHz": 100,
+      "lowpassHz": 1200,
+      "gain": 0.7
     }
   ]
 }

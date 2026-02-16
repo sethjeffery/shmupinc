@@ -8,12 +8,25 @@
     {
       "type": "tone",
       "wave": "triangle",
-      "startHz": 260,
+      "startHz": 160,
       "endHz": 84,
       "attackMs": 2,
       "holdMs": 18,
       "releaseMs": 190,
-      "gain": 0.22
+      "gain": 0.12
+    },
+    {
+      "type": "noise",
+      "startOffsetMs": 20,
+      "attackMs": 50,
+      "holdMs": 60,
+      "releaseMs": 1200,
+      "highpassHz": 35,
+      "lowpassHz": 260,
+      "gain": 0.34,
+      "effects": [
+        { "type": "waveshaper", "drive": 0.35, "mix": 0.65 }
+      ]
     },
     {
       "type": "noise",

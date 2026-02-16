@@ -1,28 +1,27 @@
 {
   "id": "player_dart_fire",
-  "name": "Player Dart Fire",
   "category": "weapon",
-  "description": "Sharper shot with fast attack and short tail.",
   "gain": 0.22,
   "layers": [
     {
-      "type": "tone",
-      "wave": "square",
-      "startHz": 240,
-      "endHz": 860,
-      "attackMs": 1,
-      "holdMs": 8,
-      "releaseMs": 44,
-      "gain": 0.3
-    },
-    {
       "type": "noise",
       "attackMs": 0,
-      "holdMs": 2,
-      "releaseMs": 114,
-      "highpassHz": 900,
-      "lowpassHz": 2800,
-      "gain": 0.635
+      "holdMs": 4,
+      "releaseMs": 38,
+      "highpassHz": 2200,
+      "lowpassHz": 9000,
+      "gain": 0.42
+    },
+    {
+      "type": "tone",
+      "wave": "square",
+      "startHz": 1400,
+      "endHz": 1000,
+      "pitchCurve": "expFast",
+      "attackMs": 0,
+      "holdMs": 6,
+      "releaseMs": 40,
+      "gain": 0.18
     }
   ]
 }

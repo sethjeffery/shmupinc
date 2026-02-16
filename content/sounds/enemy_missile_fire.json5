@@ -1,28 +1,36 @@
 {
   "id": "enemy_missile_fire",
-  "name": "Enemy Missile Fire",
-  "category": "enemy",
-  "description": "Lower, heavier enemy missile launch.",
-  "gain": 0.24,
+  "category": "weapon",
+  "gain": 0.3,
   "layers": [
     {
-      "type": "tone",
-      "wave": "sawtooth",
-      "startHz": 420,
-      "endHz": 140,
-      "attackMs": 3,
-      "holdMs": 20,
-      "releaseMs": 126,
-      "gain": 0.2
+      "type": "noise",
+      "attackMs": 80,
+      "holdMs": 30,
+      "releaseMs": 1240,
+      "highpassHz": 600,
+      "lowpassHz": 3500,
+      "gain": 0.26
     },
     {
       "type": "noise",
-      "attackMs": 1,
-      "holdMs": 6,
-      "releaseMs": 92,
-      "highpassHz": 180,
-      "lowpassHz": 2600,
-      "gain": 0.12
+      "attackMs": 80,
+      "holdMs": 30,
+      "releaseMs": 340,
+      "highpassHz": 100,
+      "lowpassHz": 800,
+      "gain": 0.46
+    },
+    {
+      "type": "tone",
+      "wave": "sine",
+      "startHz": 320,
+      "endHz": 1060,
+      "pitchCurve": "linear",
+      "attackMs": 5,
+      "holdMs": 30,
+      "releaseMs": 200,
+      "gain": 0.18
     }
   ]
 }

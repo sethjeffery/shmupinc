@@ -1,28 +1,36 @@
 {
   "id": "player_missile_fire",
-  "name": "Player Missile Fire",
   "category": "weapon",
-  "description": "Thicker missile launch with gritty tail.",
-  "gain": 0.24,
+  "gain": 0.3,
   "layers": [
     {
-      "type": "tone",
-      "wave": "sawtooth",
-      "startHz": 500,
-      "endHz": 180,
-      "attackMs": 2,
-      "holdMs": 18,
-      "releaseMs": 118,
-      "gain": 0.22
+      "type": "noise",
+      "attackMs": 80,
+      "holdMs": 30,
+      "releaseMs": 1240,
+      "highpassHz": 1200,
+      "lowpassHz": 4800,
+      "gain": 0.26
     },
     {
       "type": "noise",
-      "attackMs": 0,
-      "holdMs": 8,
-      "releaseMs": 80,
-      "highpassHz": 220,
-      "lowpassHz": 3000,
-      "gain": 0.1
+      "attackMs": 80,
+      "holdMs": 30,
+      "releaseMs": 340,
+      "highpassHz": 100,
+      "lowpassHz": 900,
+      "gain": 0.46
+    },
+    {
+      "type": "tone",
+      "wave": "sine",
+      "startHz": 420,
+      "endHz": 760,
+      "pitchCurve": "linear",
+      "attackMs": 5,
+      "holdMs": 30,
+      "releaseMs": 200,
+      "gain": 0.18
     }
   ]
 }

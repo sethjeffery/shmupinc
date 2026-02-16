@@ -1,28 +1,53 @@
 {
   "id": "enemy_death_boss",
-  "name": "Enemy Death Boss",
   "category": "enemy",
-  "description": "Boss destruction detonation.",
-  "gain": 0.34,
+  "gain": 0.36,
+  "effects": [
+    { "type": "compressor", "thresholdDb": -24, "ratio": 4, "attackMs": 6, "releaseMs": 200, "makeupGain": 1.2 },
+    { "type": "waveshaper", "drive": 0.5, "mix": 0.45 },
+    { "type": "reverb", "roomMs": 520, "damping": 0.55, "highpassHz": 240, "lowpassHz": 4200, "mix": 0.18 }
+  ],
   "layers": [
     {
       "type": "tone",
-      "wave": "sawtooth",
-      "startHz": 170,
-      "endHz": 34,
-      "attackMs": 2,
-      "holdMs": 34,
-      "releaseMs": 360,
-      "gain": 0.28
+      "wave": "sine",
+      "startHz": 100,
+      "endHz": 48,
+      "pitchCurve": "expFast",
+      "attackMs": 0,
+      "holdMs": 40,
+      "releaseMs": 320,
+      "gain": 0.55
+    },
+    {
+      "type": "tone",
+      "wave": "triangle",
+      "startHz": 300,
+      "endHz": 140,
+      "pitchCurve": "expFast",
+      "attackMs": 0,
+      "holdMs": 30,
+      "releaseMs": 420,
+      "gain": 0.22
     },
     {
       "type": "noise",
       "attackMs": 0,
-      "holdMs": 14,
-      "releaseMs": 300,
-      "highpassHz": 60,
-      "lowpassHz": 1700,
-      "gain": 0.2
+      "holdMs": 60,
+      "releaseMs": 900,
+      "highpassHz": 180,
+      "lowpassHz": 2400,
+      "gain": 0.38
+    },
+    {
+      "type": "noise",
+      "attackMs": 50,
+      "startOffsetMs": 200,
+      "holdMs": 160,
+      "releaseMs": 3090,
+      "highpassHz": 180,
+      "lowpassHz": 400,
+      "gain": 0.38
     }
   ]
 }

@@ -1,134 +1,57 @@
 {
-  "id": "player_death",
-  "name": "Player Death",
+  "id": "player_death_boom_v1",
+  "name": "Player Death Boom v1",
   "category": "system",
-  "description": "Player ship destruction burst (transient + thump + blast + tail + debris + short room).",
+  "description": "Deep boom foundation: short sub/body with gentle saturation + dark noise thump.",
   "gain": 0.33,
   "effects": [
-    {
-      "type": "compressor",
-      "thresholdDb": -20,
-      "kneeDb": 18,
-      "ratio": 4,
-      "attackMs": 6,
-      "releaseMs": 140,
-      "makeupGain": 1.1
-    },
-    {
-      "type": "waveshaper",
-      "drive": 0.25,
-      "mix": 0.35
-    },
+    { "type": "compressor", "thresholdDb": -22, "kneeDb": 18, "ratio": 4, "attackMs": 8, "releaseMs": 160, "makeupGain": 1.15 },
+    { "type": "waveshaper", "drive": 0.42, "mix": 0.45 },
     {
       "type": "reverb",
-      "roomMs": 380,
+      "roomMs": 420,
       "damping": 0.55,
-      "highpassHz": 250,
-      "lowpassHz": 6000,
-      "mix": 0.14
+      "highpassHz": 240,
+      "lowpassHz": 4200,
+      "mix": 0.16
     }
   ],
   "layers": [
     {
-      "type": "noise",
-      "startOffsetMs": 0,
-      "attackMs": 0,
-      "holdMs": 10,
-      "releaseMs": 60,
-      "highpassHz": 2200,
-      "lowpassHz": 9000,
-      "gain": 0.22,
-      "randomize": {
-        "gain": 0.12,
-        "highpassHz": 0.15,
-        "lowpassHz": 0.1
-      }
-    },
-    {
       "type": "tone",
-      "wave": "triangle",
-      "startOffsetMs": 0,
-      "startHz": 190,
-      "endHz": 48,
+      "wave": "sine",
+      "startHz": 100,
+      "endHz": 46,
       "pitchCurve": "expFast",
       "attackMs": 0,
-      "holdMs": 40,
-      "releaseMs": 520,
-      "gain": 0.33,
-      "effects": [
-        { "type": "waveshaper", "drive": 0.55, "mix": 0.5 },
-        { "type": "lowpass", "hz": 900 }
-      ],
-      "randomize": {
-        "startHz": 0.12,
-        "endHz": 0.08,
-        "gain": 0.08
-      }
-    },
-    {
-      "type": "noise",
-      "startOffsetMs": 5,
-      "attackMs": 0,
-      "holdMs": 90,
-      "releaseMs": 420,
-      "highpassHz": 900,
-      "lowpassHz": 8500,
+      "holdMs": 28,
+      "releaseMs": 220,
       "gain": 0.55,
       "effects": [
-        { "type": "waveshaper", "drive": 0.18, "mix": 0.25 }
-      ],
-      "randomize": {
-        "highpassHz": 0.2,
-        "lowpassHz": 0.15,
-        "gain": 0.12
-      }
+        { "type": "lowpass", "hz": 520 }
+      ]
     },
     {
       "type": "noise",
-      "startOffsetMs": 60,
       "attackMs": 0,
-      "holdMs": 120,
-      "releaseMs": 1200,
-      "highpassHz": 260,
-      "lowpassHz": 2400,
-      "gain": 0.34,
-      "effects": [
-        {
-          "type": "delay",
-          "timeMs": 70,
-          "feedback": 0.18,
-          "mix": 0.08,
-          "highpassHz": 400,
-          "lowpassHz": 2400
-        }
-      ],
-      "randomize": {
-        "highpassHz": 0.12,
-        "lowpassHz": 0.12,
-        "gain": 0.1
-      }
+      "holdMs": 22,
+      "releaseMs": 1780,
+      "highpassHz": 155,
+      "lowpassHz": 720,
+      "gain": 0.62
     },
     {
-      "type": "eventGroup",
-      "startOffsetMs": 35,
-      "count": 14,
-      "spacingMs": 35,
-      "jitterMs": 28,
-      "event": {
-        "type": "noise",
-        "attackMs": 0,
-        "holdMs": 2,
-        "releaseMs": 65,
-        "bandpassHz": 4200,
-        "bandpassQ": 6,
-        "gain": 0.09,
-        "pan": { "min": -0.65, "max": 0.65 },
-        "randomize": {
-          "bandpassHz": 0.55,
-          "releaseMs": 0.35,
-          "gain": 0.5
-        }
-      }
+      "type": "noise",
+      "startOffsetMs": 320,
+      "attackMs": 50,
+      "holdMs": 60,
+      "releaseMs": 2600,
+      "highpassHz": 35,
+      "lowpassHz": 260,
+      "gain": 0.44,
+      "effects": [
+        { "type": "waveshaper", "drive": 0.35, "mix": 0.35 }
+      ]
     }
   ]
 }

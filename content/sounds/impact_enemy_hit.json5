@@ -1,28 +1,30 @@
 {
   "id": "impact_enemy_hit",
-  "name": "Impact Enemy Hit",
   "category": "impact",
-  "description": "Impact when player bullets strike enemies.",
-  "gain": 0.2,
+  "gain": 0.22,
   "layers": [
     {
       "type": "tone",
-      "wave": "square",
-      "startHz": 1320,
-      "endHz": 520,
-      "attackMs": 1,
-      "holdMs": 6,
-      "releaseMs": 40,
-      "gain": 0.16
+      "wave": "sawtooth",
+      "startHz": 1800,
+      "endHz": 900,
+      "pitchCurve": "expFast",
+      "attackMs": 0,
+      "holdMs": 8,
+      "releaseMs": 60,
+      "gain": 0.32,
+      "effects": [
+        { "type": "lowpass", "hz": 6000 }
+      ]
     },
     {
       "type": "noise",
       "attackMs": 0,
-      "holdMs": 3,
-      "releaseMs": 28,
-      "highpassHz": 520,
-      "lowpassHz": 5800,
-      "gain": 0.09
+      "holdMs": 4,
+      "releaseMs": 50,
+      "highpassHz": 1800,
+      "lowpassHz": 8000,
+      "gain": 0.22
     }
   ]
 }
