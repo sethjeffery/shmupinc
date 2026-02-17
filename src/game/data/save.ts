@@ -36,10 +36,8 @@ export interface MountAssignment {
 }
 
 export interface GalaxyCampaignState {
-  branchChoiceNodeIds: string[];
-  completedNodeIds: string[];
-  currentNodeId: null | string;
-  unlockedNodeIds: string[];
+  completedLevelIds: string[];
+  currentLevelId: null | string;
 }
 
 export interface SaveData {
@@ -87,10 +85,8 @@ let cached: null | SaveData = null;
 const createDefaultGalaxyCampaignState = (
   galaxy: GalaxyDefinition,
 ): GalaxyCampaignState => ({
-  branchChoiceNodeIds: [],
-  completedNodeIds: [],
-  currentNodeId: galaxy.startNodeId,
-  unlockedNodeIds: [galaxy.startNodeId],
+  completedLevelIds: [],
+  currentLevelId: galaxy.levels[0]?.levelId ?? null,
 });
 
 function getStorage(): null | Storage {
@@ -342,68 +338,27 @@ const normalizeGalaxyCampaign = (save: SaveData): void => {
   const normalizedCampaign: Record<string, GalaxyCampaignState> = {};
 
   for (const [galaxyId, galaxy] of Object.entries(galaxies)) {
-    const validNodeIds = new Set(galaxy.nodes.map((node) => node.id));
+    const orderedLevelIds = galaxy.levels.map((entry) => entry.levelId);
+    const validLevelIds = new Set(orderedLevelIds);
     const existing = save.galaxyCampaign[galaxyId];
     const base = existing ?? createDefaultGalaxyCampaignState(galaxy);
-
-    const completedNodeIds = Array.from(
-      new Set(
-        base.completedNodeIds.filter((nodeId) => validNodeIds.has(nodeId)),
-      ),
+    const existingCompleted = Array.isArray(
+      (base as Partial<GalaxyCampaignState>).completedLevelIds,
+    )
+      ? (base as Partial<GalaxyCampaignState>).completedLevelIds ?? []
+      : [];
+    const completedSet = new Set(
+      existingCompleted.filter((levelId) => validLevelIds.has(levelId)),
     );
-    const completedSet = new Set(completedNodeIds);
-
-    const unlockedNodeIds = Array.from(
-      new Set(
-        base.unlockedNodeIds.filter(
-          (nodeId) => validNodeIds.has(nodeId) && !completedSet.has(nodeId),
-        ),
-      ),
-    );
-    if (
-      !completedSet.has(galaxy.startNodeId) &&
-      !unlockedNodeIds.includes(galaxy.startNodeId)
-    ) {
-      unlockedNodeIds.unshift(galaxy.startNodeId);
+    const completedLevelIds: string[] = [];
+    for (const levelId of orderedLevelIds) {
+      if (!completedSet.has(levelId)) break;
+      completedLevelIds.push(levelId);
     }
-
-    let currentNodeId = base.currentNodeId;
-    if (
-      !currentNodeId ||
-      !validNodeIds.has(currentNodeId) ||
-      completedSet.has(currentNodeId)
-    ) {
-      currentNodeId = null;
-    }
-
-    const branchChoiceNodeIds = Array.from(
-      new Set(
-        base.branchChoiceNodeIds.filter(
-          (nodeId) =>
-            validNodeIds.has(nodeId) &&
-            unlockedNodeIds.includes(nodeId) &&
-            !completedSet.has(nodeId),
-        ),
-      ),
-    );
-
-    if (!currentNodeId) {
-      if (branchChoiceNodeIds.length === 1) {
-        currentNodeId = branchChoiceNodeIds[0];
-      } else if (branchChoiceNodeIds.length === 0) {
-        currentNodeId =
-          unlockedNodeIds.find((nodeId) => !completedSet.has(nodeId)) ?? null;
-      }
-    }
-
+    const currentLevelId = orderedLevelIds[completedLevelIds.length] ?? null;
     normalizedCampaign[galaxyId] = {
-      branchChoiceNodeIds:
-        currentNodeId && branchChoiceNodeIds.includes(currentNodeId)
-          ? []
-          : branchChoiceNodeIds,
-      completedNodeIds,
-      currentNodeId,
-      unlockedNodeIds,
+      completedLevelIds,
+      currentLevelId,
     };
   }
 

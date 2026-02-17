@@ -652,23 +652,21 @@ export const buildContentRegistry = (
 
   const resolvedGalaxies: Record<string, GalaxyDefinition> = {};
   for (const [id, galaxy] of Object.entries(galaxiesById)) {
-    for (const node of galaxy.nodes) {
-      if (!levelsById[node.levelId]) {
+    for (const level of galaxy.levels) {
+      if (!levelsById[level.levelId]) {
         addReferenceError(
           errors,
           `galaxies/${id}`,
-          `Missing level "${node.levelId}" referenced by node "${node.id}".`,
+          `Missing level "${level.levelId}" referenced by galaxy "${id}".`,
         );
       }
     }
     resolvedGalaxies[id] = {
       decorations: galaxy.decorations,
       description: galaxy.description,
-      edges: galaxy.edges,
       id: galaxy.id,
+      levels: galaxy.levels,
       name: galaxy.name,
-      nodes: galaxy.nodes,
-      startNodeId: galaxy.startNodeId,
     };
   }
 

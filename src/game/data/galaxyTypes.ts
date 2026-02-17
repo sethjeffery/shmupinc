@@ -5,16 +5,10 @@ export interface GalaxyNodePosition {
   y: number;
 }
 
-export interface GalaxyNodeDefinition {
-  id: string;
+export interface GalaxyLevelDefinition {
   levelId: string;
   name?: string;
   pos: GalaxyNodePosition;
-}
-
-export interface GalaxyEdgeDefinition {
-  from: string;
-  to: string;
 }
 
 export interface GalaxyDecorationDefinition {
@@ -30,8 +24,6 @@ export interface GalaxyDefinition {
   id: string;
   name: string;
   description?: string;
-  startNodeId: string;
-  nodes: GalaxyNodeDefinition[];
-  edges: GalaxyEdgeDefinition[];
+  levels: GalaxyLevelDefinition[];
   decorations?: GalaxyDecorationDefinition[];
 }

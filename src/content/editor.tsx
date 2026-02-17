@@ -1255,30 +1255,25 @@ export const initContentEditor = (): void => {
     }
     setPreviewAspect("16 / 10");
     const pointPathById = new Map<string, EditablePointPath>();
-    const points: CanvasEditorPoint[] = galaxy.nodes.map((node, index) => {
-      pointPathById.set(node.id, {
-        xPath: ["nodes", index, "pos", "x"],
-        yPath: ["nodes", index, "pos", "y"],
+    const points: CanvasEditorPoint[] = galaxy.levels.map((entry, index) => {
+      pointPathById.set(entry.levelId, {
+        xPath: ["levels", index, "pos", "x"],
+        yPath: ["levels", index, "pos", "y"],
       });
       return {
-        id: node.id,
-        x: node.pos.x * 2 - 1,
-        y: node.pos.y * 2 - 1,
+        id: entry.levelId,
+        x: entry.pos.x * 2 - 1,
+        y: entry.pos.y * 2 - 1,
       };
     });
-    const validPointIds = new Set(points.map((point) => point.id));
     const scene: CanvasEditorScene = {
       axisX: 0,
       axisY: 0,
-      paths: galaxy.edges
-        .filter(
-          (edge) => validPointIds.has(edge.from) && validPointIds.has(edge.to),
-        )
-        .map((edge) => ({
-          pointIds: [edge.from, edge.to],
-          stroke: "rgba(125, 249, 255, 0.65)",
-          width: 1.75,
-        })),
+      paths: galaxy.levels.slice(0, -1).map((entry, index) => ({
+        pointIds: [entry.levelId, galaxy.levels[index + 1].levelId],
+        stroke: "rgba(125, 249, 255, 0.65)",
+        width: 1.75,
+      })),
       points,
     };
     const editorInstance = ensurePreviewPointEditor(
@@ -1638,7 +1633,7 @@ export const initContentEditor = (): void => {
         setPanelVisible(previewSection, true);
         return;
       }
-      previewText.textContent = `Nodes: ${currentGalaxyDef.nodes.length}\nEdges: ${currentGalaxyDef.edges.length}`;
+      previewText.textContent = `Levels: ${currentGalaxyDef.levels.length}`;
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       hidePreviewTabs();

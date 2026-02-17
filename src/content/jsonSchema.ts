@@ -129,11 +129,11 @@ export const buildJsonSchemaForKind = (
     }
   }
 
-  if (kind === "galaxies" && props.nodes) {
-    const nodeItem = getItemsSchema(props.nodes);
-    const nodeProps = getProperties(nodeItem);
-    if (nodeProps?.levelId) {
-      setEnumOnProperty(nodeProps.levelId, Object.keys(registry.levelsById));
+  if (kind === "galaxies" && props.levels) {
+    const levelItem = getItemsSchema(props.levels);
+    const levelProps = getProperties(levelItem);
+    if (levelProps?.levelId) {
+      setEnumOnProperty(levelProps.levelId, Object.keys(registry.levelsById));
     }
   }
 

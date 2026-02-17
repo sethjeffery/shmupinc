@@ -573,15 +573,17 @@ body.ui-open canvas {
 }
 
 .progression-shell {
-  width: min(1080px, 96vw);
+  width: min(1120px, 96vw);
   min-height: min(720px, 86vh);
-  display: grid;
-  grid-template-columns: 1.65fr minmax(280px, 0.9fr);
-  gap: 18px;
+  position: relative;
+  transition: opacity 0.5s;
+  transition-delay: 0.2s;
 }
 
 .progression-map-frame {
   position: relative;
+  height: min(720px, 86vh);
+  min-height: 520px;
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid rgba(125, 249, 255, 0.18);
@@ -618,6 +620,19 @@ body.ui-open canvas {
   z-index: 1;
   width: 100%;
   height: 100%;
+  transform-origin: 50% 50%;
+  transition:
+    transform 0.7s ease,
+    filter 0.7s ease;
+}
+
+.progression-shell.is-launching {
+  opacity: 0;
+}
+
+.progression-shell.is-launching .progression-map {
+  transform: scale(2);
+  filter: blur(1.5px);
 }
 
 .progression-ambient {
@@ -666,65 +681,133 @@ body.ui-open canvas {
   stroke: rgba(255, 209, 102, 0.9);
 }
 
-.progression-node.is-branch-choice circle {
-  stroke-dasharray: 4 4;
-}
-
 .progression-node.is-actionable {
   cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.progression-node.is-actionable:hover,
+.progression-node.is-actionable:focus-visible {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 14px rgba(125, 249, 255, 0.45));
+}
+
+.progression-node.is-actionable:hover circle,
+.progression-node.is-actionable:focus-visible circle {
+  stroke: rgba(154, 250, 255, 0.95);
+  fill: rgba(17, 32, 52, 0.95);
+}
+
+.progression-node-ping {
+  fill: none;
+  stroke: rgba(125, 249, 255, 0.66);
+  stroke-width: 1.4;
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: progressionRadarPing 2.5s ease-out infinite;
+}
+
+.progression-node-ping.ping-b {
+  animation-delay: 1.1s;
 }
 
 .progression-node-label {
   fill: #e9f4ff;
   font-family: "Orbitron", sans-serif;
-  font-size: 18px;
+  font-size: 14px;
   text-anchor: middle;
   letter-spacing: 0.08em;
 }
 
 .progression-node-stars {
-  fill: rgba(166, 188, 216, 0.96);
+  fill: rgba(166, 188, 216, 0.5);
   font-family: "Orbitron", sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   text-anchor: middle;
   letter-spacing: 0.08em;
 }
 
-.progression-side {
-  border-radius: 18px;
-  border: 1px solid rgba(125, 249, 255, 0.18);
-  background: linear-gradient(
-    150deg,
-    rgba(16, 24, 40, 0.92),
-    rgba(8, 12, 20, 0.96)
-  );
-  box-shadow:
-    0 14px 32px rgba(0, 0, 0, 0.45),
-    inset 0 0 18px rgba(125, 249, 255, 0.08);
-  padding: 18px;
-  display: grid;
-  gap: 14px;
-  align-content: start;
+.progression-node-stars .is-starred {
+  fill: #ffd166;
 }
 
-.progression-title {
+.progression-map-hud {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+
+.progression-map-title {
   font-family: "Orbitron", sans-serif;
-  font-size: 22px;
-  letter-spacing: 0.14em;
+  font-size: 21px;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: #f1f8ff;
+  text-shadow: 0 0 12px rgba(125, 249, 255, 0.3);
 }
 
-.progression-description {
-  color: var(--muted);
+.progression-map-menu {
+  border-radius: 999px;
+  border: 1px solid rgba(125, 249, 255, 0.42);
+  background: rgba(8, 15, 26, 0.72);
+  color: #d9f8ff;
+  font-family: "Orbitron", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 8px 13px;
+  cursor: pointer;
+}
+
+.progression-map-caption {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  right: 20px;
+  bottom: 18px;
+  color: rgba(207, 225, 244, 0.9);
   font-size: 13px;
   line-height: 1.45;
+  max-width: 700px;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
 }
 
-.progression-status {
-  color: #d7e9ff;
-  font-size: 13px;
-  line-height: 1.4;
+.progression-map-current {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  top: 58px;
+  color: rgba(170, 232, 255, 0.96);
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+
+.progression-shell.is-launching .progression-map-hud,
+.progression-shell.is-launching .progression-map-caption,
+.progression-shell.is-launching .progression-map-current {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 @keyframes progressionStarTwinkle {
@@ -736,6 +819,21 @@ body.ui-open canvas {
   }
   100% {
     opacity: 0.32;
+  }
+}
+
+@keyframes progressionRadarPing {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.72);
+  }
+  82% {
+    opacity: 0;
+    transform: scale(1.95);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.95);
   }
 }
 
@@ -777,15 +875,16 @@ body.ui-open canvas {
     padding: 12px;
   }
 
-  .progression-shell {
-    min-height: min(760px, 88vh);
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(320px, 1.4fr) auto;
-    gap: 12px;
+  .progression-map-frame {
+    min-height: min(580px, 80vh);
   }
 
-  .progression-title {
+  .progression-map-title {
     font-size: 18px;
+  }
+
+  .progression-map-caption {
+    font-size: 12px;
   }
 
   .progression-node-label {
@@ -1274,6 +1373,32 @@ body.ui-open canvas {
   text-align: center;
 }
 
+.shop-tab-summary {
+  border-radius: 12px;
+  border: 1px solid rgba(125, 249, 255, 0.12);
+  padding: 10px 12px;
+  background: rgba(10, 16, 28, 0.7);
+  display: grid;
+  gap: 3px;
+}
+
+.shop-tab-summary-title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.shop-tab-summary-desc {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.shop-tab-content {
+  min-width: 0;
+}
+
 .shop-content {
   padding: 16px;
   border-radius: 16px;
@@ -1284,34 +1409,39 @@ body.ui-open canvas {
     rgba(10, 15, 26, 0.9)
   );
   box-shadow: inset 0 0 14px rgba(125, 249, 255, 0.05);
+  display: grid;
+  gap: 12px;
 }
 
 .shop-content-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+  display: grid;
+  gap: 4px;
 }
 
-.shop-content-note {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.shop-section {
-  margin-bottom: 24px;
-}
-
-.shop-section-title {
-  font-size: 13px;
-  letter-spacing: 0.16em;
+.shop-content-title {
+  margin: 0;
+  font-family: "Orbitron", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #9fb7ff;
-  margin-bottom: 0;
+  color: var(--text);
 }
 
-.shop-grid {
+.shop-content-description {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.shop-content-body {
+  min-width: 0;
+}
+
+.shop-content-body--loadout {
+  min-width: 0;
+}
+
+.shop-catalog {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;

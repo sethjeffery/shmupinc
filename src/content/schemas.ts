@@ -1030,21 +1030,9 @@ const levelSchema = z.object({
   winCondition: winConditionSchema.describe("Primary victory condition."),
 });
 
-const galaxyNodePositionSchema = z.object({
+const galaxyMapPositionSchema = z.object({
   x: z.number().min(0).max(1).describe("Normalized map X (0..1)."),
   y: z.number().min(0).max(1).describe("Normalized map Y (0..1)."),
-});
-
-const galaxyNodeSchema = z.object({
-  id: idField("Unique node id within this galaxy."),
-  levelId: idField("Level id launched by this node."),
-  name: z.string().describe("Optional display label override.").optional(),
-  pos: galaxyNodePositionSchema,
-});
-
-const galaxyEdgeSchema = z.object({
-  from: idField("Source node id."),
-  to: idField("Destination node id."),
 });
 
 const galaxyDecorationSchema = z.object({
@@ -1053,9 +1041,15 @@ const galaxyDecorationSchema = z.object({
     .enum(["asteroidField", "nebula", "planet"])
     .describe("Decoration type."),
   label: z.string().describe("Optional map label.").optional(),
-  pos: galaxyNodePositionSchema.describe("Decoration anchor position."),
+  pos: galaxyMapPositionSchema.describe("Decoration anchor position."),
   scale: z.number().positive().describe("Decoration scale factor.").optional(),
   tint: colorField("Optional tint for this decoration.").optional(),
+});
+
+const galaxyLevelSchema = z.object({
+  levelId: idField("Level id launched by this node."),
+  name: z.string().describe("Optional display label override.").optional(),
+  pos: galaxyMapPositionSchema.describe("Node position in the campaign map."),
 });
 
 const galaxySchema = z
@@ -1069,87 +1063,26 @@ const galaxySchema = z
       .string()
       .describe("Optional campaign summary shown in the map UI.")
       .optional(),
-    edges: z.array(galaxyEdgeSchema).describe("Directed connections."),
     id: idField("Unique galaxy id."),
+    levels: z
+      .array(galaxyLevelSchema)
+      .min(1)
+      .describe("Ordered campaign levels."),
     name: z.string().describe("Display name."),
-    nodes: z.array(galaxyNodeSchema).min(1).describe("Playable map nodes."),
-    startNodeId: idField("Node id where campaign progression starts."),
   })
   .superRefine((galaxy, ctx) => {
-    const nodeIds = new Set<string>();
     const levelIds = new Set<string>();
-    for (let i = 0; i < galaxy.nodes.length; i += 1) {
-      const node = galaxy.nodes[i];
-      if (nodeIds.has(node.id)) {
+    for (let i = 0; i < galaxy.levels.length; i += 1) {
+      const levelId = galaxy.levels[i].levelId;
+      if (levelIds.has(levelId)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Duplicate node id "${node.id}".`,
-          path: ["nodes", i, "id"],
+          message: `Duplicate level id "${levelId}" in galaxy levels.`,
+          path: ["levels", i, "levelId"],
         });
+        continue;
       }
-      nodeIds.add(node.id);
-      if (levelIds.has(node.levelId)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Duplicate levelId "${node.levelId}" in galaxy nodes.`,
-          path: ["nodes", i, "levelId"],
-        });
-      }
-      levelIds.add(node.levelId);
-    }
-
-    if (!nodeIds.has(galaxy.startNodeId)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `startNodeId "${galaxy.startNodeId}" is not defined in nodes.`,
-        path: ["startNodeId"],
-      });
-    }
-
-    for (let i = 0; i < galaxy.edges.length; i += 1) {
-      const edge = galaxy.edges[i];
-      if (!nodeIds.has(edge.from)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Unknown edge source "${edge.from}".`,
-          path: ["edges", i, "from"],
-        });
-      }
-      if (!nodeIds.has(edge.to)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Unknown edge destination "${edge.to}".`,
-          path: ["edges", i, "to"],
-        });
-      }
-    }
-
-    if (nodeIds.has(galaxy.startNodeId)) {
-      const outgoing = new Map<string, string[]>();
-      for (const edge of galaxy.edges) {
-        const list = outgoing.get(edge.from) ?? [];
-        list.push(edge.to);
-        outgoing.set(edge.from, list);
-      }
-      const seen = new Set<string>([galaxy.startNodeId]);
-      const queue = [galaxy.startNodeId];
-      while (queue.length > 0) {
-        const next = queue.shift();
-        if (!next) break;
-        for (const to of outgoing.get(next) ?? []) {
-          if (seen.has(to)) continue;
-          seen.add(to);
-          queue.push(to);
-        }
-      }
-      galaxy.nodes.forEach((node, index) => {
-        if (seen.has(node.id)) return;
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Node "${node.id}" is unreachable from startNodeId.`,
-          path: ["nodes", index, "id"],
-        });
-      });
+      levelIds.add(levelId);
     }
   });
 

@@ -9,43 +9,70 @@ import type { WeaponInstanceId } from "../data/weaponInstances";
 import type { WeaponDefinition, WeaponId } from "../data/weapons";
 import type { WeaponSize } from "../data/weaponTypes";
 
-import { signal, type Signal } from "@preact/signals";
+import { signal } from "@preact/signals";
 import Phaser from "phaser";
 import { render } from "preact";
 
-import { GUNS, type GunDefinition } from "../data/guns";
 import { getActiveLevelSession } from "../data/levelState";
 import { MODS } from "../data/mods";
 import {
-  addResourceInSave,
-  autoAttachWeaponsForShipInSave,
   buildMountedWeapons,
-  createModInstanceInSave,
-  createWeaponInstanceInSave,
   getMissingUnlocks,
   getResourceAmount,
   hasRequiredUnlocks,
   loadSave,
   mutateSave,
-  spendResourceInSave,
 } from "../data/save";
 import { SHIPS } from "../data/ships";
 import { filterShopItems, pickAllowedId } from "../data/shopRules";
 import { canMountWeapon } from "../data/weaponMounts";
 import { WEAPONS } from "../data/weapons";
-import { drawGunToCanvas } from "../render/gunShapes";
-import { drawModToCanvas, getModIconBounds } from "../render/modShapes";
-import { DEFAULT_SHIP_VECTOR, drawShipToCanvas } from "../render/shipShapes";
-import { getVectorBounds } from "../render/vector/cache";
+import { DEFAULT_SHIP_VECTOR } from "../render/shipShapes";
+import * as DragPreview from "../ui/dragPreview";
+import LoadoutPanel from "../ui/loadout/LoadoutPanel";
+import NodeGraphContainer, { NodeLink } from "../ui/loadout/NodeGraph";
+import {
+  createNodeGraphLayout,
+  getVisibleMounts,
+  MAX_RENDERED_MOD_SLOTS,
+  type NodeGraphPoint,
+} from "../ui/loadout/nodeGraphLayout";
+import ArmoryTab from "../ui/shop/ArmoryTab";
+import { drawShopIcon, type CardIconKind } from "../ui/shop/iconPainter";
+import LoadoutTab from "../ui/shop/LoadoutTab";
+import ShipsTab from "../ui/shop/ShipsTab";
+import { DEFAULT_SHOP_CATEGORY, type ShopCategory } from "../ui/shop/shopTabs";
+import ShopCard from "../ui/ShopCard";
+import ShopNodeIcon from "../ui/ShopNodeIcon";
+import { ShopOverlayView } from "../ui/ShopOverlayView";
 import { PreviewScene } from "./PreviewScene";
+import { getEligibleMountIdsForDrag } from "./shop/dragEligibility";
+import {
+  assignModToMountInSave,
+  assignModToSlotInSave,
+  assignWeaponToMountInSave,
+  clearModSlotInSave,
+  detachModFromMountInSave,
+  detachWeaponFromMountInSave,
+  purchaseModInSave,
+  purchaseWeaponInSave,
+  selectOrPurchaseShipInSave,
+} from "./shop/saveOps";
 
 type ShopItemType = "inventory" | "mod" | "mount" | "ship" | "weapon";
 
-type ShopCategory = "armory" | "loadout" | "ships";
-
 type ShopCardState = "equipped" | "locked" | "mounted" | "owned" | "restricted";
 
-type CardIconKind = "gun" | "mod" | "ship";
+export interface BuildNodeIconOptions {
+  accentColor: number;
+  className?: string;
+  gunId?: string;
+  modVector?: ModIconVector;
+  iconKind?: CardIconKind;
+  size?: number;
+  shipShape?: ShipVector;
+  weaponSize?: WeaponSize;
+}
 
 interface WeaponDragPayload {
   kind: "weapon";
@@ -74,31 +101,7 @@ interface ModNodeSelection {
 
 type LoadoutNodeSelection = ModNodeSelection | MountNodeSelection;
 
-interface NodeOptionIcon {
-  accentColor: number;
-  gunId?: string;
-  iconKind: CardIconKind;
-  modVector?: ModIconVector;
-  weaponSize?: WeaponSize;
-}
-
-interface NodeGraphPoint {
-  x: number;
-  y: number;
-}
-
-interface NodeGraphLayout {
-  mountPoints: Map<string, NodeGraphPoint>;
-  modPoints: Map<string, NodeGraphPoint[]>;
-  shipPoint: NodeGraphPoint;
-  worldHeight: number;
-  worldWidth: number;
-}
-
-const SELL_RATIO = 0.5;
 const PRIMARY_RESOURCE_ID = "gold";
-const MAX_RENDERED_WEAPON_MOUNTS = 3;
-const MAX_RENDERED_MOD_SLOTS = 2;
 
 const formatCost = (cost: number, resourceId: string): string =>
   resourceId === PRIMARY_RESOURCE_ID ? `${cost}g` : `${cost} ${resourceId}`;
@@ -112,140 +115,9 @@ interface ShopStatsView {
   speed: string;
 }
 
-interface ShopOverlaySignals {
-  catalogNote: Signal<string>;
-  catalogTitle: Signal<string>;
-  category: Signal<ShopCategory>;
-  gold: Signal<string>;
-  missionActive: Signal<boolean>;
-  missionText: Signal<string>;
-  stats: Signal<ShopStatsView>;
-}
-
-const tabClass = (
-  activeCategory: ShopCategory,
-  tabCategory: ShopCategory,
-): string => `shop-tab${activeCategory === tabCategory ? " is-active" : ""}`;
-
-const ShopOverlayView = (props: {
-  onCatalogGridRef: (element: HTMLDivElement | null) => void;
-  onPreviewRootRef: (element: HTMLDivElement | null) => void;
-  signals: ShopOverlaySignals;
-}) => {
-  const category = props.signals.category.value;
-  const missionClass = `shop-mission${
-    props.signals.missionActive.value ? " is-active" : ""
-  }`;
-  const deckClass = `shop-deck${
-    category === "loadout" ? " is-loadout-focus" : ""
-  }`;
-  const stats = props.signals.stats.value;
-
-  return (
-    <div className="shop-panel">
-      <div className="shop-header">
-        <div className="shop-header-meta">
-          <div className="shop-title">Hangar Exchange</div>
-          <div className={missionClass}>{props.signals.missionText.value}</div>
-        </div>
-        <button
-          className="shop-header-start"
-          data-action="deploy"
-          type="button"
-        >
-          Start
-        </button>
-        <div className="shop-gold">{props.signals.gold.value}</div>
-      </div>
-
-      <div className={deckClass}>
-        <div className="shop-left">
-          <div className="shop-preview-card">
-            <div className="shop-preview-canvas" ref={props.onPreviewRootRef} />
-          </div>
-
-          <div className="shop-stats">
-            <div className="shop-stat">
-              <strong>Hull</strong>
-              <span>{stats.hull}</span>
-            </div>
-            <div className="shop-stat">
-              <strong>Thrust</strong>
-              <span>{stats.speed}</span>
-            </div>
-            <div className="shop-stat">
-              <strong>Magnet</strong>
-              <span>{stats.magnet}</span>
-            </div>
-          </div>
-
-          <div className="shop-cta">
-            <button className="shop-play" data-action="deploy" type="button">
-              <span className="shop-play-icon" />
-              <span className="shop-play-label">Start Mission</span>
-            </button>
-            <div className="shop-cta-meta">
-              <span className="shop-cta-gold">{props.signals.gold.value}</span>
-              <span className="shop-cta-hint">
-                Configure mounts before deploying.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="shop-right">
-          <div className="shop-tabs">
-            <button
-              className={tabClass(category, "ships")}
-              data-action="show-ships"
-              type="button"
-            >
-              <span className="shop-tab-icon shop-tab-icon--ship">
-                <svg className="shop-tab-icon-svg" viewBox="0 0 24 24">
-                  <path d="M12 2 L17.5 8.5 L21 7.8 L21 18.8 L12 17 L3 18.8 L3 7.8 L6.5 8.5 Z" />
-                </svg>
-              </span>
-              <span className="shop-tab-label">Ships</span>
-            </button>
-            <button
-              className={tabClass(category, "armory")}
-              data-action="show-armory"
-              type="button"
-            >
-              <span className="shop-tab-icon shop-tab-icon--weapon" />
-              <span className="shop-tab-label">Armory</span>
-            </button>
-            <button
-              className={tabClass(category, "loadout")}
-              data-action="show-loadout"
-              type="button"
-            >
-              <span className="shop-tab-icon shop-tab-icon--mount" />
-              <span className="shop-tab-label">Loadout</span>
-            </button>
-          </div>
-
-          <div className="shop-content">
-            <div className="shop-content-header">
-              <div className="shop-section-title">
-                {props.signals.catalogTitle.value}
-              </div>
-              <div className="shop-content-note">
-                {props.signals.catalogNote.value}
-              </div>
-            </div>
-            <div className="shop-grid" ref={props.onCatalogGridRef} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export class ShopScene extends Phaser.Scene {
   private save!: SaveData;
   private overlay?: HTMLDivElement;
-  private catalogGrid?: HTMLDivElement;
   private previewRoot?: HTMLDivElement;
   private previewGame?: Phaser.Game;
   private previewScene?: PreviewScene;
@@ -256,12 +128,9 @@ export class ShopScene extends Phaser.Scene {
   private mountCalloutLines = new Map<string, HTMLDivElement>();
   private dragHoverMountId: null | string = null;
   private dragPreviewEl?: HTMLDivElement;
-  private currentCategory: ShopCategory = "loadout";
-  private readonly categorySignal = signal<ShopCategory>("loadout");
-  private readonly catalogNoteSignal = signal(
-    "Equip anything you own at no cost.",
-  );
-  private readonly catalogTitleSignal = signal("Loadout");
+  private currentCategory: ShopCategory = DEFAULT_SHOP_CATEGORY;
+  private readonly categorySignal = signal<ShopCategory>(DEFAULT_SHOP_CATEGORY);
+  private readonly contentSignal = signal<preact.ComponentChild>(null);
   private readonly goldSignal = signal("Gold: 0");
   private readonly missionActiveSignal = signal(false);
   private readonly missionTextSignal = signal("");
@@ -289,8 +158,6 @@ export class ShopScene extends Phaser.Scene {
   private activeEnergySurge: { mountId: string; slotIndex?: number } | null =
     null;
   private energySurgeTimeout: null | number = null;
-  private handleClickBound = (event: MouseEvent) =>
-    this.handleOverlayClick(event);
   private handleDragStartBound = (event: DragEvent) =>
     this.handleDragStart(event);
   private handleDragOverBound = (event: DragEvent) =>
@@ -319,7 +186,6 @@ export class ShopScene extends Phaser.Scene {
     this.overlay.className = "shop-overlay";
     this.renderOverlay(this.overlay);
     document.body.classList.add("shop-open");
-    this.overlay.addEventListener("click", this.handleClickBound);
     this.overlay.addEventListener("dragstart", this.handleDragStartBound);
     this.overlay.addEventListener("dragover", this.handleDragOverBound);
     this.overlay.addEventListener("drop", this.handleDropBound);
@@ -331,7 +197,6 @@ export class ShopScene extends Phaser.Scene {
   private hideOverlay(): void {
     if (!this.overlay) return;
     this.teardownPreviewGame();
-    this.overlay.removeEventListener("click", this.handleClickBound);
     this.overlay.removeEventListener("dragstart", this.handleDragStartBound);
     this.overlay.removeEventListener("dragover", this.handleDragOverBound);
     this.overlay.removeEventListener("drop", this.handleDropBound);
@@ -339,7 +204,6 @@ export class ShopScene extends Phaser.Scene {
     render(null, this.overlay);
     this.overlay.className = "";
     this.overlay = undefined;
-    this.catalogGrid = undefined;
     this.previewRoot = undefined;
     this.shopRules = null;
     this.mountVisual = undefined;
@@ -365,16 +229,14 @@ export class ShopScene extends Phaser.Scene {
   private renderOverlay(overlay: HTMLDivElement): void {
     render(
       <ShopOverlayView
-        onCatalogGridRef={(element) => {
-          this.catalogGrid = element ?? undefined;
-        }}
+        onDeploy={() => this.handleDeploy()}
         onPreviewRootRef={(element) => {
           this.previewRoot = element ?? undefined;
         }}
+        onTabSelect={(category) => this.setCategory(category)}
         signals={{
-          catalogNote: this.catalogNoteSignal,
-          catalogTitle: this.catalogTitleSignal,
           category: this.categorySignal,
+          content: this.contentSignal,
           gold: this.goldSignal,
           missionActive: this.missionActiveSignal,
           missionText: this.missionTextSignal,
@@ -386,7 +248,7 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private refreshOverlay(): void {
-    if (!this.overlay || !this.catalogGrid) return;
+    if (!this.overlay) return;
     this.syncShopRules();
     this.ensureAllowedSelections();
     const goldValue = `Gold: ${Math.round(
@@ -394,11 +256,7 @@ export class ShopScene extends Phaser.Scene {
     )}`;
     this.goldSignal.value = goldValue;
     this.categorySignal.value = this.currentCategory;
-
-    const { content, title } = this.buildCategoryContent(this.currentCategory);
-    this.catalogTitleSignal.value = title;
-    render(<>{content}</>, this.catalogGrid);
-    this.updateCatalogNote(this.currentCategory);
+    this.contentSignal.value = this.buildCategoryContent(this.currentCategory);
     this.updateStats();
     this.applyPreviewLoadout();
     if (this.currentCategory !== "loadout") {
@@ -416,6 +274,16 @@ export class ShopScene extends Phaser.Scene {
     } else {
       window.requestAnimationFrame(() => this.syncNodeGraphTransform());
     }
+  }
+
+  private setCategory(category: ShopCategory): void {
+    if (this.currentCategory === category) return;
+    this.currentCategory = category;
+    this.refreshOverlay();
+  }
+
+  private handleDeploy(): void {
+    this.game.events.emit("ui:route", "play");
   }
 
   private updateSave(
@@ -447,27 +315,6 @@ export class ShopScene extends Phaser.Scene {
       this.missionTextSignal.value = "";
       this.missionActiveSignal.value = false;
     }
-  }
-
-  private updateCatalogNote(category: ShopCategory): void {
-    const level = getActiveLevelSession()?.level;
-    const restriction = level ? "Mission-approved gear for purchase." : "";
-    if (category === "ships") {
-      this.catalogNoteSignal.value = level
-        ? "Mission-approved hulls for purchase. Owned ships stay available."
-        : "Select a ship to equip.";
-      return;
-    }
-    if (category === "armory") {
-      this.catalogNoteSignal.value = [
-        "Each weapon type is single-ownership. Buy once, equip anywhere.",
-        restriction,
-      ]
-        .filter(Boolean)
-        .join(" ");
-      return;
-    }
-    this.catalogNoteSignal.value = "";
   }
 
   private ensureAllowedSelections(): void {
@@ -509,21 +356,15 @@ export class ShopScene extends Phaser.Scene {
     );
   }
 
-  private buildCategoryContent(category: ShopCategory) {
+  private buildCategoryContent(category: ShopCategory): preact.ComponentChild {
     switch (category) {
       case "armory":
-        return {
-          content: this.buildArmoryCards(),
-          title: "Armory",
-        };
+        return <ArmoryTab cards={this.buildArmoryCards()} />;
       case "loadout":
-        return {
-          content: this.buildLoadoutView(),
-          title: "Loadout",
-        };
+        return <LoadoutTab content={this.buildLoadoutView()} />;
       case "ships":
       default:
-        return { content: this.buildShipCards(), title: "Ships" };
+        return <ShipsTab cards={this.buildShipCards()} />;
     }
   }
 
@@ -646,6 +487,7 @@ export class ShopScene extends Phaser.Scene {
           key: `ship-${ship.id}`,
           modVector: undefined,
           name: ship.name,
+          onClick: () => this.handleCardClick("ship", ship.id),
           shipShape: ship.vector,
           state,
           status,
@@ -692,6 +534,7 @@ export class ShopScene extends Phaser.Scene {
           key: `weapon-${weapon.id}`,
           modVector: undefined,
           name: weapon.name,
+          onClick: () => this.handleCardClick("weapon", weapon.id),
           shipShape: undefined,
           state,
           status,
@@ -734,6 +577,7 @@ export class ShopScene extends Phaser.Scene {
           key: `mod-${mod.id}`,
           modVector: mod.icon,
           name: mod.name,
+          onClick: () => this.handleCardClick("mod", mod.id),
           shipShape: undefined,
           state,
           status,
@@ -759,36 +603,33 @@ export class ShopScene extends Phaser.Scene {
     state: ShopCardState;
     status: string;
     type: ShopItemType;
+    onClick?: () => void;
     weaponSize?: WeaponSize;
   }) {
     const cardStyle = { "--accent": data.accent } as Record<string, string>;
     return (
-      <button
-        className="shop-card"
-        data-id={data.id}
-        data-state={data.state}
-        data-type={data.type}
+      <ShopCard
+        id={data.id}
+        state={data.state}
+        type={data.type}
         key={data.key}
         style={cardStyle}
-        type="button"
-      >
-        <div className="shop-card-inner">
-          <div className="card-icon">
-            {this.buildNodeIcon(data.iconKind, {
-              accentColor: data.accentColor,
-              className: "card-icon-canvas",
-              gunId: data.gunId,
-              modVector: data.modVector,
-              shipShape: data.shipShape ?? DEFAULT_SHIP_VECTOR,
-              size: 52,
-              weaponSize: data.weaponSize,
-            })}
-          </div>
-          <div className="card-title">{data.name}</div>
-          <div className="card-desc">{data.description}</div>
-          <div className="card-status">{data.status}</div>
-        </div>
-      </button>
+        onClick={data.onClick}
+        renderIcon={() =>
+          this.buildNodeIcon(data.iconKind, {
+            accentColor: data.accentColor,
+            className: "card-icon-canvas",
+            gunId: data.gunId,
+            modVector: data.modVector,
+            shipShape: data.shipShape ?? DEFAULT_SHIP_VECTOR,
+            size: 52,
+            weaponSize: data.weaponSize,
+          })
+        }
+        name={data.name}
+        description={data.description}
+        status={data.status}
+      />
     );
   }
 
@@ -813,10 +654,38 @@ export class ShopScene extends Phaser.Scene {
     return (
       <div className="shop-loadout">
         <div className="shop-loadout-section">
-          <div className="shop-section-title">Loadout Matrix</div>
           <div className="shop-loadout-workbench">
             {this.buildLoadoutNodeGraph(ship, assignments)}
-            {this.buildLoadoutSelectionPanel(ship, assignments, selection)}
+            <LoadoutPanel
+              ship={ship}
+              assignments={assignments}
+              selection={selection}
+              save={this.save}
+              onClearModSlot={(mountId, slotIndex) => {
+                this.clearModSlot(mountId, slotIndex);
+                this.loadoutSelection = { kind: "mod", mountId, slotIndex };
+              }}
+              onClearMountWeapon={(mountId) => {
+                this.detachWeaponFromMount(mountId);
+                this.loadoutSelection = { kind: "mount", mountId };
+              }}
+              onEquipMod={(mountId, slotIndex, instanceId) => {
+                this.assignModToSlot(mountId, slotIndex, instanceId);
+                this.loadoutSelection = { kind: "mod", mountId, slotIndex };
+              }}
+              onEquipWeapon={(mountId, instanceId) => {
+                this.assignWeaponToMount({ instanceId, kind: "weapon" }, mountId);
+                this.loadoutSelection = { kind: "mount", mountId };
+              }}
+              buildNodeIcon={(kind, options) =>
+                this.buildNodeIcon(kind as CardIconKind, options)
+              }
+              describeWeaponNodeMeta={(w, a) =>
+                this.describeWeaponNodeMeta(w, a)
+              }
+              describeModEffects={(m) => this.describeModEffects(m)}
+              getModAccentColor={(k) => this.getModAccentColor(k)}
+            />
           </div>
         </div>
       </div>
@@ -860,13 +729,13 @@ export class ShopScene extends Phaser.Scene {
     ship: ShipDefinition,
     assignments: MountAssignment[],
   ) {
-    const visibleMounts = ship.mounts.slice(0, MAX_RENDERED_WEAPON_MOUNTS);
+    const visibleMounts = getVisibleMounts(ship);
     const assignmentById = new Map(
       assignments.map((entry) => [entry.mountId, entry]),
     );
-    const layout = this.createNodeGraphLayout(ship, assignments);
+    const layout = createNodeGraphLayout(ship, assignments);
 
-    const links: ReturnType<typeof this.createNodeLink>[] = [];
+    const links: preact.ComponentChildren[] = [];
     const nodes: ReturnType<typeof this.buildNodeIcon>[] = [];
     nodes.push(
       <div
@@ -902,14 +771,14 @@ export class ShopScene extends Phaser.Scene {
       const mountSurge = this.activeEnergySurge?.mountId === mount.id;
 
       links.push(
-        this.createNodeLink(
-          layout.shipPoint,
-          mountPos,
-          Boolean(weapon),
-          selected,
-          mountSurge,
-          `link-hull-${mount.id}`,
-        ),
+        <NodeLink
+          id={`link-hull-${mount.id}`}
+          from={layout.shipPoint}
+          to={mountPos}
+          active={Boolean(weapon)}
+          selected={selected}
+          surge={mountSurge}
+        />,
       );
 
       const mountClass = `shop-node shop-node--weapon${
@@ -919,11 +788,14 @@ export class ShopScene extends Phaser.Scene {
       nodes.push(
         <button
           className={mountClass}
-          data-action="select-loadout-mount"
           data-drop="mount"
           data-mount-id={mount.id}
           data-type="mount"
           key={`node-mount-${mount.id}`}
+          onClick={() => {
+            this.loadoutSelection = { kind: "mount", mountId: mount.id };
+            this.refreshOverlay();
+          }}
           onMouseEnter={() => {
             this.dragHoverMountId = mount.id;
             this.updateMountVisualHighlights();
@@ -973,14 +845,14 @@ export class ShopScene extends Phaser.Scene {
           this.activeEnergySurge.slotIndex === slotIndex;
 
         links.push(
-          this.createNodeLink(
-            modPos,
-            mountPos,
-            Boolean(mod),
-            modSelected,
-            modSurge,
-            `link-mod-${mount.id}-${slotIndex}`,
-          ),
+          <NodeLink
+            id={`link-mod-${mount.id}-${slotIndex}`}
+            from={modPos}
+            to={mountPos}
+            active={Boolean(mod)}
+            selected={modSelected}
+            surge={modSurge}
+          />,
         );
 
         const modClass = `shop-node shop-node--mod${mod ? "" : " is-empty"}${
@@ -990,10 +862,17 @@ export class ShopScene extends Phaser.Scene {
         nodes.push(
           <button
             className={modClass}
-            data-action="select-loadout-mod"
             data-mount-id={mount.id}
             data-slot-index={slotIndex}
             key={`node-mod-${mount.id}-${slotIndex}`}
+            onClick={() => {
+              this.loadoutSelection = {
+                kind: "mod",
+                mountId: mount.id,
+                slotIndex,
+              };
+              this.refreshOverlay();
+            }}
             style={{ left: `${modPos.x}px`, top: `${modPos.y}px` }}
             type="button"
           >
@@ -1010,457 +889,49 @@ export class ShopScene extends Phaser.Scene {
     }
 
     return (
-      <div
-        className="shop-node-graph"
-        ref={(element) => {
-          this.mountVisual = element ?? undefined;
+      <NodeGraphContainer
+        worldStyle={{ height: layout.worldHeight, width: layout.worldWidth }}
+        onMountVisualRef={(el) => {
+          this.mountVisual = el ?? undefined;
         }}
-        onWheel={(event) => {
-          this.handleNodeGraphWheel(event as WheelEvent);
+        onViewportRef={(el) => {
+          this.nodeGraphViewport = el ?? undefined;
         }}
+        onWorldRef={(el) => {
+          this.nodeGraphWorld = el ?? undefined;
+        }}
+        onWheel={(e) => this.handleNodeGraphWheel(e)}
+        onPointerCancel={(e) => this.stopNodeGraphDrag(e)}
+        onPointerDown={(e) => this.startNodeGraphDrag(e)}
+        onPointerMove={(e) => this.updateNodeGraphDrag(e)}
+        onPointerUp={(e) => this.stopNodeGraphDrag(e)}
       >
-        <div
-          className="shop-node-viewport"
-          ref={(element) => {
-            this.nodeGraphViewport = element ?? undefined;
-          }}
-          onPointerCancel={(event) => {
-            this.stopNodeGraphDrag(event as PointerEvent);
-          }}
-          onPointerDown={(event) => {
-            this.startNodeGraphDrag(event as PointerEvent);
-          }}
-          onPointerMove={(event) => {
-            this.updateNodeGraphDrag(event as PointerEvent);
-          }}
-          onPointerUp={(event) => {
-            this.stopNodeGraphDrag(event as PointerEvent);
-          }}
-        >
-          <div
-            className="shop-node-world"
-            ref={(element) => {
-              this.nodeGraphWorld = element ?? undefined;
-            }}
-            style={{
-              height: `${layout.worldHeight}px`,
-              width: `${layout.worldWidth}px`,
-            }}
-          >
-            {links}
-            {nodes}
-          </div>
-        </div>
-      </div>
+        {links}
+        {nodes}
+      </NodeGraphContainer>
     );
   }
 
-  private buildNodeIcon(
-    kind: CardIconKind,
-    options: {
-      accentColor: number;
-      className?: string;
-      gunId?: string;
-      modVector?: ModIconVector;
-      size?: number;
-      shipShape?: ShipVector;
-      weaponSize?: WeaponSize;
-    },
-  ) {
+  private buildNodeIcon(kind: CardIconKind, options: BuildNodeIconOptions) {
     const size = Math.max(24, Math.round(options.size ?? 100));
     return (
-      <canvas
+      <ShopNodeIcon
         className={options.className ?? "shop-node-icon"}
-        height={size}
-        ref={(canvas) => {
-          if (!canvas) return;
-          this.drawIcon(
+        size={size}
+        onDraw={(canvas) =>
+          drawShopIcon({
             canvas,
+            colorHex: formatColor(options.accentColor),
+            colorValue: options.accentColor,
+            gunId: options.gunId,
             kind,
-            formatColor(options.accentColor),
-            options.accentColor,
-            options.shipShape ?? this.getSelectedShip().vector,
-            options.gunId,
-            options.modVector,
-            options.weaponSize,
-          );
-        }}
-        width={size}
-      />
-    );
-  }
-
-  private buildLoadoutSelectionPanel(
-    ship: ShipDefinition,
-    assignments: MountAssignment[],
-    selection: LoadoutNodeSelection | null,
-  ) {
-    if (!selection) {
-      return (
-        <div className="shop-node-panel">
-          <div className="shop-node-panel-title">Select a node</div>
-          <div className="shop-node-panel-hint">
-            Tap any node to route gear.
-          </div>
-        </div>
-      );
-    }
-
-    const assignment = assignments.find(
-      (entry) => entry.mountId === selection.mountId,
-    );
-    const mount = ship.mounts.find((entry) => entry.id === selection.mountId);
-    if (!assignment || !mount) {
-      return (
-        <div className="shop-node-panel">
-          <div className="shop-node-panel-title">Node unavailable</div>
-          <div className="shop-node-panel-hint">Select another node.</div>
-        </div>
-      );
-    }
-
-    if (selection.kind === "mount") {
-      const currentInstance = assignment.weaponInstanceId
-        ? this.save.ownedWeapons.find(
-            (item) => item.id === assignment.weaponInstanceId,
-          )
-        : null;
-
-      const compatible = this.save.ownedWeapons
-        .filter((instance) => {
-          const weapon = WEAPONS[instance.weaponId];
-          return Boolean(weapon && canMountWeapon(weapon, mount));
-        })
-        .sort((a, b) => {
-          const weaponA = WEAPONS[a.weaponId];
-          const weaponB = WEAPONS[b.weaponId];
-          if (!weaponA && !weaponB) return 0;
-          if (!weaponA) return 1;
-          if (!weaponB) return -1;
-          if (weaponB.cost !== weaponA.cost) return weaponB.cost - weaponA.cost;
-          return weaponA.name.localeCompare(weaponB.name);
-        });
-
-      const optionsContent =
-        compatible.length === 0 ? (
-          <div className="shop-empty">
-            No compatible weapons owned. Buy in Armory.
-          </div>
-        ) : (
-          compatible.map((instance) => {
-            const weapon = WEAPONS[instance.weaponId];
-            if (!weapon) return null;
-            return this.buildNodeOptionButton({
-              action: "equip-weapon-node",
-              current: currentInstance?.id === instance.id,
-              icon: {
-                accentColor: weapon.stats.bullet.color ?? 0x7df9ff,
-                gunId: weapon.gunId,
-                iconKind: "gun",
-                weaponSize: weapon.size,
-              },
-              instanceId: instance.id,
-              key: `weapon-node-option-${instance.id}`,
-              label: weapon.name,
-              meta: this.describeWeaponNodeMeta(weapon, assignment),
-              mountId: mount.id,
-            });
+            modVector: options.modVector,
+            shipShape: options.shipShape ?? this.getSelectedShip().vector,
+            weaponSize: options.weaponSize,
           })
-        );
-
-      return (
-        <div className="shop-node-panel">
-          <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} weapon`}</div>
-          <div className="shop-node-panel-options">{optionsContent}</div>
-          <div className="shop-node-panel-footer">
-            <button
-              className="shop-node-clear"
-              data-action="clear-mount-weapon"
-              data-mount-id={mount.id}
-              disabled={!currentInstance}
-              type="button"
-            >
-              Unequip Weapon
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    const currentModId = assignment.modInstanceIds[selection.slotIndex] ?? null;
-    const currentModInstance = currentModId
-      ? this.save.ownedMods.find((item) => item.id === currentModId)
-      : null;
-    const currentMod = currentModInstance
-      ? MODS[currentModInstance.modId]
-      : null;
-
-    if (!assignment.weaponInstanceId) {
-      return (
-        <div className="shop-node-panel">
-          <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} mod ${
-            selection.slotIndex + 1
-          }`}</div>
-          <div className="shop-node-panel-hint">Mount a weapon first.</div>
-        </div>
-      );
-    }
-
-    const reservedKinds = new Set(
-      assignment.modInstanceIds
-        .filter((_instanceId, index) => index !== selection.slotIndex)
-        .map((instanceId) =>
-          this.save.ownedMods.find((entry) => entry.id === instanceId),
-        )
-        .map((instance) => (instance ? MODS[instance.modId] : null))
-        .filter((mod): mod is ModDefinition => Boolean(mod))
-        .map((mod) => mod.iconKind),
-    );
-
-    const candidates = this.save.ownedMods.filter((instance) => {
-      if (instance.id === currentModId) return true;
-      const mod = MODS[instance.modId];
-      if (!mod) return false;
-      return !reservedKinds.has(mod.iconKind);
-    });
-
-    const optionContent =
-      candidates.length === 0 ? (
-        <div className="shop-empty">No compatible mods available.</div>
-      ) : (
-        candidates.map((instance) => {
-          const mod = MODS[instance.modId];
-          if (!mod) return null;
-          return this.buildNodeOptionButton({
-            action: "equip-mod-node",
-            current: currentModId === instance.id,
-            icon: {
-              accentColor: this.getModAccentColor(mod.iconKind),
-              iconKind: "mod",
-              modVector: mod.icon,
-            },
-            instanceId: instance.id,
-            key: `mod-node-option-${instance.id}`,
-            label: mod.name,
-            meta: this.describeModEffects(mod),
-            mountId: mount.id,
-            slotIndex: selection.slotIndex,
-          });
-        })
-      );
-
-    return (
-      <div className="shop-node-panel">
-        <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} mod ${
-          selection.slotIndex + 1
-        }`}</div>
-        <div className="shop-node-panel-options">{optionContent}</div>
-        <div className="shop-node-panel-footer">
-          <button
-            className="shop-node-clear"
-            data-action="clear-mod-slot"
-            data-mount-id={mount.id}
-            data-slot-index={selection.slotIndex}
-            disabled={!currentMod}
-            type="button"
-          >
-            Unequip Mod
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  private buildNodeOptionButton(data: {
-    action: "equip-mod-node" | "equip-weapon-node";
-    current: boolean;
-    icon: NodeOptionIcon;
-    instanceId: string;
-    key: string;
-    label: string;
-    meta?: string;
-    mountId: string;
-    slotIndex?: number;
-  }) {
-    const className = `shop-node-option${data.current ? " is-current" : ""}`;
-    return (
-      <button
-        className={className}
-        data-action={data.action}
-        data-instance-id={data.instanceId}
-        data-mount-id={data.mountId}
-        data-slot-index={
-          Number.isInteger(data.slotIndex) ? data.slotIndex : undefined
         }
-        key={data.key}
-        type="button"
-      >
-        {this.buildNodeIcon(data.icon.iconKind, {
-          accentColor: data.icon.accentColor,
-          className: "shop-node-option-icon",
-          gunId: data.icon.gunId,
-          modVector: data.icon.modVector,
-          size: 100,
-          weaponSize: data.icon.weaponSize,
-        })}
-        <span className="shop-node-option-label">{data.label}</span>
-        {data.meta ? (
-          <span className="shop-node-option-meta">{data.meta}</span>
-        ) : null}
-      </button>
-    );
-  }
-
-  private createNodeLink(
-    from: NodeGraphPoint,
-    to: NodeGraphPoint,
-    active: boolean,
-    selected: boolean,
-    surge: boolean,
-    key: string,
-  ) {
-    const className = `shop-node-link${active ? " is-active" : ""}${
-      selected ? " is-selected" : ""
-    }${surge ? " is-surge" : ""}`;
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const width = Math.hypot(dx, dy);
-    return (
-      <div
-        className={className}
-        key={key}
-        style={{
-          left: `${from.x}px`,
-          top: `${from.y}px`,
-          transform: `rotate(${Math.atan2(dy, dx)}rad)`,
-          width: `${width}px`,
-        }}
       />
     );
-  }
-
-  private createNodeGraphLayout(
-    ship: ShipDefinition,
-    assignments: MountAssignment[],
-  ): NodeGraphLayout {
-    const visibleMounts = ship.mounts.slice(0, MAX_RENDERED_WEAPON_MOUNTS);
-    const mountAssignmentById = new Map(
-      assignments.map((assignment) => [assignment.mountId, assignment]),
-    );
-    const mountAngles = this.getMountBranchAngles(visibleMounts.length);
-    const mountDistance = 160;
-    const modDistance = 160;
-    const shipHalfSize = { h: 96, w: 96 };
-    const nodeHalfSize = { h: 72, w: 98 };
-
-    let minX = -shipHalfSize.w;
-    let maxX = shipHalfSize.w;
-    let minY = -shipHalfSize.h;
-    let maxY = shipHalfSize.h;
-    const includePointBounds = (
-      point: NodeGraphPoint,
-      halfSize: { h: number; w: number },
-    ): void => {
-      minX = Math.min(minX, point.x - halfSize.w);
-      maxX = Math.max(maxX, point.x + halfSize.w);
-      minY = Math.min(minY, point.y - halfSize.h);
-      maxY = Math.max(maxY, point.y + halfSize.h);
-    };
-
-    const shipLocalPoint = { x: 0, y: 0 };
-    const mountLocalPoints = new Map<string, NodeGraphPoint>();
-    const modLocalPoints = new Map<string, NodeGraphPoint[]>();
-
-    visibleMounts.forEach((mount, index) => {
-      const branchAngle = mountAngles[index] ?? 0;
-      const branchVector = this.getAngleVector(branchAngle);
-      const mountPoint = {
-        x: shipLocalPoint.x + branchVector.x * mountDistance,
-        y: shipLocalPoint.y + branchVector.y * mountDistance,
-      };
-      mountLocalPoints.set(mount.id, mountPoint);
-      includePointBounds(mountPoint, nodeHalfSize);
-
-      const mountAssignment = mountAssignmentById.get(mount.id);
-      const modCount = mountAssignment?.weaponInstanceId
-        ? Math.min(mount.modSlots, MAX_RENDERED_MOD_SLOTS)
-        : 0;
-      const modBranchOffsets = this.getModBranchAngles(modCount);
-      const mountModPoints: NodeGraphPoint[] = [];
-      modBranchOffsets.forEach((offset) => {
-        const modAngle = branchAngle + offset;
-        const modVector = this.getAngleVector(modAngle);
-        const modPoint = {
-          x: mountPoint.x + modVector.x * modDistance,
-          y: mountPoint.y + modVector.y * modDistance,
-        };
-        mountModPoints.push(modPoint);
-        includePointBounds(modPoint, nodeHalfSize);
-      });
-      modLocalPoints.set(mount.id, mountModPoints);
-    });
-
-    const framePadding = { x: 180, y: 180 };
-    const coreWidth = maxX - minX;
-    const coreHeight = maxY - minY;
-    const baseWidth = coreWidth + framePadding.x * 2;
-    const baseHeight = coreHeight + framePadding.y * 2;
-    const worldWidth = Math.max(1020, baseWidth);
-    const worldHeight = Math.max(820, baseHeight);
-    const extraX = (worldWidth - baseWidth) * 0.5;
-    const extraY = (worldHeight - baseHeight) * 0.5;
-    const shiftX = -minX + framePadding.x + extraX;
-    const shiftY = -minY + framePadding.y + extraY;
-
-    const mountPoints = new Map<string, NodeGraphPoint>();
-    for (const [mountId, point] of mountLocalPoints) {
-      mountPoints.set(mountId, {
-        x: point.x + shiftX,
-        y: point.y + shiftY,
-      });
-    }
-
-    const modPoints = new Map<string, NodeGraphPoint[]>();
-    for (const [mountId, points] of modLocalPoints) {
-      modPoints.set(
-        mountId,
-        points.map((point) => ({ x: point.x + shiftX, y: point.y + shiftY })),
-      );
-    }
-
-    const shipPoint = {
-      x: shipLocalPoint.x + shiftX,
-      y: shipLocalPoint.y + shiftY,
-    };
-
-    return {
-      modPoints,
-      mountPoints,
-      shipPoint,
-      worldHeight,
-      worldWidth,
-    };
-  }
-
-  private getAngleVector(angleDegrees: number): NodeGraphPoint {
-    const radians = (angleDegrees * Math.PI) / 180;
-    return {
-      x: Math.sin(radians),
-      y: -Math.cos(radians),
-    };
-  }
-
-  private getMountBranchAngles(count: number): number[] {
-    if (count <= 0) return [];
-    if (count === 1) return [0];
-    if (count === 2) return [-35, 35];
-    return [-90, 0, 90];
-  }
-
-  private getModBranchAngles(count: number): number[] {
-    if (count <= 0) return [];
-    if (count === 1) return [0];
-    return [-45, 45];
   }
 
   private clampNodeGraphScale(value: number): number {
@@ -1734,60 +1205,16 @@ export class ShopScene extends Phaser.Scene {
     if (this.mountDots.size === 0) return;
     const ship = this.getSelectedShip();
     const assignments = this.getAssignmentsForShip(ship);
-    const assignmentById = new Map(
-      assignments.map((entry) => [entry.mountId, entry]),
-    );
     const payload = this.dragPayload;
     if (this.mountVisual) {
       this.mountVisual.classList.toggle("is-dragging", Boolean(payload));
     }
-    const eligibleMounts = new Set<string>();
-    if (payload) {
-      if (payload.kind === "weapon") {
-        const instance = this.save.ownedWeapons.find(
-          (item) => item.id === payload.instanceId,
-        );
-        const weapon = instance ? WEAPONS[instance.weaponId] : null;
-        if (weapon) {
-          for (const mount of ship.mounts) {
-            if (canMountWeapon(weapon, mount)) {
-              eligibleMounts.add(mount.id);
-            }
-          }
-        }
-      } else {
-        const modInstance = this.save.ownedMods.find(
-          (item) => item.id === payload.instanceId,
-        );
-        const mod = modInstance ? MODS[modInstance.modId] : null;
-        if (mod) {
-          for (const mount of ship.mounts) {
-            const assignment = assignmentById.get(mount.id);
-            if (!assignment?.weaponInstanceId) continue;
-            if (assignment.modInstanceIds.includes(payload.instanceId)) {
-              eligibleMounts.add(mount.id);
-              continue;
-            }
-            if (assignment.modInstanceIds.length >= (mount.modSlots ?? 0))
-              continue;
-            const hasSameType = assignment.modInstanceIds.some(
-              (modInstanceId) => {
-                const existingInstance = this.save.ownedMods.find(
-                  (item) => item.id === modInstanceId,
-                );
-                const existing = existingInstance
-                  ? MODS[existingInstance.modId]
-                  : null;
-                return existing?.iconKind === mod.iconKind;
-              },
-            );
-            if (!hasSameType) {
-              eligibleMounts.add(mount.id);
-            }
-          }
-        }
-      }
-    }
+    const eligibleMounts = getEligibleMountIdsForDrag(
+      this.save,
+      ship,
+      assignments,
+      payload,
+    );
     for (const [mountId, dot] of this.mountDots.entries()) {
       const eligible = eligibleMounts.has(mountId);
       dot.classList.toggle("is-eligible", eligible);
@@ -1796,99 +1223,7 @@ export class ShopScene extends Phaser.Scene {
     }
   }
 
-  private handleOverlayClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement | null;
-    if (!target || !this.overlay) return;
-
-    const action = target.closest<HTMLElement>("[data-action]");
-    if (action?.dataset.action === "deploy") {
-      this.game.events.emit("ui:route", "play");
-      return;
-    }
-    if (action?.dataset.action === "show-ships") {
-      this.currentCategory = "ships";
-      this.refreshOverlay();
-      return;
-    }
-    if (action?.dataset.action === "show-armory") {
-      this.currentCategory = "armory";
-      this.refreshOverlay();
-      return;
-    }
-    if (action?.dataset.action === "show-loadout") {
-      this.currentCategory = "loadout";
-      this.refreshOverlay();
-      return;
-    }
-    if (action?.dataset.action === "sell-weapon") {
-      const instanceId = action.dataset.instanceId;
-      if (instanceId) this.sellWeaponInstance(instanceId);
-      return;
-    }
-    if (action?.dataset.action === "sell-mod") {
-      const instanceId = action.dataset.instanceId;
-      if (instanceId) this.sellModInstance(instanceId);
-      return;
-    }
-    if (action?.dataset.action === "detach-weapon") {
-      const mountId = action.dataset.mountId;
-      if (mountId) this.detachWeaponFromMount(mountId);
-      return;
-    }
-    if (action?.dataset.action === "select-loadout-mount") {
-      const mountId = action.dataset.mountId;
-      if (!mountId) return;
-      this.loadoutSelection = { kind: "mount", mountId };
-      this.refreshOverlay();
-      return;
-    }
-    if (action?.dataset.action === "select-loadout-mod") {
-      const mountId = action.dataset.mountId;
-      const slotIndex = Number.parseInt(action.dataset.slotIndex ?? "", 10);
-      if (!mountId || Number.isNaN(slotIndex)) return;
-      this.loadoutSelection = { kind: "mod", mountId, slotIndex };
-      this.refreshOverlay();
-      return;
-    }
-    if (action?.dataset.action === "clear-mount-weapon") {
-      const mountId = action.dataset.mountId;
-      if (!mountId) return;
-      this.detachWeaponFromMount(mountId);
-      this.loadoutSelection = { kind: "mount", mountId };
-      return;
-    }
-    if (action?.dataset.action === "equip-weapon-node") {
-      const mountId = action.dataset.mountId;
-      const instanceId = action.dataset.instanceId;
-      if (!mountId || !instanceId) return;
-      this.assignWeaponToMount({ instanceId, kind: "weapon" }, mountId);
-      this.loadoutSelection = { kind: "mount", mountId };
-      return;
-    }
-    if (action?.dataset.action === "clear-mod-slot") {
-      const mountId = action.dataset.mountId;
-      const slotIndex = Number.parseInt(action.dataset.slotIndex ?? "", 10);
-      if (!mountId || Number.isNaN(slotIndex)) return;
-      this.clearModSlot(mountId, slotIndex);
-      this.loadoutSelection = { kind: "mod", mountId, slotIndex };
-      return;
-    }
-    if (action?.dataset.action === "equip-mod-node") {
-      const mountId = action.dataset.mountId;
-      const slotIndex = Number.parseInt(action.dataset.slotIndex ?? "", 10);
-      const instanceId = action.dataset.instanceId;
-      if (!mountId || Number.isNaN(slotIndex) || !instanceId) return;
-      this.assignModToSlot(mountId, slotIndex, instanceId);
-      this.loadoutSelection = { kind: "mod", mountId, slotIndex };
-      return;
-    }
-
-    const card = target.closest<HTMLElement>("[data-type][data-id]");
-    if (!card) return;
-    const type = card.dataset.type as ShopItemType | undefined;
-    const id = card.dataset.id;
-    if (!type || !id) return;
-
+  private handleCardClick(type: "mod" | "ship" | "weapon", id: string): void {
     if (type === "ship") {
       const ship = SHIPS[id];
       if (!ship) return;
@@ -1896,27 +1231,9 @@ export class ShopScene extends Phaser.Scene {
       const canPurchase = this.isShipAllowedForPurchase(id);
       const canUnlock = hasRequiredUnlocks(this.save, ship.requiresUnlocks);
       if (!owned && (!canPurchase || !canUnlock)) return;
-      this.updateSave((data) => {
-        const unlocked = data.unlockedShips.includes(id);
-        const selectedShip = SHIPS[data.selectedShipId];
-        const selectedAssignments = selectedShip
-          ? this.ensureMountAssignments(data, selectedShip)
-          : [];
-        const preferredWeaponIds = selectedAssignments
-          .map((entry) => entry.weaponInstanceId)
-          .filter((instanceId): instanceId is WeaponInstanceId =>
-            Boolean(instanceId),
-          );
-        if (!unlocked) {
-          if (!hasRequiredUnlocks(data, ship.requiresUnlocks)) return;
-          if (!canPurchase) return;
-          const resourceId = ship.costResource ?? PRIMARY_RESOURCE_ID;
-          if (!spendResourceInSave(data, resourceId, ship.cost)) return;
-          data.unlockedShips = [...data.unlockedShips, id];
-          autoAttachWeaponsForShipInSave(data, ship, preferredWeaponIds);
-        }
-        data.selectedShipId = id;
-      });
+      this.updateSave((data) =>
+        selectOrPurchaseShipInSave(data, id, canPurchase),
+      );
       this.loadoutSelection = null;
       this.refreshOverlay();
       return;
@@ -1931,159 +1248,34 @@ export class ShopScene extends Phaser.Scene {
       if (alreadyOwned) return;
       if (!this.isWeaponAllowed(weapon)) return;
       if (!hasRequiredUnlocks(this.save, weapon.requiresUnlocks)) return;
-      this.updateSave((data) => {
-        const owned = data.ownedWeapons.some(
-          (instance) => instance.weaponId === weapon.id,
-        );
-        if (owned) return;
-        if (!hasRequiredUnlocks(data, weapon.requiresUnlocks)) return;
-        const resourceId = weapon.costResource ?? PRIMARY_RESOURCE_ID;
-        if (!spendResourceInSave(data, resourceId, weapon.cost)) return;
-        createWeaponInstanceInSave(data, weapon.id);
-      });
+      this.updateSave((data) => purchaseWeaponInSave(data, weapon.id));
       this.refreshOverlay();
       return;
     }
 
-    if (type === "mod") {
-      const mod = MODS[id];
-      if (!mod) return;
-      const alreadyOwned = this.save.ownedMods.some(
-        (instance) => instance.modId === mod.id,
-      );
-      if (alreadyOwned) return;
-      if (!this.isModAllowed(mod)) return;
-      if (!hasRequiredUnlocks(this.save, mod.requiresUnlocks)) return;
-      this.updateSave((data) => {
-        const owned = data.ownedMods.some(
-          (instance) => instance.modId === mod.id,
-        );
-        if (owned) return;
-        if (!hasRequiredUnlocks(data, mod.requiresUnlocks)) return;
-        const resourceId = mod.costResource ?? PRIMARY_RESOURCE_ID;
-        if (!spendResourceInSave(data, resourceId, mod.cost)) return;
-        createModInstanceInSave(data, mod.id);
-      });
-      this.refreshOverlay();
-    }
-  }
-
-  private sellWeaponInstance(instanceId: WeaponInstanceId): void {
-    this.updateSave(
-      (data) => {
-        const index = data.ownedWeapons.findIndex(
-          (item) => item.id === instanceId,
-        );
-        if (index < 0) return;
-        const weaponId = data.ownedWeapons[index].weaponId;
-        const weapon = WEAPONS[weaponId];
-        if (!weapon) return;
-        for (const assignments of Object.values(data.mountedWeapons)) {
-          for (const entry of assignments) {
-            if (entry.weaponInstanceId === instanceId) {
-              entry.weaponInstanceId = null;
-              entry.modInstanceIds = [];
-            }
-          }
-        }
-        data.ownedWeapons.splice(index, 1);
-        const payout = Math.max(0, Math.round(weapon.cost * SELL_RATIO));
-        addResourceInSave(
-          data,
-          weapon.costResource ?? PRIMARY_RESOURCE_ID,
-          payout,
-        );
-      },
-      { allowEmptyLoadout: true },
+    const mod = MODS[id];
+    if (!mod) return;
+    const alreadyOwned = this.save.ownedMods.some(
+      (instance) => instance.modId === mod.id,
     );
-    this.refreshOverlay();
-  }
-
-  private sellModInstance(instanceId: ModInstanceId): void {
-    this.updateSave(
-      (data) => {
-        const index = data.ownedMods.findIndex(
-          (item) => item.id === instanceId,
-        );
-        if (index < 0) return;
-        const modId = data.ownedMods[index].modId;
-        const mod = MODS[modId];
-        if (!mod) return;
-        for (const assignments of Object.values(data.mountedWeapons)) {
-          for (const entry of assignments) {
-            entry.modInstanceIds = entry.modInstanceIds.filter(
-              (mountedModId) => mountedModId !== instanceId,
-            );
-          }
-        }
-        data.ownedMods.splice(index, 1);
-        const payout = Math.max(0, Math.round(mod.cost * SELL_RATIO));
-        addResourceInSave(
-          data,
-          mod.costResource ?? PRIMARY_RESOURCE_ID,
-          payout,
-        );
-      },
-      { allowEmptyLoadout: true },
-    );
+    if (alreadyOwned) return;
+    if (!this.isModAllowed(mod)) return;
+    if (!hasRequiredUnlocks(this.save, mod.requiresUnlocks)) return;
+    this.updateSave((data) => purchaseModInSave(data, mod.id));
     this.refreshOverlay();
   }
 
   private detachWeaponFromMount(mountId: string): void {
-    this.updateSave(
-      (data) => {
-        const ship = SHIPS[data.selectedShipId];
-        if (!ship) return;
-        const assignments = this.ensureMountAssignments(data, ship);
-        const entry = assignments.find((item) => item.mountId === mountId);
-        if (entry) {
-          entry.weaponInstanceId = null;
-          entry.modInstanceIds = [];
-        }
-      },
-      { allowEmptyLoadout: true },
-    );
+    this.updateSave((data) => detachWeaponFromMountInSave(data, mountId), {
+      allowEmptyLoadout: true,
+    });
     this.refreshOverlay();
   }
 
   private assignWeaponToMount(payload: DragPayload, mountId: string): void {
     if (payload.kind !== "weapon") return;
-    if (payload.sourceMountId && payload.sourceMountId === mountId) return;
     this.updateSave(
-      (data) => {
-        const ship = SHIPS[data.selectedShipId];
-        if (!ship) return;
-        const assignments = this.ensureMountAssignments(data, ship);
-        const target = assignments.find((item) => item.mountId === mountId);
-        if (!target) return;
-        const instance = data.ownedWeapons.find(
-          (item) => item.id === payload.instanceId,
-        );
-        if (!instance) return;
-        const weapon = WEAPONS[instance.weaponId];
-        const mount = ship.mounts.find((entry) => entry.id === mountId);
-        if (!weapon || !mount) return;
-        if (!canMountWeapon(weapon, mount)) return;
-
-        for (const entry of assignments) {
-          if (entry.weaponInstanceId === payload.instanceId) {
-            entry.weaponInstanceId = null;
-          }
-        }
-
-        if (payload.sourceMountId) {
-          const source = assignments.find(
-            (item) => item.mountId === payload.sourceMountId,
-          );
-          const swapped = target.weaponInstanceId;
-          target.weaponInstanceId = payload.instanceId;
-          if (source) {
-            source.weaponInstanceId = swapped ?? null;
-          }
-        } else {
-          target.weaponInstanceId = payload.instanceId;
-        }
-      },
+      (data) => assignWeaponToMountInSave(data, payload, mountId),
       { allowEmptyLoadout: true },
     );
     this.queueEnergySurge(mountId);
@@ -2095,16 +1287,7 @@ export class ShopScene extends Phaser.Scene {
     modInstanceId: ModInstanceId,
   ): void {
     this.updateSave(
-      (data) => {
-        const ship = SHIPS[data.selectedShipId];
-        if (!ship) return;
-        const assignments = this.ensureMountAssignments(data, ship);
-        const entry = assignments.find((item) => item.mountId === mountId);
-        if (!entry) return;
-        entry.modInstanceIds = entry.modInstanceIds.filter(
-          (id) => id !== modInstanceId,
-        );
-      },
+      (data) => detachModFromMountInSave(data, mountId, modInstanceId),
       { allowEmptyLoadout: true },
     );
     this.refreshOverlay();
@@ -2115,38 +1298,7 @@ export class ShopScene extends Phaser.Scene {
     let appliedSlotIndex: null | number = null;
     this.updateSave(
       (data) => {
-        const ship = SHIPS[data.selectedShipId];
-        if (!ship) return;
-        const assignments = this.ensureMountAssignments(data, ship);
-        const target = assignments.find((item) => item.mountId === mountId);
-        const mount = ship.mounts.find((entry) => entry.id === mountId);
-        if (!target || !mount || !target.weaponInstanceId) return;
-
-        const modInstance = data.ownedMods.find(
-          (item) => item.id === payload.instanceId,
-        );
-        const mod = modInstance ? MODS[modInstance.modId] : null;
-        if (!mod) return;
-
-        if (target.modInstanceIds.includes(payload.instanceId)) return;
-
-        const hasSameType = target.modInstanceIds.some((instanceId) => {
-          const existing = data.ownedMods.find(
-            (item) => item.id === instanceId,
-          );
-          const existingMod = existing ? MODS[existing.modId] : null;
-          return existingMod?.iconKind === mod.iconKind;
-        });
-        if (hasSameType) return;
-        if (target.modInstanceIds.length >= (mount.modSlots ?? 0)) return;
-
-        for (const entry of assignments) {
-          entry.modInstanceIds = entry.modInstanceIds.filter(
-            (instanceId) => instanceId !== payload.instanceId,
-          );
-        }
-        target.modInstanceIds = [...target.modInstanceIds, payload.instanceId];
-        appliedSlotIndex = Math.max(0, target.modInstanceIds.length - 1);
+        appliedSlotIndex = assignModToMountInSave(data, payload, mountId);
       },
       { allowEmptyLoadout: true },
     );
@@ -2157,21 +1309,9 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private clearModSlot(mountId: string, slotIndex: number): void {
-    this.updateSave(
-      (data) => {
-        const ship = SHIPS[data.selectedShipId];
-        if (!ship) return;
-        const mount = ship.mounts.find((entry) => entry.id === mountId);
-        if (!mount) return;
-        const assignments = this.ensureMountAssignments(data, ship);
-        const entry = assignments.find((item) => item.mountId === mountId);
-        if (!entry) return;
-        if (slotIndex < 0 || slotIndex >= entry.modInstanceIds.length) return;
-        entry.modInstanceIds.splice(slotIndex, 1);
-        entry.modInstanceIds = entry.modInstanceIds.slice(0, mount.modSlots);
-      },
-      { allowEmptyLoadout: true },
-    );
+    this.updateSave((data) => clearModSlotInSave(data, mountId, slotIndex), {
+      allowEmptyLoadout: true,
+    });
     this.refreshOverlay();
   }
 
@@ -2181,49 +1321,7 @@ export class ShopScene extends Phaser.Scene {
     modInstanceId: ModInstanceId,
   ): void {
     this.updateSave(
-      (data) => {
-        const ship = SHIPS[data.selectedShipId];
-        if (!ship) return;
-        const mount = ship.mounts.find((entry) => entry.id === mountId);
-        if (!mount || mount.modSlots <= 0) return;
-        const assignments = this.ensureMountAssignments(data, ship);
-        const entry = assignments.find((item) => item.mountId === mountId);
-        if (!entry?.weaponInstanceId) return;
-        const modInstance = data.ownedMods.find(
-          (item) => item.id === modInstanceId,
-        );
-        const mod = modInstance ? MODS[modInstance.modId] : null;
-        if (!mod) return;
-
-        for (const assignment of assignments) {
-          assignment.modInstanceIds = assignment.modInstanceIds.filter(
-            (instanceId) => instanceId !== modInstanceId,
-          );
-        }
-
-        const maxSlots = Math.max(0, mount.modSlots);
-        const targetIndex = Math.min(
-          Math.max(0, slotIndex),
-          Math.max(0, maxSlots - 1),
-        );
-        const current = [...entry.modInstanceIds].slice(0, maxSlots);
-        if (targetIndex < current.length) {
-          current.splice(targetIndex, 1);
-        }
-        const sameTypeIndex = current.findIndex((instanceId) => {
-          const existing = data.ownedMods.find(
-            (item) => item.id === instanceId,
-          );
-          const existingMod = existing ? MODS[existing.modId] : null;
-          return existingMod?.iconKind === mod.iconKind;
-        });
-        if (sameTypeIndex >= 0) {
-          current.splice(sameTypeIndex, 1);
-        }
-        const insertIndex = Math.min(targetIndex, current.length);
-        current.splice(insertIndex, 0, modInstanceId);
-        entry.modInstanceIds = current.slice(0, maxSlots);
-      },
+      (data) => assignModToSlotInSave(data, mountId, slotIndex, modInstanceId),
       { allowEmptyLoadout: true },
     );
     this.queueEnergySurge(mountId, slotIndex);
@@ -2378,69 +1476,33 @@ export class ShopScene extends Phaser.Scene {
     return MODS[instance.modId] ?? null;
   }
 
-  private getDragPreviewHost(): HTMLDivElement | null {
-    const host = document.getElementById("shop-drag-preview-root");
-    return host instanceof HTMLDivElement ? host : null;
-  }
-
   private clearDragPreview(): void {
-    const host = this.getDragPreviewHost();
-    if (host) {
-      render(null, host);
-    }
+    DragPreview.clearDragPreview();
     this.dragPreviewEl = undefined;
   }
 
   private mountDragPreview(
     onCanvasReady: (canvas: HTMLCanvasElement) => void,
   ): HTMLDivElement | null {
-    const host = this.getDragPreviewHost();
-    if (!host) return null;
-    let previewRef: HTMLDivElement | null = null;
-    let canvasRef: HTMLCanvasElement | null = null;
-    render(
-      <div
-        className="shop-drag-preview"
-        ref={(element) => {
-          previewRef = element;
-        }}
-      >
-        <canvas
-          className="shop-drag-preview-icon"
-          height={36}
-          ref={(element) => {
-            canvasRef = element;
-          }}
-          width={36}
-        />
-      </div>,
-      host,
-    );
-    if (!previewRef || !canvasRef) {
-      render(null, host);
-      return null;
-    }
-    onCanvasReady(canvasRef);
-    this.dragPreviewEl = previewRef;
-    return previewRef;
+    const preview = DragPreview.mountDragPreview(onCanvasReady);
+    if (preview) this.dragPreviewEl = preview;
+    return preview;
   }
 
   private setDragPreview(event: DragEvent, weapon: WeaponDefinition): void {
     const transfer = event.dataTransfer;
     if (!transfer) return;
     this.clearDragPreview();
-    const color = formatColor(weapon.stats.bullet.color ?? 0x7df9ff);
     const preview = this.mountDragPreview((canvas) => {
-      this.drawIcon(
+      drawShopIcon({
         canvas,
-        "gun",
-        color,
-        weapon.stats.bullet.color ?? 0x7df9ff,
-        this.getSelectedShip().vector,
-        weapon.gunId,
-        undefined,
-        weapon.size,
-      );
+        colorHex: formatColor(weapon.stats.bullet.color ?? 0x7df9ff),
+        colorValue: weapon.stats.bullet.color ?? 0x7df9ff,
+        gunId: weapon.gunId,
+        kind: "gun",
+        shipShape: this.getSelectedShip().vector,
+        weaponSize: weapon.size,
+      });
     });
     if (!preview) return;
     transfer.setDragImage(preview, 22, 22);
@@ -2451,18 +1513,15 @@ export class ShopScene extends Phaser.Scene {
     if (!transfer) return;
     this.clearDragPreview();
     const colorValue = this.getModAccentColor(mod.iconKind);
-    const color = formatColor(colorValue);
     const preview = this.mountDragPreview((canvas) => {
-      this.drawIcon(
+      drawShopIcon({
         canvas,
-        "mod",
-        color,
+        colorHex: formatColor(colorValue),
         colorValue,
-        this.getSelectedShip().vector,
-        undefined,
-        mod.icon,
-        undefined,
-      );
+        kind: "mod",
+        modVector: mod.icon,
+        shipShape: this.getSelectedShip().vector,
+      });
     });
     if (!preview) return;
     transfer.setDragImage(preview, 22, 22);
@@ -2552,132 +1611,6 @@ export class ShopScene extends Phaser.Scene {
     this.previewScene.setLoadout(mountedWeapons, ship);
   }
 
-  private drawIcon(
-    canvas: HTMLCanvasElement,
-    kind: CardIconKind,
-    color: string,
-    colorValue: number,
-    shipShape: ShipVector,
-    gunId?: string,
-    modVector?: ModIconVector,
-    weaponSize?: WeaponSize,
-  ): void {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const { height, width } = canvas;
-    ctx.clearRect(0, 0, width, height);
-    if (kind === "ship") {
-      const fill = this.toRgba(color, 0.9, 0.25);
-      this.drawShip(
-        ctx,
-        width / 2,
-        height / 2,
-        width * 0.28,
-        color,
-        fill,
-        shipShape,
-      );
-      return;
-    }
-    if (kind === "mod") {
-      if (modVector) {
-        this.drawCenteredModIcon(ctx, modVector, width, height, colorValue);
-      } else {
-        this.drawVacantMountIcon(
-          ctx,
-          width / 2,
-          height / 2,
-          width * 0.3,
-          color,
-        );
-      }
-      return;
-    }
-    const gun = gunId ? GUNS[gunId] : null;
-    if (gun) {
-      this.drawCenteredGunIcon(ctx, gun, width, height, colorValue, weaponSize);
-      return;
-    }
-    this.drawVacantMountIcon(ctx, width / 2, height / 2, width * 0.3, color);
-  }
-
-  private drawCenteredGunIcon(
-    ctx: CanvasRenderingContext2D,
-    gun: GunDefinition,
-    canvasWidth: number,
-    canvasHeight: number,
-    colorValue: number,
-    weaponSize?: WeaponSize,
-  ): void {
-    const bounds = this.getGunLocalBounds(gun);
-    const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
-    const localHeight = Math.max(0.001, bounds.maxY - bounds.minY);
-    const localMaxSpan = Math.max(localWidth, localHeight);
-    const targetSpan = canvasWidth * (weaponSize === "large" ? 0.476 : 0.364);
-    const scale = targetSpan / localMaxSpan;
-    const localCenterX = (bounds.minX + bounds.maxX) * 0.5;
-    const localCenterY = (bounds.minY + bounds.maxY) * 0.5;
-    drawGunToCanvas(
-      ctx,
-      gun,
-      canvasWidth * 0.5 - localCenterX * scale,
-      canvasHeight * 0.5 - localCenterY * scale,
-      scale,
-      colorValue,
-    );
-  }
-
-  private drawCenteredModIcon(
-    ctx: CanvasRenderingContext2D,
-    icon: ModIconVector,
-    canvasWidth: number,
-    canvasHeight: number,
-    colorValue: number,
-  ): void {
-    const bounds = getModIconBounds(icon);
-    const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
-    const localHeight = Math.max(0.001, bounds.maxY - bounds.minY);
-    const localMaxSpan = Math.max(localWidth, localHeight);
-    const targetSpan = canvasWidth * 0.5;
-    const scale = targetSpan / localMaxSpan;
-    const localCenterX = (bounds.minX + bounds.maxX) * 0.5;
-    const localCenterY = (bounds.minY + bounds.maxY) * 0.5;
-    drawModToCanvas(
-      ctx,
-      icon,
-      canvasWidth * 0.5 - localCenterX * scale,
-      canvasHeight * 0.5 - localCenterY * scale,
-      scale,
-      colorValue,
-    );
-  }
-
-  private getGunLocalBounds(gun: GunDefinition): {
-    maxX: number;
-    maxY: number;
-    minX: number;
-    minY: number;
-  } {
-    return getVectorBounds(gun.vector);
-  }
-
-  private drawVacantMountIcon(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    size: number,
-    color: string,
-  ): void {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.strokeStyle = this.toRgba(color, 0.9, 1.05);
-    ctx.lineWidth = Math.max(2, size * 0.12);
-    ctx.beginPath();
-    ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   private getModAccentColor(icon: ModIconKind): number {
     switch (icon) {
       case "aoe":
@@ -2692,38 +1625,5 @@ export class ShopScene extends Phaser.Scene {
       default:
         return 0xff8c42;
     }
-  }
-
-  private drawShip(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    r: number,
-    stroke: string,
-    fill: string,
-    vector: ShipVector,
-  ): void {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = fill;
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 2;
-    drawShipToCanvas(ctx, vector, r);
-    ctx.restore();
-  }
-
-  private toRgba(hex: string, alpha: number, factor: number): string {
-    const { b, g, r } = this.hexToRgb(hex);
-    return `rgba(${Math.round(r * factor)}, ${Math.round(g * factor)}, ${Math.round(b * factor)}, ${alpha})`;
-  }
-
-  private hexToRgb(hex: string): { r: number; g: number; b: number } {
-    const raw = hex.replace("#", "").padStart(6, "0");
-    const value = parseInt(raw, 16);
-    return {
-      b: value & 255,
-      g: (value >> 8) & 255,
-      r: (value >> 16) & 255,
-    };
   }
 }

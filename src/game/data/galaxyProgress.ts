@@ -1,8 +1,6 @@
 import type {
   GalaxyDecorationDefinition,
   GalaxyDefinition,
-  GalaxyEdgeDefinition,
-  GalaxyNodeDefinition,
 } from "./galaxyTypes";
 import type { SaveData } from "./save";
 
@@ -13,7 +11,6 @@ import { loadSave, mutateSave } from "./save";
 
 export interface GalaxyNodeView {
   id: string;
-  isBranchChoice: boolean;
   isCompleted: boolean;
   isCurrent: boolean;
   isReplayable: boolean;
@@ -26,14 +23,15 @@ export interface GalaxyNodeView {
   stars: number;
 }
 
-export interface GalaxyEdgeView extends GalaxyEdgeDefinition {
+export interface GalaxyEdgeView {
+  from: string;
   isCompleted: boolean;
   isUnlocked: boolean;
+  to: string;
 }
 
 export interface GalaxyView {
-  branchChoiceNodeIds: string[];
-  currentNodeId: null | string;
+  currentLevelId: null | string;
   decorations: GalaxyDecorationDefinition[];
   description?: string;
   edges: GalaxyEdgeView[];
@@ -52,27 +50,10 @@ export interface GalaxyNodeLaunch {
 
 export interface GalaxyAdvanceResult {
   advanced: boolean;
-  branchChoiceNodeIds: string[];
-  currentNodeId: null | string;
+  currentLevelId: null | string;
   galaxyId: null | string;
   isComplete: boolean;
 }
-
-const findNode = (
-  galaxy: GalaxyDefinition,
-  nodeId: string,
-): GalaxyNodeDefinition | null =>
-  galaxy.nodes.find((node) => node.id === nodeId) ?? null;
-
-const getOutgoingNodeIds = (
-  galaxy: GalaxyDefinition,
-  nodeId: string,
-): string[] => {
-  const validIds = new Set(galaxy.nodes.map((node) => node.id));
-  return galaxy.edges
-    .filter((edge) => edge.from === nodeId && validIds.has(edge.to))
-    .map((edge) => edge.to);
-};
 
 const getActiveGalaxy = (
   save: SaveData,
@@ -87,8 +68,9 @@ const getActiveGalaxy = (
 
 const isCampaignComplete = (
   galaxy: GalaxyDefinition,
-  completedNodeIds: Set<string>,
-): boolean => galaxy.nodes.every((node) => completedNodeIds.has(node.id));
+  completedLevelIds: Set<string>,
+): boolean =>
+  galaxy.levels.every((entry) => completedLevelIds.has(entry.levelId));
 
 export const ensureActiveGalaxy = (): null | string => {
   const galaxies = getGalaxies();
@@ -110,41 +92,42 @@ export const buildActiveGalaxyView = (
   if (!campaign) return null;
 
   const levels = getLevels();
-  const completedSet = new Set(campaign.completedNodeIds);
-  const unlockedSet = new Set(campaign.unlockedNodeIds);
-  const branchSet = new Set(campaign.branchChoiceNodeIds);
+  const completedSet = new Set(campaign.completedLevelIds);
 
-  const nodes: GalaxyNodeView[] = galaxy.nodes.map((node) => {
-    const level = levels[node.levelId];
-    const isCompleted = completedSet.has(node.id);
-    const isCurrent = campaign.currentNodeId === node.id;
-    const isBranchChoice = !campaign.currentNodeId && branchSet.has(node.id);
-    const isUnlocked = isCompleted || unlockedSet.has(node.id);
+  const nodes: GalaxyNodeView[] = galaxy.levels.map((entry) => {
+    const level = levels[entry.levelId];
+    const isCompleted = completedSet.has(entry.levelId);
+    const isCurrent = campaign.currentLevelId === entry.levelId;
     return {
-      id: node.id,
-      isBranchChoice,
+      id: entry.levelId,
       isCompleted,
       isCurrent,
       isReplayable: isCompleted,
-      isSelectable: isCurrent || isBranchChoice,
-      isUnlocked,
-      levelId: node.levelId,
-      name: node.name ?? level?.title ?? node.levelId,
-      pos: node.pos,
-      starCap: getLevelStarCap(node.levelId),
-      stars: getLevelStars(node.levelId, save),
+      isSelectable: isCurrent,
+      isUnlocked: isCompleted || isCurrent,
+      levelId: entry.levelId,
+      name: entry.name ?? level?.title ?? entry.levelId,
+      pos: entry.pos,
+      starCap: getLevelStarCap(entry.levelId),
+      stars: getLevelStars(entry.levelId, save),
     };
   });
 
-  const edges: GalaxyEdgeView[] = galaxy.edges.map((edge) => ({
-    ...edge,
-    isCompleted: completedSet.has(edge.from) && completedSet.has(edge.to),
-    isUnlocked: completedSet.has(edge.from) || unlockedSet.has(edge.to),
-  }));
+  const edges: GalaxyEdgeView[] = [];
+  for (let i = 0; i < galaxy.levels.length - 1; i += 1) {
+    const from = galaxy.levels[i]?.levelId;
+    const to = galaxy.levels[i + 1]?.levelId;
+    if (!from || !to) continue;
+    edges.push({
+      from,
+      isCompleted: completedSet.has(from) && completedSet.has(to),
+      isUnlocked: completedSet.has(from) || campaign.currentLevelId === to,
+      to,
+    });
+  }
 
   return {
-    branchChoiceNodeIds: campaign.branchChoiceNodeIds,
-    currentNodeId: campaign.currentNodeId,
+    currentLevelId: campaign.currentLevelId,
     decorations: galaxy.decorations ?? [],
     description: galaxy.description,
     edges,
@@ -162,56 +145,20 @@ export const launchGalaxyNode = (nodeId: string): GalaxyNodeLaunch | null => {
   const { galaxy, galaxyId } = active;
   const campaign = save.galaxyCampaign[galaxyId];
   if (!campaign) return null;
+  if (!galaxy.levels.some((entry) => entry.levelId === nodeId)) return null;
 
-  const node = findNode(galaxy, nodeId);
-  if (!node) return null;
-
-  const isCompleted = campaign.completedNodeIds.includes(nodeId);
-  if (isCompleted) {
+  if (campaign.completedLevelIds.includes(nodeId)) {
     return {
       galaxyId,
-      levelId: node.levelId,
+      levelId: nodeId,
       mode: "replay",
       nodeId,
     };
   }
-
-  if (campaign.currentNodeId === nodeId) {
-    return {
-      galaxyId,
-      levelId: node.levelId,
-      mode: "campaign",
-      nodeId,
-    };
-  }
-
-  if (
-    campaign.currentNodeId ||
-    !campaign.branchChoiceNodeIds.includes(nodeId) ||
-    !campaign.unlockedNodeIds.includes(nodeId)
-  ) {
-    return null;
-  }
-
-  mutateSave((saveData) => {
-    const activeGalaxyId = saveData.activeGalaxyId;
-    if (!activeGalaxyId || activeGalaxyId !== galaxyId) return;
-    const state = saveData.galaxyCampaign[activeGalaxyId];
-    if (!state) return;
-    const branchChoices = new Set(state.branchChoiceNodeIds);
-    state.currentNodeId = nodeId;
-    state.branchChoiceNodeIds = [];
-    state.unlockedNodeIds = state.unlockedNodeIds.filter(
-      (entry) => !branchChoices.has(entry) || entry === nodeId,
-    );
-    if (!state.unlockedNodeIds.includes(nodeId)) {
-      state.unlockedNodeIds.push(nodeId);
-    }
-  });
-
+  if (campaign.currentLevelId !== nodeId) return null;
   return {
     galaxyId,
-    levelId: node.levelId,
+    levelId: nodeId,
     mode: "campaign",
     nodeId,
   };
@@ -222,8 +169,7 @@ export const advanceActiveGalaxyOnLevelClear = (
 ): GalaxyAdvanceResult => {
   const result: GalaxyAdvanceResult = {
     advanced: false,
-    branchChoiceNodeIds: [],
-    currentNodeId: null,
+    currentLevelId: null,
     galaxyId: null,
     isComplete: false,
   };
@@ -233,43 +179,26 @@ export const advanceActiveGalaxyOnLevelClear = (
     if (!active) return;
     const { galaxy, galaxyId } = active;
     const campaign = saveData.galaxyCampaign[galaxyId];
-    if (!campaign?.currentNodeId) return;
+    if (campaign?.currentLevelId !== levelId) return;
+    const orderedLevelIds = galaxy.levels.map((entry) => entry.levelId);
 
-    const currentNode = findNode(galaxy, campaign.currentNodeId);
-    if (currentNode?.levelId !== levelId) return;
+    const completedSet = new Set(campaign.completedLevelIds);
+    completedSet.add(levelId);
 
-    const completed = new Set(campaign.completedNodeIds);
-    const unlocked = new Set(campaign.unlockedNodeIds);
-    completed.add(currentNode.id);
-    unlocked.delete(currentNode.id);
-
-    const nextNodeIds = getOutgoingNodeIds(galaxy, currentNode.id);
-    for (const nodeId of nextNodeIds) {
-      if (!completed.has(nodeId)) unlocked.add(nodeId);
+    const completedLevelIds: string[] = [];
+    for (const candidateLevelId of orderedLevelIds) {
+      if (!completedSet.has(candidateLevelId)) break;
+      completedLevelIds.push(candidateLevelId);
     }
+    const currentLevelId = orderedLevelIds[completedLevelIds.length] ?? null;
 
-    campaign.completedNodeIds = [...completed];
-    campaign.unlockedNodeIds = [...unlocked];
-
-    if (nextNodeIds.length === 0) {
-      campaign.currentNodeId = null;
-      campaign.branchChoiceNodeIds = [];
-    } else if (nextNodeIds.length === 1) {
-      campaign.currentNodeId = nextNodeIds[0];
-      campaign.branchChoiceNodeIds = [];
-      if (!campaign.unlockedNodeIds.includes(nextNodeIds[0])) {
-        campaign.unlockedNodeIds.push(nextNodeIds[0]);
-      }
-    } else {
-      campaign.currentNodeId = null;
-      campaign.branchChoiceNodeIds = nextNodeIds;
-    }
+    campaign.completedLevelIds = completedLevelIds;
+    campaign.currentLevelId = currentLevelId;
 
     result.advanced = true;
-    result.branchChoiceNodeIds = campaign.branchChoiceNodeIds;
-    result.currentNodeId = campaign.currentNodeId;
+    result.currentLevelId = campaign.currentLevelId;
     result.galaxyId = galaxyId;
-    result.isComplete = isCampaignComplete(galaxy, completed);
+    result.isComplete = isCampaignComplete(galaxy, completedSet);
   });
 
   return result;

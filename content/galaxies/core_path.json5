@@ -1,101 +1,42 @@
 {
   "id": "core_path",
   "name": "Outer Drift",
-  "description": "Push through the sector, choose your branch, and break command control.",
-  "startNodeId": "n1_intro",
-  "nodes": [
+  "description": "Push through the sector and break command control.",
+  "levels": [
     {
-      "id": "n1_intro",
       "levelId": "L1_INTRO",
       "name": "Cadet Sortie",
-      "pos": {
-        "x": 0.12,
-        "y": 0.78
-      }
+      "pos": { "x": 0.12, "y": 0.78 }
     },
     {
-      "id": "n2_squeeze",
       "levelId": "L2_SQUEEZE",
       "name": "Pattern Lock",
-      "pos": {
-        "x": 0.28,
-        "y": 0.66
-      }
+      "pos": { "x": 0.45, "y": 0.75 }
     },
     {
-      "id": "n3_breakthrough",
       "levelId": "L3_BREAKTHROUGH",
       "name": "Breakline Run",
-      "pos": {
-        "x": 0.44,
-        "y": 0.56
-      }
+      "pos": { "x": 0.75, "y": 0.65 }
     },
     {
-      "id": "n4_deadline",
       "levelId": "L4_DEADLINE",
       "name": "Countdown Drift",
-      "pos": {
-        "x": 0.58,
-        "y": 0.42
-      }
+      "pos": { "x": 0.5, "y": 0.5 }
     },
     {
-      "id": "n4_midboss",
       "levelId": "L5_MIDBOSS",
       "name": "Escort Breaker",
-      "pos": {
-        "x": 0.62,
-        "y": 0.64
-      }
+      "pos": { "x": 0.25, "y": 0.45 }
     },
     {
-      "id": "n5_remix",
       "levelId": "L6_REMIX",
       "name": "Remix Gauntlet",
-      "pos": {
-        "x": 0.78,
-        "y": 0.52
-      }
+      "pos": { "x": 0.55, "y": 0.25 }
     },
     {
-      "id": "n6_boss",
       "levelId": "L7_BOSS",
       "name": "Command Core",
-      "pos": {
-        "x": 0.9,
-        "y": 0.34
-      }
-    }
-  ],
-  "edges": [
-    {
-      "from": "n1_intro",
-      "to": "n2_squeeze"
-    },
-    {
-      "from": "n2_squeeze",
-      "to": "n3_breakthrough"
-    },
-    {
-      "from": "n3_breakthrough",
-      "to": "n4_deadline"
-    },
-    {
-      "from": "n3_breakthrough",
-      "to": "n4_midboss"
-    },
-    {
-      "from": "n4_deadline",
-      "to": "n5_remix"
-    },
-    {
-      "from": "n4_midboss",
-      "to": "n5_remix"
-    },
-    {
-      "from": "n5_remix",
-      "to": "n6_boss"
+      "pos": { "x": 0.85, "y": 0.3 }
     }
   ],
   "decorations": [
