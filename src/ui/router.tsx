@@ -1,8 +1,10 @@
 import type Phaser from "phaser";
 
 import { signal, type Signal } from "@preact/signals";
+import clsx from "clsx";
 import { render } from "preact";
 
+import { AudioControls } from "../game/audio/AudioControls";
 import { getAudioDirector } from "../game/audio/audioDirector";
 import {
   buildActiveGalaxyView,
@@ -20,6 +22,8 @@ import {
   stopPlayScene,
   stopShopScene,
 } from "./router/sceneEffects";
+
+import styles from "./router.module.css";
 
 export type UiRoute =
   | "gameover"
@@ -51,8 +55,10 @@ interface StoryBeatView {
 interface UiViewSignals {
   gameOver: Signal<GameOverStats>;
   menuActions: Signal<PanelAction[]>;
+  musicEnabled: Signal<boolean>;
   progression: Signal<GalaxyView | null>;
   route: Signal<UiRoute>;
+  soundEnabled: Signal<boolean>;
   storyBeat: Signal<StoryBeatView>;
 }
 
@@ -67,7 +73,8 @@ const UI_OPEN_ROUTES = new Set<UiRoute>([
 const GAME_LOCK_ROUTES = new Set<UiRoute>(["play", "pause"]);
 
 const isUiOpenRoute = (route: UiRoute): boolean => UI_OPEN_ROUTES.has(route);
-const isGameLockRoute = (route: UiRoute): boolean => GAME_LOCK_ROUTES.has(route);
+const isGameLockRoute = (route: UiRoute): boolean =>
+  GAME_LOCK_ROUTES.has(route);
 
 const isTextTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLInputElement ||
@@ -76,9 +83,11 @@ const isTextTarget = (target: EventTarget | null): boolean =>
   (target instanceof HTMLElement && target.isContentEditable);
 
 const panelButtonClass = (item: PanelAction): string =>
-  `ui-button${item.primary ? " ui-button--primary" : ""}${
-    item.disabled ? " ui-button--locked" : ""
-  }`;
+  clsx(
+    styles.uiButton,
+    item.primary ? styles.uiButtonPrimary : undefined,
+    item.disabled ? styles.uiButtonLocked : undefined,
+  );
 
 const UiPanel = (props: {
   actions: PanelAction[];
@@ -87,10 +96,12 @@ const UiPanel = (props: {
   statsText?: string;
   title: string;
 }) => (
-  <div className="ui-panel">
-    <div className="ui-title">{props.title}</div>
-    {props.statsText ? <div className="ui-stats">{props.statsText}</div> : null}
-    <div className="ui-actions">
+  <div className={styles.uiPanel}>
+    <div className={styles.uiTitle}>{props.title}</div>
+    {props.statsText ? (
+      <div className={styles.uiStats}>{props.statsText}</div>
+    ) : null}
+    <div className={styles.uiActions}>
       {props.actions.map((item) => (
         <button
           className={panelButtonClass(item)}
@@ -102,39 +113,49 @@ const UiPanel = (props: {
         </button>
       ))}
     </div>
-    {props.hint ? <div className="ui-hint">{props.hint}</div> : null}
+    {props.hint ? <div className={styles.uiHint}>{props.hint}</div> : null}
   </div>
 );
 
 const MenuOverlay = (props: {
   actions: PanelAction[];
+  musicEnabled: boolean;
   onAction: (action: string, levelId?: string) => void;
+  soundEnabled: boolean;
 }) => (
-  <div className="menu-shell">
-    <div className="menu-shell__halo" />
-    <div className="menu-shell__grid" />
-    <div className="menu-shell__badge">Vector Combat Campaign</div>
-    <div className="menu-shell__title">Shmup Inc</div>
-    <div className="menu-shell__subtitle">
-      Push through hostile sectors, unlock loadouts, and keep the run clean.
+  <>
+    <div className={styles.menuShell}>
+      <div className={styles.menuShellHalo} />
+      <div className={styles.menuShellGrid} />
+      <div className={styles.menuShellBadge}>Vector Combat Campaign</div>
+      <div className={styles.menuShellTitle}>Shmup Inc</div>
+      <div className={styles.menuShellSubtitle}>
+        Push through hostile sectors, unlock loadouts, and keep the run clean.
+      </div>
+      <div className={styles.menuShellDivider} />
+      <div className={clsx(styles.uiActions, styles.menuShellActions)}>
+        {props.actions.map((item) => (
+          <button
+            className={panelButtonClass(item)}
+            disabled={Boolean(item.disabled)}
+            onClick={() => props.onAction(item.action, item.levelId)}
+            type="button"
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className={styles.menuShellHint}>
+        Drag to move. Auto-fire engages on hold.
+      </div>
     </div>
-    <div className="menu-shell__divider" />
-    <div className="ui-actions menu-shell__actions">
-      {props.actions.map((item) => (
-        <button
-          className={panelButtonClass(item)}
-          disabled={Boolean(item.disabled)}
-          onClick={() => props.onAction(item.action, item.levelId)}
-          type="button"
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
-    <div className="menu-shell__hint">
-      Drag to move. Auto-fire engages on hold.
-    </div>
-  </div>
+    <AudioControls
+      musicEnabled={props.musicEnabled}
+      onToggleMusic={() => props.onAction("toggle-music")}
+      onToggleSound={() => props.onAction("toggle-sound")}
+      soundEnabled={props.soundEnabled}
+    />
+  </>
 );
 
 const UiRoot = (props: {
@@ -148,18 +169,28 @@ const UiRoot = (props: {
   const storyBeat = props.signals.storyBeat.value;
 
   return (
-    <div className={`ui-root${uiOpen ? " is-active" : ""}`}>
+    <div className={clsx(styles.uiRoot, uiOpen ? styles.isActive : undefined)}>
       <div
-        className={`ui-overlay ui-overlay--menu${route === "menu" ? " is-active" : ""}`}
+        className={clsx(
+          styles.uiOverlay,
+          styles.uiOverlayMenu,
+          route === "menu" ? styles.isActive : undefined,
+        )}
       >
         <MenuOverlay
           actions={props.signals.menuActions.value}
+          musicEnabled={props.signals.musicEnabled.value}
           onAction={props.onAction}
+          soundEnabled={props.signals.soundEnabled.value}
         />
       </div>
 
       <div
-        className={`ui-overlay ui-overlay--pause${route === "pause" ? " is-active" : ""}`}
+        className={clsx(
+          styles.uiOverlay,
+          styles.uiOverlayPause,
+          route === "pause" ? styles.isActive : undefined,
+        )}
       >
         <UiPanel
           actions={[
@@ -174,7 +205,11 @@ const UiRoot = (props: {
       </div>
 
       <div
-        className={`ui-overlay ui-overlay--gameover${route === "gameover" ? " is-active" : ""}`}
+        className={clsx(
+          styles.uiOverlay,
+          styles.uiOverlayGameOver,
+          route === "gameover" ? styles.isActive : undefined,
+        )}
       >
         <UiPanel
           actions={[
@@ -189,7 +224,11 @@ const UiRoot = (props: {
       </div>
 
       <div
-        className={`ui-overlay ui-overlay--progression${route === "progression" ? " is-active" : ""}`}
+        className={clsx(
+          styles.uiOverlay,
+          styles.uiOverlayProgression,
+          route === "progression" ? styles.isActive : undefined,
+        )}
       >
         {progression ? (
           <ProgressionOverlay onAction={props.onAction} view={progression} />
@@ -203,25 +242,29 @@ const UiRoot = (props: {
       </div>
 
       <div
-        className={`ui-overlay ui-overlay--story${route === "story" ? " is-active" : ""}`}
+        className={clsx(
+          styles.uiOverlay,
+          styles.uiOverlayStory,
+          route === "story" ? styles.isActive : undefined,
+        )}
       >
-        <div className="story-panel">
-          <div className="story-title">{storyBeat.title}</div>
-          <div className="story-lines">
+        <div className={styles.storyPanel}>
+          <div className={styles.storyTitle}>{storyBeat.title}</div>
+          <div className={styles.storyLines}>
             {storyBeat.lines.map((line, index) => (
               <p key={`${index}-${line}`}>{line}</p>
             ))}
           </div>
-          <div className="story-actions">
+          <div className={styles.storyActions}>
             <button
-              className="story-button"
+              className={styles.storyButton}
               onClick={() => props.onAction("story-continue")}
               type="button"
             >
               Continue
             </button>
             <button
-              className="story-skip"
+              className={styles.storySkip}
               onClick={() => props.onAction("story-skip")}
               type="button"
             >
@@ -244,8 +287,14 @@ export class UiRouter {
   private transitionToken = 0;
   private readonly routeSignal = signal<UiRoute>("menu");
   private readonly menuActionsSignal = signal<PanelAction[]>([]);
+  private readonly musicEnabledSignal = signal<boolean>(
+    this.audio.getMusicEnabled(),
+  );
   private readonly progressionSignal = signal<GalaxyView | null>(null);
   private readonly gameOverSignal = signal<GameOverStats>({ gold: 0, wave: 0 });
+  private readonly soundEnabledSignal = signal<boolean>(
+    this.audio.getSoundEnabled(),
+  );
   private readonly storyBeatSignal = signal<StoryBeatView>({
     lines: ["Awaiting mission data."],
     title: "Mission Brief",
@@ -267,8 +316,10 @@ export class UiRouter {
         signals={{
           gameOver: this.gameOverSignal,
           menuActions: this.menuActionsSignal,
+          musicEnabled: this.musicEnabledSignal,
           progression: this.progressionSignal,
           route: this.routeSignal,
+          soundEnabled: this.soundEnabledSignal,
           storyBeat: this.storyBeatSignal,
         }}
       />,
@@ -434,6 +485,18 @@ export class UiRouter {
       case "story-skip":
         this.resolveStory();
         break;
+      case "toggle-music": {
+        const next = !this.musicEnabledSignal.value;
+        this.audio.setMusicEnabled(next);
+        this.musicEnabledSignal.value = this.audio.getMusicEnabled();
+        break;
+      }
+      case "toggle-sound": {
+        const next = !this.soundEnabledSignal.value;
+        this.audio.setSoundEnabled(next);
+        this.soundEnabledSignal.value = this.audio.getSoundEnabled();
+        break;
+      }
       default:
         break;
     }

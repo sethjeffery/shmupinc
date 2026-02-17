@@ -5,7 +5,15 @@
   "description": "Deep boom foundation: short sub/body with gentle saturation + dark noise thump.",
   "gain": 0.33,
   "effects": [
-    { "type": "compressor", "thresholdDb": -22, "kneeDb": 18, "ratio": 4, "attackMs": 8, "releaseMs": 160, "makeupGain": 1.15 },
+    {
+      "type": "compressor",
+      "thresholdDb": -22,
+      "kneeDb": 18,
+      "ratio": 4,
+      "attackMs": 8,
+      "releaseMs": 160,
+      "makeupGain": 1.15
+    },
     { "type": "waveshaper", "drive": 0.42, "mix": 0.45 },
     {
       "type": "reverb",
@@ -27,9 +35,7 @@
       "holdMs": 28,
       "releaseMs": 220,
       "gain": 0.55,
-      "effects": [
-        { "type": "lowpass", "hz": 520 }
-      ]
+      "effects": [{ "type": "lowpass", "hz": 520 }]
     },
     {
       "type": "noise",
@@ -49,9 +55,7 @@
       "highpassHz": 35,
       "lowpassHz": 260,
       "gain": 0.44,
-      "effects": [
-        { "type": "waveshaper", "drive": 0.35, "mix": 0.35 }
-      ]
+      "effects": [{ "type": "waveshaper", "drive": 0.35, "mix": 0.35 }]
     }
   ]
 }

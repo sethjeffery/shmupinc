@@ -12,7 +12,7 @@
       "attackMs": 0,
       "holdMs": 20,
       "releaseMs": 120,
-      "gain": 0.46
+      "gain": 0.66
     },
     {
       "type": "noise",

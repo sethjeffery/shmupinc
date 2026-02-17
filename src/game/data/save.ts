@@ -345,7 +345,7 @@ const normalizeGalaxyCampaign = (save: SaveData): void => {
     const existingCompleted = Array.isArray(
       (base as Partial<GalaxyCampaignState>).completedLevelIds,
     )
-      ? (base as Partial<GalaxyCampaignState>).completedLevelIds ?? []
+      ? ((base as Partial<GalaxyCampaignState>).completedLevelIds ?? [])
       : [];
     const completedSet = new Set(
       existingCompleted.filter((levelId) => validLevelIds.has(levelId)),

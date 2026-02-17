@@ -2,9 +2,7 @@
   "id": "impact_player_hit",
   "category": "impact",
   "gain": 0.24,
-  "effects": [
-    { "type": "waveshaper", "drive": 0.4, "mix": 0.4 }
-  ],
+  "effects": [{ "type": "waveshaper", "drive": 0.4, "mix": 0.4 }],
   "layers": [
     {
       "type": "tone",

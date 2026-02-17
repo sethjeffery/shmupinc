@@ -4,11 +4,14 @@ import type { ShipDefinition } from "../../data/shipTypes";
 import type { WeaponInstanceId } from "../../data/weaponInstances";
 import type { BuildNodeIconOptions } from "../../scenes/ShopScene";
 
+import { clsx } from "clsx";
 import { type ComponentChildren } from "preact";
 
 import { MODS, type ModDefinition, type ModIconKind } from "../../data/mods";
 import { canMountWeapon } from "../../data/weaponMounts";
 import { WEAPONS, type WeaponDefinition } from "../../data/weapons";
+
+import styles from "../../scenes/ShopScene.module.css";
 
 type LoadoutNodeSelection =
   | { kind: "mod"; mountId: string; slotIndex: number }
@@ -42,9 +45,11 @@ export default function LoadoutPanel(props: {
 
   if (!selection) {
     return (
-      <div className="shop-node-panel">
-        <div className="shop-node-panel-title">Select a node</div>
-        <div className="shop-node-panel-hint">Tap any node to route gear.</div>
+      <div className={styles["shop-node-panel"]}>
+        <div className={styles["shop-node-panel-title"]}>Select a node</div>
+        <div className={styles["shop-node-panel-hint"]}>
+          Tap any node to route gear.
+        </div>
       </div>
     );
   }
@@ -55,9 +60,11 @@ export default function LoadoutPanel(props: {
   const mount = ship.mounts.find((entry) => entry.id === selection.mountId);
   if (!assignment || !mount) {
     return (
-      <div className="shop-node-panel">
-        <div className="shop-node-panel-title">Node unavailable</div>
-        <div className="shop-node-panel-hint">Select another node.</div>
+      <div className={styles["shop-node-panel"]}>
+        <div className={styles["shop-node-panel-title"]}>Node unavailable</div>
+        <div className={styles["shop-node-panel-hint"]}>
+          Select another node.
+        </div>
       </div>
     );
   }
@@ -86,8 +93,8 @@ export default function LoadoutPanel(props: {
 
     const optionsContent =
       compatible.length === 0 ? (
-        <div className="shop-empty">
-          No compatible weapons owned. Buy in Armory.
+        <div className={styles["shop-empty"]}>
+          No compatible weapons owned. Buy in Weapons.
         </div>
       ) : (
         compatible.map((instance) => {
@@ -95,20 +102,27 @@ export default function LoadoutPanel(props: {
           if (!weapon) return null;
           return (
             <button
-              className={`shop-node-option${currentInstance?.id === instance.id ? " is-current" : ""}`}
+              className={clsx(
+                styles["shop-node-option"],
+                currentInstance?.id === instance.id
+                  ? styles["is-current"]
+                  : undefined,
+              )}
               key={`weapon-node-option-${instance.id}`}
               onClick={() => props.onEquipWeapon(mount.id, instance.id)}
               type="button"
             >
               {props.buildNodeIcon("gun", {
                 accentColor: weapon.stats.bullet.color ?? 0x7df9ff,
-                className: "shop-node-option-icon",
+                className: styles["shop-node-option-icon"],
                 gunId: weapon.gunId,
                 size: 100,
                 weaponSize: weapon.size,
               })}
-              <span className="shop-node-option-label">{weapon.name}</span>
-              <span className="shop-node-option-meta">
+              <span className={styles["shop-node-option-label"]}>
+                {weapon.name}
+              </span>
+              <span className={styles["shop-node-option-meta"]}>
                 {props.describeWeaponNodeMeta(weapon, assignment)}
               </span>
             </button>
@@ -117,12 +131,16 @@ export default function LoadoutPanel(props: {
       );
 
     return (
-      <div className="shop-node-panel">
-        <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} weapon`}</div>
-        <div className="shop-node-panel-options">{optionsContent}</div>
-        <div className="shop-node-panel-footer">
+      <div className={styles["shop-node-panel"]}>
+        <div
+          className={styles["shop-node-panel-title"]}
+        >{`${mount.id.toUpperCase()} weapon`}</div>
+        <div className={styles["shop-node-panel-options"]}>
+          {optionsContent}
+        </div>
+        <div className={styles["shop-node-panel-footer"]}>
           <button
-            className="shop-node-clear"
+            className={styles["shop-node-clear"]}
             disabled={!currentInstance}
             onClick={() => props.onClearMountWeapon(mount.id)}
             type="button"
@@ -142,9 +160,13 @@ export default function LoadoutPanel(props: {
 
   if (!assignment.weaponInstanceId) {
     return (
-      <div className="shop-node-panel">
-        <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} mod ${selection.slotIndex + 1}`}</div>
-        <div className="shop-node-panel-hint">Mount a weapon first.</div>
+      <div className={styles["shop-node-panel"]}>
+        <div
+          className={styles["shop-node-panel-title"]}
+        >{`${mount.id.toUpperCase()} mod ${selection.slotIndex + 1}`}</div>
+        <div className={styles["shop-node-panel-hint"]}>
+          Mount a weapon first.
+        </div>
       </div>
     );
   }
@@ -169,14 +191,17 @@ export default function LoadoutPanel(props: {
 
   const optionContent =
     candidates.length === 0 ? (
-      <div className="shop-empty">No compatible mods available.</div>
+      <div className={styles["shop-empty"]}>No compatible mods available.</div>
     ) : (
       candidates.map((instance) => {
         const mod = MODS[instance.modId];
         if (!mod) return null;
         return (
           <button
-            className={`shop-node-option${currentModId === instance.id ? " is-current" : ""}`}
+            className={clsx(
+              styles["shop-node-option"],
+              currentModId === instance.id ? styles["is-current"] : undefined,
+            )}
             key={`mod-node-option-${instance.id}`}
             onClick={() =>
               props.onEquipMod(mount.id, selection.slotIndex, instance.id)
@@ -185,13 +210,13 @@ export default function LoadoutPanel(props: {
           >
             {props.buildNodeIcon("mod", {
               accentColor: props.getModAccentColor(mod.iconKind),
-              className: "shop-node-option-icon",
+              className: styles["shop-node-option-icon"],
               iconKind: "mod",
               modVector: mod.icon,
               size: 100,
             })}
-            <span className="shop-node-option-label">{mod.name}</span>
-            <span className="shop-node-option-meta">
+            <span className={styles["shop-node-option-label"]}>{mod.name}</span>
+            <span className={styles["shop-node-option-meta"]}>
               {props.describeModEffects(mod)}
             </span>
           </button>
@@ -200,12 +225,14 @@ export default function LoadoutPanel(props: {
     );
 
   return (
-    <div className="shop-node-panel">
-      <div className="shop-node-panel-title">{`${mount.id.toUpperCase()} mod ${selection.slotIndex + 1}`}</div>
-      <div className="shop-node-panel-options">{optionContent}</div>
-      <div className="shop-node-panel-footer">
+    <div className={styles["shop-node-panel"]}>
+      <div
+        className={styles["shop-node-panel-title"]}
+      >{`${mount.id.toUpperCase()} mod ${selection.slotIndex + 1}`}</div>
+      <div className={styles["shop-node-panel-options"]}>{optionContent}</div>
+      <div className={styles["shop-node-panel-footer"]}>
         <button
-          className="shop-node-clear"
+          className={styles["shop-node-clear"]}
           disabled={!currentMod}
           onClick={() => props.onClearModSlot(mount.id, selection.slotIndex)}
           type="button"

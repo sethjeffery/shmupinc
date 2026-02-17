@@ -31,7 +31,9 @@ export const getEligibleMountIdsForDrag = (
 
   const eligibleMounts = new Set<string>();
   if (payload.kind === "weapon") {
-    const instance = save.ownedWeapons.find((item) => item.id === payload.instanceId);
+    const instance = save.ownedWeapons.find(
+      (item) => item.id === payload.instanceId,
+    );
     const weapon = instance ? WEAPONS[instance.weaponId] : null;
     if (!weapon) return eligibleMounts;
 
@@ -43,7 +45,9 @@ export const getEligibleMountIdsForDrag = (
     return eligibleMounts;
   }
 
-  const modInstance = save.ownedMods.find((item) => item.id === payload.instanceId);
+  const modInstance = save.ownedMods.find(
+    (item) => item.id === payload.instanceId,
+  );
   const mod = modInstance ? MODS[modInstance.modId] : null;
   if (!mod) return eligibleMounts;
 
@@ -58,7 +62,9 @@ export const getEligibleMountIdsForDrag = (
     if (assignment.modInstanceIds.length >= (mount.modSlots ?? 0)) continue;
 
     const hasSameType = assignment.modInstanceIds.some((modInstanceId) => {
-      const existingInstance = save.ownedMods.find((item) => item.id === modInstanceId);
+      const existingInstance = save.ownedMods.find(
+        (item) => item.id === modInstanceId,
+      );
       const existing = existingInstance ? MODS[existingInstance.modId] : null;
       return existing?.iconKind === mod.iconKind;
     });

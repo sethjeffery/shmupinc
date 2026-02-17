@@ -4,9 +4,7 @@
   "category": "ui",
   "description": "Neon pickup chirp: quick square ping + tiny upward triangle sweep + sparkle.",
   "gain": 0.26,
-  "effects": [
-    { "type": "waveshaper", "drive": 0.15, "mix": 0.18 }
-  ],
+  "effects": [{ "type": "waveshaper", "drive": 0.15, "mix": 0.18 }],
   "layers": [
     {
       "type": "tone",

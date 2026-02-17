@@ -23,6 +23,18 @@ const GAME_TRACKS = [
   new URL("../../../content/music/game03.mp3", import.meta.url).href,
   new URL("../../../content/music/game04.mp3", import.meta.url).href,
 ];
+const AUDIO_PREFS_STORAGE_KEY = "shmupinc-audio-prefs-v1";
+const BASE_SFX_GAIN = 0.26;
+
+interface AudioPreferences {
+  musicEnabled: boolean;
+  soundEnabled: boolean;
+}
+
+const DEFAULT_AUDIO_PREFERENCES: AudioPreferences = {
+  musicEnabled: true,
+  soundEnabled: true,
+};
 
 const MUSIC_FADE_MS = 380;
 const SHOT_COOLDOWNS_MS: Record<string, number> = {
@@ -83,6 +95,30 @@ const msToSec = (ms: number | undefined): number =>
   Math.max(0, (ms ?? 0) / 1000);
 const NOOP_SOUND_STOP: SoundPlayHandle = () => {
   return;
+};
+
+const readAudioPreferences = (): AudioPreferences => {
+  if (typeof window === "undefined") return DEFAULT_AUDIO_PREFERENCES;
+  try {
+    const raw = window.localStorage.getItem(AUDIO_PREFS_STORAGE_KEY);
+    if (!raw) return DEFAULT_AUDIO_PREFERENCES;
+    const parsed = JSON.parse(raw) as Partial<AudioPreferences>;
+    return {
+      ...DEFAULT_AUDIO_PREFERENCES,
+      ...parsed,
+    };
+  } catch {
+    return DEFAULT_AUDIO_PREFERENCES;
+  }
+};
+
+const writeAudioPreferences = (prefs: AudioPreferences): void => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(AUDIO_PREFS_STORAGE_KEY, JSON.stringify(prefs));
+  } catch {
+    // ignore
+  }
 };
 
 // -----------------------------------------------------------------------------
@@ -197,7 +233,9 @@ class AudioDirector {
     HTMLAudioElement,
     MediaElementAudioSourceNode
   >();
+  private musicEnabled = DEFAULT_AUDIO_PREFERENCES.musicEnabled;
   private soundsById: Record<string, SoundContent>;
+  private soundEnabled = DEFAULT_AUDIO_PREFERENCES.soundEnabled;
   private sfxLastAtMs = new Map<string, number>();
   private sfxGain: GainNode | null = null;
   private unlockAttached = false;
@@ -207,6 +245,9 @@ class AudioDirector {
   private reverbCache = new Map<string, AudioBuffer>();
 
   constructor() {
+    const prefs = readAudioPreferences();
+    this.musicEnabled = prefs.musicEnabled;
+    this.soundEnabled = prefs.soundEnabled;
     this.soundsById = getContentRegistry().soundsById;
     this.modeState = {
       game: this.createModeState(GAME_TRACKS, 0.42),
@@ -237,8 +278,38 @@ class AudioDirector {
     if (!context) return;
     void context.resume();
     this.ensureMusicGraph();
+    this.applySfxEnabled();
     this.applyMusicMode(this.desiredMode);
     this.applyPauseLowPass(this.desiredPauseLowPass);
+  }
+
+  getMusicEnabled(): boolean {
+    return this.musicEnabled;
+  }
+
+  getSoundEnabled(): boolean {
+    return this.soundEnabled;
+  }
+
+  setMusicEnabled(enabled: boolean): void {
+    if (this.musicEnabled === enabled) return;
+    this.musicEnabled = enabled;
+    this.persistAudioPreferences();
+    if (!this.unlocked) return;
+    if (!enabled) {
+      this.stopAllMusic();
+      return;
+    }
+    this.activeMode = null;
+    this.applyMusicMode(this.desiredMode);
+    this.applyPauseLowPass(this.desiredPauseLowPass);
+  }
+
+  setSoundEnabled(enabled: boolean): void {
+    if (this.soundEnabled === enabled) return;
+    this.soundEnabled = enabled;
+    this.persistAudioPreferences();
+    this.applySfxEnabled();
   }
 
   setMusicMode(mode: MusicMode): void {
@@ -341,6 +412,7 @@ class AudioDirector {
       pitchSemitones?: number;
     },
   ): SoundPlayHandle {
+    if (!this.soundEnabled) return NOOP_SOUND_STOP;
     const context = this.ensureAudioContext();
     const master = this.ensureSfxGain();
     if (!context || !master) return NOOP_SOUND_STOP;
@@ -349,6 +421,11 @@ class AudioDirector {
   }
 
   private applyMusicMode(mode: MusicMode): void {
+    if (!this.musicEnabled) {
+      this.stopAllMusic();
+      this.activeMode = mode;
+      return;
+    }
     if (this.activeMode === mode) return;
     const targetState = this.modeState[mode];
     if (mode === "game" && targetState.audioElements.length > 1) {
@@ -416,7 +493,7 @@ class AudioDirector {
     if (!context) return null;
     if (this.sfxGain) return this.sfxGain;
     this.sfxGain = context.createGain();
-    this.sfxGain.gain.value = 0.26;
+    this.sfxGain.gain.value = this.soundEnabled ? BASE_SFX_GAIN : 0;
     this.sfxGain.connect(context.destination);
     return this.sfxGain;
   }
@@ -468,6 +545,7 @@ class AudioDirector {
   }
 
   private canTriggerSfx(key: string, cooldownMs: number): boolean {
+    if (!this.soundEnabled) return false;
     if (!this.unlocked) return false;
     const context = this.ensureAudioContext();
     const masterGain = this.ensureSfxGain();
@@ -1100,6 +1178,46 @@ class AudioDirector {
       positionSec: elements.map(() => 0),
       volume,
     };
+  }
+
+  private persistAudioPreferences(): void {
+    writeAudioPreferences({
+      musicEnabled: this.musicEnabled,
+      soundEnabled: this.soundEnabled,
+    });
+  }
+
+  private applySfxEnabled(): void {
+    const context = this.audioContext;
+    const gain = this.sfxGain;
+    if (!context || !gain) return;
+    const now = context.currentTime;
+    const targetGain = this.soundEnabled ? BASE_SFX_GAIN : 0;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.setTargetAtTime(targetGain, now, 0.03);
+  }
+
+  private stopAllMusic(): void {
+    if (typeof window !== "undefined" && this.fadeHandles.size > 0) {
+      for (const handle of this.fadeHandles) {
+        window.cancelAnimationFrame(handle);
+      }
+      this.fadeHandles.clear();
+    }
+
+    for (const [mode, state] of Object.entries(this.modeState) as [
+      MusicMode,
+      ModeAudioState,
+    ][]) {
+      for (const audio of state.audioElements) {
+        if (!audio.paused) {
+          this.captureAudioPosition(mode, audio);
+        }
+        audio.volume = 0;
+        audio.pause();
+      }
+    }
   }
 
   private captureAudioPosition(mode: MusicMode, audio: HTMLAudioElement): void {

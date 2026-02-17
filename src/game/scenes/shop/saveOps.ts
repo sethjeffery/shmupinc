@@ -75,7 +75,9 @@ export const selectOrPurchaseShipInSave = (
       : [];
     const preferredWeaponIds = selectedAssignments
       .map((entry) => entry.weaponInstanceId)
-      .filter((instanceId): instanceId is WeaponInstanceId => Boolean(instanceId));
+      .filter((instanceId): instanceId is WeaponInstanceId =>
+        Boolean(instanceId),
+      );
 
     const resourceId = ship.costResource ?? PRIMARY_RESOURCE_ID;
     if (!spendResourceInSave(save, resourceId, ship.cost)) return;
@@ -87,11 +89,16 @@ export const selectOrPurchaseShipInSave = (
   save.selectedShipId = shipId;
 };
 
-export const purchaseWeaponInSave = (save: SaveData, weaponId: WeaponId): void => {
+export const purchaseWeaponInSave = (
+  save: SaveData,
+  weaponId: WeaponId,
+): void => {
   const weapon = WEAPONS[weaponId];
   if (!weapon) return;
 
-  const owned = save.ownedWeapons.some((instance) => instance.weaponId === weaponId);
+  const owned = save.ownedWeapons.some(
+    (instance) => instance.weaponId === weaponId,
+  );
   if (owned) return;
   if (!hasRequiredUnlocks(save, weapon.requiresUnlocks)) return;
 
@@ -191,7 +198,9 @@ export const assignWeaponToMountInSave = (
   const target = selected.assignments.find((item) => item.mountId === mountId);
   if (!target) return;
 
-  const instance = save.ownedWeapons.find((item) => item.id === payload.instanceId);
+  const instance = save.ownedWeapons.find(
+    (item) => item.id === payload.instanceId,
+  );
   if (!instance) return;
 
   const weapon = WEAPONS[instance.weaponId];
@@ -231,7 +240,9 @@ export const detachModFromMountInSave = (
   const entry = selected.assignments.find((item) => item.mountId === mountId);
   if (!entry) return;
 
-  entry.modInstanceIds = entry.modInstanceIds.filter((id) => id !== modInstanceId);
+  entry.modInstanceIds = entry.modInstanceIds.filter(
+    (id) => id !== modInstanceId,
+  );
 };
 
 export const assignModToMountInSave = (
@@ -246,7 +257,9 @@ export const assignModToMountInSave = (
   const mount = selected.ship.mounts.find((entry) => entry.id === mountId);
   if (!target || !mount || !target.weaponInstanceId) return null;
 
-  const modInstance = save.ownedMods.find((item) => item.id === payload.instanceId);
+  const modInstance = save.ownedMods.find(
+    (item) => item.id === payload.instanceId,
+  );
   const mod = modInstance ? MODS[modInstance.modId] : null;
   if (!mod) return null;
 

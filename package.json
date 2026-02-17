@@ -31,6 +31,7 @@
   "dependencies": {
     "@preact/signals": "^2.7.1",
     "cac": "^6.7.14",
+    "clsx": "^2.1.1",
     "d3-selection": "^3.0.0",
     "d3-zoom": "^3.0.0",
     "fast-glob": "^3.3.3",

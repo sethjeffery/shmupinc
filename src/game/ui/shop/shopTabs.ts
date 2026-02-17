@@ -15,37 +15,38 @@ export const SHOP_TABS: readonly ShopTabDef[] = [
   {
     action: "show-ships",
     category: "ships",
-    description: "Swap hulls and review core flight stats.",
+    description: "Select and preview ships.",
     icon: "ship",
-    label: "Ships",
-    title: "Fleet",
+    label: "Ship",
+    title: "Ship",
   },
   {
     action: "show-armory",
     category: "armory",
-    description: "Buy weapons and mods for your inventory.",
+    description: "Browse weapons and mods.",
     icon: "weapon",
-    label: "Armory",
-    title: "Equipment",
+    label: "Weapons",
+    title: "Weapons",
   },
   {
     action: "show-loadout",
     category: "loadout",
-    description: "Route weapons and mods onto mount nodes.",
+    description: "Adjust mounted gear.",
     icon: "mount",
     label: "Loadout",
-    title: "Workbench",
+    title: "Loadout",
   },
 ] as const;
 
-export const SHOP_CATEGORY_BY_ACTION: Readonly<Record<ShopTabAction, ShopCategory>> =
-  {
-    "show-armory": "armory",
-    "show-loadout": "loadout",
-    "show-ships": "ships",
-  };
+export const SHOP_CATEGORY_BY_ACTION: Readonly<
+  Record<ShopTabAction, ShopCategory>
+> = {
+  "show-armory": "armory",
+  "show-loadout": "loadout",
+  "show-ships": "ships",
+};
 
-export const DEFAULT_SHOP_CATEGORY: ShopCategory = "loadout";
+export const DEFAULT_SHOP_CATEGORY: ShopCategory = "ships";
 
 export const getShopTabByCategory = (
   category: ShopCategory,

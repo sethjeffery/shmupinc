@@ -51,7 +51,13 @@ export const drawShopIcon = (options: DrawIconOptions): void => {
         options.colorValue,
       );
     } else {
-      drawVacantMountIcon(ctx, width / 2, height / 2, width * 0.3, options.colorHex);
+      drawVacantMountIcon(
+        ctx,
+        width / 2,
+        height / 2,
+        width * 0.3,
+        options.colorHex,
+      );
     }
     return;
   }
@@ -69,7 +75,13 @@ export const drawShopIcon = (options: DrawIconOptions): void => {
     return;
   }
 
-  drawVacantMountIcon(ctx, width / 2, height / 2, width * 0.3, options.colorHex);
+  drawVacantMountIcon(
+    ctx,
+    width / 2,
+    height / 2,
+    width * 0.3,
+    options.colorHex,
+  );
 };
 
 const drawCenteredGunIcon = (
@@ -125,7 +137,9 @@ const drawCenteredModIcon = (
   );
 };
 
-const getGunLocalBounds = (gun: GunDefinition): {
+const getGunLocalBounds = (
+  gun: GunDefinition,
+): {
   maxX: number;
   maxY: number;
   minX: number;

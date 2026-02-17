@@ -3,9 +3,23 @@
   "category": "enemy",
   "gain": 0.36,
   "effects": [
-    { "type": "compressor", "thresholdDb": -24, "ratio": 4, "attackMs": 6, "releaseMs": 200, "makeupGain": 1.2 },
+    {
+      "type": "compressor",
+      "thresholdDb": -24,
+      "ratio": 4,
+      "attackMs": 6,
+      "releaseMs": 200,
+      "makeupGain": 1.2
+    },
     { "type": "waveshaper", "drive": 0.5, "mix": 0.45 },
-    { "type": "reverb", "roomMs": 520, "damping": 0.55, "highpassHz": 240, "lowpassHz": 4200, "mix": 0.18 }
+    {
+      "type": "reverb",
+      "roomMs": 520,
+      "damping": 0.55,
+      "highpassHz": 240,
+      "lowpassHz": 4200,
+      "mix": 0.18
+    }
   ],
   "layers": [
     {

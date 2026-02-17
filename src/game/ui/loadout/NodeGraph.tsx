@@ -1,5 +1,9 @@
 import type { ComponentChildren } from "preact";
 
+import { clsx } from "clsx";
+
+import styles from "../../scenes/ShopScene.module.css";
+
 export function NodeLink(props: {
   active?: boolean;
   from: { x: number; y: number };
@@ -12,9 +16,12 @@ export function NodeLink(props: {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const width = Math.hypot(dx, dy);
-  const className = `shop-node-link${active ? " is-active" : ""}${
-    selected ? " is-selected" : ""
-  }${surge ? " is-surge" : ""}`;
+  const className = clsx(
+    styles["shop-node-link"],
+    active ? styles["is-active"] : undefined,
+    selected ? styles["is-selected"] : undefined,
+    surge ? styles["is-surge"] : undefined,
+  );
   return (
     <div
       className={className}
@@ -43,12 +50,12 @@ export function NodeGraphContainer(props: {
 }) {
   return (
     <div
-      className="shop-node-graph"
+      className={styles["shop-node-graph"]}
       ref={props.onMountVisualRef}
       onWheel={(e) => props.onWheel?.(e as WheelEvent)}
     >
       <div
-        className="shop-node-viewport"
+        className={styles["shop-node-viewport"]}
         ref={props.onViewportRef}
         onPointerCancel={(e) => props.onPointerCancel?.(e as PointerEvent)}
         onPointerDown={(e) => props.onPointerDown?.(e as PointerEvent)}
@@ -56,7 +63,7 @@ export function NodeGraphContainer(props: {
         onPointerUp={(e) => props.onPointerUp?.(e as PointerEvent)}
       >
         <div
-          className="shop-node-world"
+          className={styles["shop-node-world"]}
           ref={props.onWorldRef}
           style={{
             height: `${props.worldStyle.height}px`,

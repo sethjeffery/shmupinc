@@ -13,9 +13,7 @@
       "holdMs": 8,
       "releaseMs": 60,
       "gain": 0.32,
-      "effects": [
-        { "type": "lowpass", "hz": 6000 }
-      ]
+      "effects": [{ "type": "lowpass", "hz": 6000 }]
     },
     {
       "type": "noise",

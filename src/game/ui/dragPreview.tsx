@@ -1,5 +1,7 @@
 import { render } from "preact";
 
+import styles from "../scenes/ShopScene.module.css";
+
 export function getDragPreviewHost(): HTMLDivElement | null {
   const host = document.getElementById("shop-drag-preview-root");
   return host instanceof HTMLDivElement ? host : null;
@@ -19,13 +21,13 @@ export function mountDragPreview(
   let canvasRef: HTMLCanvasElement | null = null;
   render(
     <div
-      className="shop-drag-preview"
+      className={styles["shop-drag-preview"]}
       ref={(el) => {
         previewRef = el;
       }}
     >
       <canvas
-        className="shop-drag-preview-icon"
+        className={styles["shop-drag-preview-icon"]}
         height={36}
         ref={(el) => {
           canvasRef = el;
