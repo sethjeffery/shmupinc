@@ -12,7 +12,7 @@ import type Phaser from "phaser";
 import { circleHitboxOverlap } from "../hitbox";
 import { isExplosiveBullet } from "./BulletVisualFx";
 
-export interface BulletRuntimeContext {
+interface BulletRuntimeContext {
   bulletContext: BulletUpdateContext;
   enemies: Enemy[];
   enemyBullets: ObjectPool<Bullet>;

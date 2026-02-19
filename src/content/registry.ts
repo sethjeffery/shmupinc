@@ -1,4 +1,4 @@
-import type { ContentEntry, ContentError, ContentRegistry } from "./validation";
+import type { ContentEntry, ContentRegistry } from "./validation";
 
 import { CONTENT_KINDS, type ContentKind } from "./schemas";
 import { buildContentRegistry } from "./validation";
@@ -39,7 +39,6 @@ const loadContentEntries = (): ContentEntry[] => {
 };
 
 let cachedRegistry: ContentRegistry | null = null;
-let cachedErrors: ContentError[] = [];
 
 const EMPTY_REGISTRY: ContentRegistry = {
   beatsById: {},
@@ -63,15 +62,11 @@ export const getContentRegistry = (): ContentRegistry => {
   if (import.meta.env.DEV) {
     const result = buildContentRegistry(loadContentEntries());
     cachedRegistry = result.registry;
-    cachedErrors = result.errors;
     return cachedRegistry;
   }
   if (!cachedRegistry) {
     const result = buildContentRegistry(loadContentEntries());
     cachedRegistry = result.registry;
-    cachedErrors = result.errors;
   }
   return cachedRegistry;
 };
-
-export const getContentErrors = (): ContentError[] => cachedErrors;

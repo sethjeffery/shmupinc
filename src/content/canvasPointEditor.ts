@@ -63,7 +63,7 @@ export interface CanvasEditorScene {
   points: CanvasEditorPoint[];
 }
 
-export interface CanvasPointEditorOptions {
+interface CanvasPointEditorOptions {
   background?: string;
   maxZoom?: number;
   minZoom?: number;

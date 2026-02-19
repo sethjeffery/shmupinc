@@ -5,7 +5,7 @@ import type { EmitBullet } from "./FireScriptRunner";
 
 import { DEFAULT_WEAPON_SHOTS } from "../data/weaponTypes";
 
-export interface PlayerChargeCue {
+interface PlayerChargeCue {
   color: number;
   progress: number;
   ready: boolean;

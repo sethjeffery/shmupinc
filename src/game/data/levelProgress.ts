@@ -5,33 +5,6 @@ import { getLevels } from "./levels";
 import { MAX_LEVEL_STARS, evaluateObjectiveRule } from "./objectiveTypes";
 import { applyRewardBundleInSave, loadSave, mutateSave } from "./save";
 
-const levelOrderInfo = (
-  levelId: string,
-): { hasOrder: boolean; order: number } => {
-  const match = /^L(\d+)_/i.exec(levelId);
-  if (!match) return { hasOrder: false, order: Number.MAX_SAFE_INTEGER };
-  const parsed = Number.parseInt(match[1], 10);
-  if (Number.isNaN(parsed)) {
-    return { hasOrder: false, order: Number.MAX_SAFE_INTEGER };
-  }
-  return { hasOrder: true, order: parsed };
-};
-
-const compareLevelIds = (a: string, b: string): number => {
-  const aInfo = levelOrderInfo(a);
-  const bInfo = levelOrderInfo(b);
-  if (aInfo.hasOrder && bInfo.hasOrder && aInfo.order !== bInfo.order) {
-    return aInfo.order - bInfo.order;
-  }
-  if (aInfo.hasOrder !== bInfo.hasOrder) {
-    return aInfo.hasOrder ? -1 : 1;
-  }
-  return a.localeCompare(b);
-};
-
-export const getStoryLevelOrder = (): string[] =>
-  Object.keys(getLevels()).sort(compareLevelIds);
-
 const getSavedStars = (levelId: string, save: SaveData): number =>
   Math.max(0, save.levelStars[levelId] ?? 0);
 
@@ -54,33 +27,7 @@ export const getLevelStars = (
 ): number =>
   Math.min(getConfiguredStarCap(levelId), getSavedStars(levelId, save));
 
-const isLevelUnlockedWithSave = (levelId: string, save: SaveData): boolean => {
-  const order = getStoryLevelOrder();
-  const index = order.indexOf(levelId);
-  if (index < 0) return false;
-  if (index === 0) return true;
-  const previousLevel = order[index - 1];
-  return getSavedStars(previousLevel, save) >= 1;
-};
-
-export const isLevelUnlocked = (
-  levelId: string,
-  save: SaveData = loadSave(),
-): boolean => isLevelUnlockedWithSave(levelId, save);
-
-export const getFirstUnlockedLevelId = (
-  save: SaveData = loadSave(),
-): null | string => {
-  const order = getStoryLevelOrder();
-  for (const levelId of order) {
-    if (isLevelUnlockedWithSave(levelId, save)) {
-      return levelId;
-    }
-  }
-  return order[0] ?? null;
-};
-
-export interface LevelCompletionResult {
+interface LevelCompletionResult {
   completedObjectiveIds: string[];
   newlyClaimedObjectiveIds: string[];
   save: SaveData;

@@ -36,7 +36,9 @@ export default function WeaponPreviewStageView(props: {
         >
           <div className={styles["shop-weapon-size"]}>
             <div className={styles["shop-item-section-label"]}>Size</div>
-            <div className={styles["shop-weapon-size-value"]}>{props.sizeLabel}</div>
+            <div className={styles["shop-weapon-size-value"]}>
+              {props.sizeLabel}
+            </div>
             {!props.fitsCurrentShip ? (
               <div className={styles["shop-weapon-size-warning"]}>
                 Will not fit on your ship
@@ -76,14 +78,14 @@ export default function WeaponPreviewStageView(props: {
           <div className={styles["shop-item-effects"]}>
             <div className={styles["shop-item-section-label"]}>Effects</div>
             <div className={styles["shop-item-effect-list"]}>
-              {props.effects.length > 0
-                ? props.effects.map((effect) => (
-                    <span className={styles["shop-item-effect"]} key={effect}>
-                      {effect}
-                    </span>
-                  ))
-                : (
-                    <span className={styles["shop-item-effect-muted"]}>None</span>
+              {props.effects.length > 0 ? (
+                props.effects.map((effect) => (
+                  <span className={styles["shop-item-effect"]} key={effect}>
+                    {effect}
+                  </span>
+                ))
+              ) : (
+                <span className={styles["shop-item-effect-muted"]}>None</span>
               )}
             </div>
           </div>

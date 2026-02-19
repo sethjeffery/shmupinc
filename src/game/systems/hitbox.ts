@@ -1,6 +1,6 @@
 import type { EnemyHitbox } from "../data/enemyTypes";
 
-export interface CircleHitboxPenetration {
+interface CircleHitboxPenetration {
   contactX: number;
   contactY: number;
   depth: number;
@@ -8,7 +8,7 @@ export interface CircleHitboxPenetration {
   ny: number;
 }
 
-export interface HitboxHitboxPenetration {
+interface HitboxHitboxPenetration {
   contactX: number;
   contactY: number;
   depth: number;
@@ -39,12 +39,7 @@ const getHitboxBoundaryDistance = (
     ? hitbox.radius
     : getEllipseBoundaryDistance(hitbox.radiusX, hitbox.radiusY, nx, ny);
 
-export const hitboxMaxRadius = (hitbox: EnemyHitbox): number =>
-  hitbox.kind === "circle"
-    ? hitbox.radius
-    : Math.max(hitbox.radiusX, hitbox.radiusY);
-
-export const resolveCircleHitboxPenetration = (
+const resolveCircleHitboxPenetration = (
   circleX: number,
   circleY: number,
   circleRadius: number,

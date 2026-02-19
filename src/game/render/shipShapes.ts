@@ -2,7 +2,10 @@ import type { ShipVector } from "../data/shipTypes";
 import type Phaser from "phaser";
 
 import { vectorFromOutlineLines } from "../data/vectorShape";
-import { drawVectorToCanvas, type CanvasVectorStyle } from "./vector/drawCanvas";
+import {
+  drawVectorToCanvas,
+  type CanvasVectorStyle,
+} from "./vector/drawCanvas";
 import {
   drawVectorToGraphics,
   type PhaserVectorStyle,

@@ -7,7 +7,7 @@ import { MODS } from "../../data/mods";
 import { canMountWeapon } from "../../data/weaponMounts";
 import { WEAPONS } from "../../data/weapons";
 
-export type DragEligibilityPayload =
+type DragEligibilityPayload =
   | {
       kind: "mod";
       instanceId: ModInstanceId;

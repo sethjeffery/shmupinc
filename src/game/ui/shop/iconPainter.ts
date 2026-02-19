@@ -10,7 +10,7 @@ import { getVectorBounds } from "../../render/vector/cache";
 
 export type CardIconKind = "gun" | "mod" | "ship";
 
-export interface DrawIconOptions {
+interface DrawIconOptions {
   canvas: HTMLCanvasElement;
   colorHex: string;
   colorValue: number;

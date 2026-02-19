@@ -74,7 +74,7 @@ import {
 
 import styles from "./ShopScene.module.css";
 
-export interface BuildNodeIconOptions {
+interface BuildNodeIconOptions {
   accentColor: number;
   className?: string;
   gunId?: string;
@@ -375,7 +375,9 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private requiresPreviewScene(category: ShopCategory): boolean {
-    return category === "ships" || category === "weapons" || category === "loadout";
+    return (
+      category === "ships" || category === "weapons" || category === "loadout"
+    );
   }
 
   private advanceShipTypewriter(deltaMs: number): void {
@@ -760,7 +762,9 @@ export class ShopScene extends Phaser.Scene {
     const itemByKey = new Map(
       items.map((item) => [`${item.kind}-${item.id}`, item] as const),
     );
-    const renderItemIcon = (item: ShopMarketAreaItem): preact.ComponentChild => {
+    const renderItemIcon = (
+      item: ShopMarketAreaItem,
+    ): preact.ComponentChild => {
       const marketItem = itemByKey.get(`${item.kind}-${item.id}`);
       if (!marketItem) return null;
       return this.buildNodeIcon(
@@ -1290,18 +1294,19 @@ export class ShopScene extends Phaser.Scene {
       assignments.map((entry) => [entry.mountId, entry]),
     );
     const selectedAssignment = drawerSelection
-      ? assignmentById.get(drawerSelection.mountId) ?? null
+      ? (assignmentById.get(drawerSelection.mountId) ?? null)
       : null;
     const selectedMount = drawerSelection
-      ? ship.mounts.find((entry) => entry.id === drawerSelection.mountId) ?? null
+      ? (ship.mounts.find((entry) => entry.id === drawerSelection.mountId) ??
+        null)
       : null;
 
     const canClear = Boolean(
       drawerSelection &&
-        selectedAssignment &&
-        (drawerSelection.kind === "mount"
-          ? selectedAssignment.weaponInstanceId
-          : selectedAssignment.modInstanceIds[drawerSelection.slotIndex]),
+      selectedAssignment &&
+      (drawerSelection.kind === "mount"
+        ? selectedAssignment.weaponInstanceId
+        : selectedAssignment.modInstanceIds[drawerSelection.slotIndex]),
     );
     const shipChoices: ReadyShipChoiceViewModel[] = this.getLoadoutShips().map(
       (choice) => ({
@@ -1365,14 +1370,19 @@ export class ShopScene extends Phaser.Scene {
           return {
             disabled,
             icon: this.buildNodeIcon("mod", {
-              accentColor: mod ? this.getModAccentColor(mod.iconKind) : 0x6a7a90,
+              accentColor: mod
+                ? this.getModAccentColor(mod.iconKind)
+                : 0x6a7a90,
               className: styles["shop-loadout-slot-canvas"],
               modVector: mod?.icon,
               shipShape: ship.vector,
               size: 52,
             }),
             id: `${mount.id}-mod-${slotIndex}`,
-            isActive: this.isSameLoadoutSelection(drawerSelection, modSelection),
+            isActive: this.isSameLoadoutSelection(
+              drawerSelection,
+              modSelection,
+            ),
             isEmpty: !mod,
             kind: "mod",
             label: mod?.name ?? `Mod ${slotIndex + 1}`,

@@ -3,7 +3,7 @@ import Phaser from "phaser";
 export const PLAYFIELD_BASE_WIDTH = 450;
 export const PLAYFIELD_BASE_HEIGHT = 800;
 export const PLAYFIELD_CORNER_RADIUS = 18;
-export const PLAYFIELD_MARGIN = 0;
+const PLAYFIELD_MARGIN = 0;
 
 export const computePlayArea = (
   width: number,

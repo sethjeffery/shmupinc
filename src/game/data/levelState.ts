@@ -1,13 +1,13 @@
 import { getLevels, type LevelDefinition } from "./levels";
 
-export type LevelSessionRoute = "menu" | "progression";
+type LevelSessionRoute = "menu" | "progression";
 
-export interface LevelSessionSource {
+interface LevelSessionSource {
   galaxyId?: string;
   nodeId?: string;
 }
 
-export interface LevelSession {
+interface LevelSession {
   id: string;
   level: LevelDefinition;
   returnRoute: LevelSessionRoute;

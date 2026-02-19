@@ -26,10 +26,7 @@ const ensureSceneLoaded = async (
   }
 };
 
-export const setPlayInputEnabled = (
-  game: Phaser.Game,
-  enabled: boolean,
-): void => {
+const setPlayInputEnabled = (game: Phaser.Game, enabled: boolean): void => {
   if (!sceneExists(game, "PlayScene")) return;
   const input = game.scene.getScene("PlayScene")?.input;
   if (input) input.enabled = enabled;

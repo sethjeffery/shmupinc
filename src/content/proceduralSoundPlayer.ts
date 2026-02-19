@@ -5,7 +5,7 @@ import { getAudioDirector } from "../game/audio/audioDirector";
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export interface SoundPreviewPlayOptions {
+interface SoundPreviewPlayOptions {
   gainScale?: number;
   semitoneOffset?: number;
 }

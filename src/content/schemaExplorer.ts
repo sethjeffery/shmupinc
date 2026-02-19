@@ -2,7 +2,7 @@ import type { JsonSchema } from "./jsonSchema";
 
 import traverse from "json-schema-traverse";
 
-export interface SchemaExplorerEntry {
+interface SchemaExplorerEntry {
   defaultValue?: string;
   description?: string;
   path: string;

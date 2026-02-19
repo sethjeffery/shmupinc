@@ -40,12 +40,19 @@ export default function ShopLoadoutDrawer(props: {
       ) : null}
 
       <aside
-        className={clsx(styles.drawer, props.open ? styles["is-open"] : undefined)}
+        className={clsx(
+          styles.drawer,
+          props.open ? styles["is-open"] : undefined,
+        )}
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.head}>
           <div className={styles.title}>{props.title}</div>
-          <button className={styles.close} onClick={props.onClose} type="button">
+          <button
+            className={styles.close}
+            onClick={props.onClose}
+            type="button"
+          >
             Close
           </button>
         </div>
@@ -55,7 +62,10 @@ export default function ShopLoadoutDrawer(props: {
         ) : (
           <div className={styles.list}>
             <button
-              className={clsx(styles.item, props.canClear ? undefined : styles["is-disabled"])}
+              className={clsx(
+                styles.item,
+                props.canClear ? undefined : styles["is-disabled"],
+              )}
               disabled={!props.canClear}
               onClick={props.onClear}
               type="button"

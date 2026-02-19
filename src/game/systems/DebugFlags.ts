@@ -1,4 +1,4 @@
-export interface DebugFlags {
+interface DebugFlags {
   showHazardBounds: boolean;
   showSpawnPoints: boolean;
 }

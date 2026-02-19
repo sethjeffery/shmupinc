@@ -1,4 +1,4 @@
-export interface Poolable {
+interface Poolable {
   active: boolean;
   deactivate: () => void;
 }

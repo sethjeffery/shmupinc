@@ -16,7 +16,7 @@ interface GunAttachment {
   sizeMultiplier: number;
 }
 
-export interface ShipConfig {
+interface ShipConfig {
   radius: number;
   hitbox: ShipHitbox;
   maxHp: number;

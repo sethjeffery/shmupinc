@@ -5,4 +5,4 @@ import { getContentRegistry } from "../../content/registry";
 export const GUNS: Record<string, GunDefinition> =
   getContentRegistry().gunsById;
 
-export type { GunDefinition, GunId } from "./gunTypes";
+export type { GunDefinition } from "./gunTypes";

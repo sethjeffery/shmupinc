@@ -41,14 +41,14 @@ export interface GalaxyView {
   nodes: GalaxyNodeView[];
 }
 
-export interface GalaxyNodeLaunch {
+interface GalaxyNodeLaunch {
   galaxyId: string;
   levelId: string;
   mode: "campaign" | "replay";
   nodeId: string;
 }
 
-export interface GalaxyAdvanceResult {
+interface GalaxyAdvanceResult {
   advanced: boolean;
   currentLevelId: null | string;
   galaxyId: null | string;

@@ -50,7 +50,9 @@ export default function ReadyAreaView(props: {
 }) {
   return (
     <div className={styles["ready-area"]}>
-      <ShopTopCarousel carouselClassName={sceneStyles["shop-loadout-ship-strip"]}>
+      <ShopTopCarousel
+        carouselClassName={sceneStyles["shop-loadout-ship-strip"]}
+      >
         {props.shipChoices.map((choice) => (
           <ShopVectorIconButton
             className={clsx(
@@ -93,11 +95,18 @@ export default function ReadyAreaView(props: {
         </button>
 
         <section className={sceneStyles["shop-loadout-config"]}>
-          <h2 className={sceneStyles["shop-loadout-config-title"]}>{props.shipName}</h2>
+          <h2 className={sceneStyles["shop-loadout-config-title"]}>
+            {props.shipName}
+          </h2>
           <div className={sceneStyles["shop-loadout-mount-list"]}>
             {props.mountRows.map((mount) => (
-              <div className={sceneStyles["shop-loadout-mount-row"]} key={mount.id}>
-                <div className={sceneStyles["shop-loadout-mount-name"]}>{mount.label}</div>
+              <div
+                className={sceneStyles["shop-loadout-mount-row"]}
+                key={mount.id}
+              >
+                <div className={sceneStyles["shop-loadout-mount-name"]}>
+                  {mount.label}
+                </div>
                 <div className={sceneStyles["shop-loadout-slot-row"]}>
                   <ShopVectorIconButton
                     className={clsx(
@@ -106,7 +115,9 @@ export default function ReadyAreaView(props: {
                       mount.weaponSlot.isActive
                         ? sceneStyles["is-active"]
                         : undefined,
-                      mount.weaponSlot.isEmpty ? sceneStyles["is-empty"] : undefined,
+                      mount.weaponSlot.isEmpty
+                        ? sceneStyles["is-empty"]
+                        : undefined,
                     )}
                     icon={mount.weaponSlot.icon}
                     iconClassName={sceneStyles["shop-loadout-slot-icon"]}
@@ -129,7 +140,9 @@ export default function ReadyAreaView(props: {
                         sceneStyles["is-mod"],
                         modSlot.isActive ? sceneStyles["is-active"] : undefined,
                         modSlot.isEmpty ? sceneStyles["is-empty"] : undefined,
-                        modSlot.disabled ? sceneStyles["is-disabled"] : undefined,
+                        modSlot.disabled
+                          ? sceneStyles["is-disabled"]
+                          : undefined,
                       )}
                       disabled={modSlot.disabled}
                       icon={modSlot.icon}
@@ -149,7 +162,9 @@ export default function ReadyAreaView(props: {
         {props.drawer}
 
         {props.legacyContent ? (
-          <div className={sceneStyles["shop-loadout-legacy"]}>{props.legacyContent}</div>
+          <div className={sceneStyles["shop-loadout-legacy"]}>
+            {props.legacyContent}
+          </div>
         ) : null}
       </div>
     </div>

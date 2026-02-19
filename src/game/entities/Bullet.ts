@@ -5,7 +5,7 @@ import Phaser from "phaser";
 
 export type BulletOwner = "enemy" | "player";
 
-export interface BulletConfig {
+interface BulletConfig {
   owner: BulletOwner;
 }
 

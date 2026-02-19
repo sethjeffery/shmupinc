@@ -5,7 +5,7 @@ import type { ShipId } from "../shipTypes";
 import type { WaveDefinition } from "../waves";
 import type { WeaponId } from "../weaponTypes";
 
-export type PressureKind = "enemy" | "focus" | "space" | "throughput" | "time";
+type PressureKind = "enemy" | "focus" | "space" | "throughput" | "time";
 
 export interface PressureProfile {
   primary: PressureKind;

@@ -34,7 +34,7 @@ export type UiRoute =
   | "progression"
   | "story";
 
-export interface GameOverStats {
+interface GameOverStats {
   gold: number;
   wave: number;
 }

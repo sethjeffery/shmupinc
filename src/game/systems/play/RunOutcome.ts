@@ -4,7 +4,7 @@ import type { PickupGold } from "../../entities/PickupGold";
 import type { ObjectPool } from "../../util/pool";
 import type Phaser from "phaser";
 
-export interface GameOverEventPayload {
+interface GameOverEventPayload {
   gold: number;
   wave: number;
 }

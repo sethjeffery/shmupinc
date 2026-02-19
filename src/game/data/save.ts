@@ -17,7 +17,7 @@ import { STARTER_WEAPON_ID, WEAPONS } from "./weapons";
 const STORAGE_KEY = "shmupinc-save-v4";
 const GOLD_RESOURCE_ID: ResourceId = "gold";
 
-export const BASE_HP = 6;
+const BASE_HP = 6;
 
 export interface WeaponInstance {
   id: WeaponInstanceId;
@@ -424,7 +424,7 @@ export function loadSave(): SaveData {
   return { ...cached };
 }
 
-export function persistSave(data: SaveData): void {
+function persistSave(data: SaveData): void {
   cached = { ...data };
   const storage = getStorage();
   if (!storage) return;
@@ -481,7 +481,7 @@ export const spendResourceInSave = (
   return true;
 };
 
-export const hasUnlock = (save: SaveData, unlockId: UnlockId): boolean =>
+const hasUnlock = (save: SaveData, unlockId: UnlockId): boolean =>
   save.unlocks.includes(unlockId);
 
 export const hasRequiredUnlocks = (
@@ -492,15 +492,7 @@ export const hasRequiredUnlocks = (
   return required.every((unlockId) => hasUnlock(save, unlockId));
 };
 
-export const getMissingUnlocks = (
-  save: SaveData,
-  required: undefined | UnlockId[],
-): UnlockId[] => {
-  if (!required || required.length === 0) return [];
-  return required.filter((unlockId) => !hasUnlock(save, unlockId));
-};
-
-export const grantUnlockInSave = (save: SaveData, unlockId: UnlockId): void => {
+const grantUnlockInSave = (save: SaveData, unlockId: UnlockId): void => {
   if (!unlockId) return;
   if (save.unlocks.includes(unlockId)) return;
   save.unlocks = [...save.unlocks, unlockId];

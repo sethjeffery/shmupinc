@@ -1,7 +1,6 @@
 import type { EnemyVector } from "../data/enemyTypes";
 import type Phaser from "phaser";
 
-import { drawVectorToCanvas } from "./vector/drawCanvas";
 import { drawVectorToGraphics } from "./vector/drawPhaser";
 
 export const DEFAULT_ENEMY_VECTOR: EnemyVector = {
@@ -22,18 +21,6 @@ export const drawEnemyToGraphics = (
   radius: number,
 ): void => {
   drawVectorToGraphics(graphics, vector, {
-    scale: radius,
-    x: 0,
-    y: 0,
-  });
-};
-
-export const drawEnemyToCanvas = (
-  ctx: CanvasRenderingContext2D,
-  vector: EnemyVector,
-  radius: number,
-): void => {
-  drawVectorToCanvas(ctx, vector, {
     scale: radius,
     x: 0,
     y: 0,

@@ -36,7 +36,7 @@ export function NodeLink(props: {
   );
 }
 
-export function NodeGraphContainer(props: {
+function NodeGraphContainer(props: {
   worldStyle: { height: number; width: number };
   onMountVisualRef: (el: HTMLDivElement | null) => void;
   onViewportRef: (el: HTMLDivElement | null) => void;

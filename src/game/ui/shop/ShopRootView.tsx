@@ -7,7 +7,7 @@ import ShopOverlayView from "../ShopOverlayView";
 
 import styles from "./ShopRootView.module.css";
 
-export interface ShopRootSignals {
+interface ShopRootSignals {
   category: Signal<ShopCategory>;
   content: Signal<ComponentChild>;
   gold: Signal<string>;

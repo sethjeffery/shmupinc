@@ -1,14 +1,14 @@
 import type { Ship } from "../entities/Ship";
 import type { ParticleSystem } from "./Particles";
 
-export interface CollisionBounds {
+interface CollisionBounds {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
-export interface BumpFxConfig {
+interface BumpFxConfig {
   burstCount: number;
   color: number;
   cooldownMs: number;
@@ -17,7 +17,7 @@ export interface BumpFxConfig {
   ringThickness: number;
 }
 
-export interface DamageFxConfig {
+interface DamageFxConfig {
   angleMax: number;
   angleMin: number;
   colors: number[];
@@ -34,7 +34,7 @@ export interface DamageFxConfig {
   thicknessMin: number;
 }
 
-export interface PlayerCollisionConfig {
+interface PlayerCollisionConfig {
   bumpFx: BumpFxConfig;
   damageFx: DamageFxConfig;
   damageMultiplier: number;
@@ -42,7 +42,7 @@ export interface PlayerCollisionConfig {
   padding: number;
 }
 
-export interface PlayerCollisionContext {
+interface PlayerCollisionContext {
   canDamage: () => boolean;
   getBounds: () => CollisionBounds;
   onDeath: () => void;
@@ -50,7 +50,7 @@ export interface PlayerCollisionContext {
   ship: Ship;
 }
 
-export interface ApplyPushOptions {
+interface ApplyPushOptions {
   allowBottomEject?: boolean;
 }
 

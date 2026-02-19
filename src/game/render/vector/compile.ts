@@ -15,7 +15,7 @@ export interface VectorBounds {
   minY: number;
 }
 
-export interface CompiledPathCommandCubic {
+interface CompiledPathCommandCubic {
   c1x: number;
   c1y: number;
   c2x: number;
@@ -25,19 +25,19 @@ export interface CompiledPathCommandCubic {
   y: number;
 }
 
-export interface CompiledPathCommandLine {
+interface CompiledPathCommandLine {
   k: "L";
   x: number;
   y: number;
 }
 
-export interface CompiledPathCommandMove {
+interface CompiledPathCommandMove {
   k: "M";
   x: number;
   y: number;
 }
 
-export interface CompiledPathCommandQuadratic {
+interface CompiledPathCommandQuadratic {
   cx: number;
   cy: number;
   k: "Q";
@@ -45,7 +45,7 @@ export interface CompiledPathCommandQuadratic {
   y: number;
 }
 
-export interface CompiledPathCommandClose {
+interface CompiledPathCommandClose {
   k: "Z";
 }
 

@@ -23,7 +23,9 @@ export default function ShopInfoPanel(props: {
         <div className={clsx(styles.title, props.titleClassName)}>
           {props.title}
         </div>
-        {props.actions ? <div className={styles.actions}>{props.actions}</div> : null}
+        {props.actions ? (
+          <div className={styles.actions}>{props.actions}</div>
+        ) : null}
       </div>
 
       <div className={clsx(styles.stream, props.streamClassName)}>

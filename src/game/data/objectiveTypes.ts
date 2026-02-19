@@ -50,30 +50,6 @@ export interface LevelRunStats {
   maxHp: number;
 }
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, value));
-
-const mergeRewards = (
-  target: RewardBundle,
-  incoming: RewardBundle | undefined,
-): void => {
-  if (!incoming) return;
-  if (incoming.resources) {
-    const resources = target.resources ?? {};
-    for (const [resourceId, amount] of Object.entries(incoming.resources)) {
-      resources[resourceId] = (resources[resourceId] ?? 0) + amount;
-    }
-    target.resources = resources;
-  }
-  if (incoming.unlocks?.length) {
-    const unlocks = new Set(target.unlocks ?? []);
-    for (const unlockId of incoming.unlocks) {
-      unlocks.add(unlockId);
-    }
-    target.unlocks = [...unlocks];
-  }
-};
-
 export const evaluateObjectiveRule = (
   rule: ObjectiveRule,
   run: LevelRunStats,
@@ -96,29 +72,4 @@ export const evaluateObjectiveRule = (
     default:
       return false;
   }
-};
-
-export const evaluateObjectiveSet = (
-  objectiveSet: ObjectiveSetDefinition,
-  run: LevelRunStats,
-): {
-  completedObjectiveIds: string[];
-  rewards: RewardBundle;
-  stars: number;
-} => {
-  const completedObjectiveIds: string[] = [];
-  const rewards: RewardBundle = {};
-  let stars = 0;
-  for (const objective of objectiveSet.objectives) {
-    const completed = evaluateObjectiveRule(objective, run);
-    if (!completed) continue;
-    completedObjectiveIds.push(objective.id);
-    stars += objective.stars;
-    mergeRewards(rewards, objective.reward);
-  }
-  return {
-    completedObjectiveIds,
-    rewards,
-    stars: clamp(Math.round(stars), 0, MAX_LEVEL_STARS),
-  };
 };

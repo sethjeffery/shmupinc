@@ -1,10 +1,10 @@
-export interface JsonParseError {
+interface JsonParseError {
   column: number;
   line: number;
   message: string;
 }
 
-export interface JsonParseResult {
+interface JsonParseResult {
   data?: unknown;
   error?: JsonParseError;
 }

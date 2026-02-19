@@ -8,7 +8,7 @@ export type ShipId = string;
 export type ShipVector = VectorShape;
 export type ShipHitbox = EnemyHitbox;
 
-export const BASE_SHIP_RADIUS = 17;
+const BASE_SHIP_RADIUS = 17;
 
 export interface WeaponMount {
   id: string;

@@ -76,7 +76,7 @@ export interface ContentRegistry {
   weaponsById: Record<string, WeaponDefinition>;
 }
 
-export interface ContentBuildResult {
+interface ContentBuildResult {
   errors: ContentError[];
   registry: ContentRegistry;
 }

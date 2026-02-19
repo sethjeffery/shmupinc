@@ -7,14 +7,14 @@ import { parseJsonWithLocation } from "../../src/content/parseJson";
 import { CONTENT_KINDS, type ContentKind } from "../../src/content/schemas";
 import type { ContentEntry, ContentError } from "../../src/content/validation";
 
-export interface ContentTreeNode {
+interface ContentTreeNode {
   children?: ContentTreeNode[];
   name: string;
   path: string;
   type: "dir" | "file";
 }
 
-export interface LoadContentResult {
+interface LoadContentResult {
   entries: ContentEntry[];
   errors: ContentError[];
 }

@@ -8,7 +8,7 @@ import { SHOP_TABS, type ShopCategory } from "./shop/shopTabs";
 
 import styles from "./ShopOverlayView.module.css";
 
-export interface ShopOverlaySignals {
+interface ShopOverlaySignals {
   category: Signal<ShopCategory>;
   content: Signal<ComponentChild>;
   gold: Signal<string>;
@@ -52,7 +52,7 @@ const ShopTabIcon = (props: { icon: "mod" | "mount" | "ship" | "weapon" }) => {
   );
 };
 
-export const ShopOverlayView = (props: {
+const ShopOverlayView = (props: {
   onQuit: () => void;
   onTabSelect: (category: ShopCategory) => void;
   signals: ShopOverlaySignals;

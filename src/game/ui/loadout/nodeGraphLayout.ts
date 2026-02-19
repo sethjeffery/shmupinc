@@ -6,7 +6,7 @@ export interface NodeGraphPoint {
   y: number;
 }
 
-export interface NodeGraphLayout {
+interface NodeGraphLayout {
   mountPoints: Map<string, NodeGraphPoint>;
   modPoints: Map<string, NodeGraphPoint[]>;
   shipPoint: NodeGraphPoint;
@@ -14,7 +14,7 @@ export interface NodeGraphLayout {
   worldWidth: number;
 }
 
-export const MAX_RENDERED_WEAPON_MOUNTS = 3;
+const MAX_RENDERED_WEAPON_MOUNTS = 3;
 export const MAX_RENDERED_MOD_SLOTS = 2;
 
 const getAngleVector = (angleDegrees: number): NodeGraphPoint => {

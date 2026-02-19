@@ -7,7 +7,7 @@ import type Phaser from "phaser";
 import { ENEMIES, resolveEnemyDefinition } from "../../data/enemies";
 import { Enemy } from "../../entities/Enemy";
 
-export interface EnemyPush {
+interface EnemyPush {
   contactX: number;
   contactY: number;
   nx: number;
@@ -16,7 +16,7 @@ export interface EnemyPush {
   y: number;
 }
 
-export interface SpawnEnemyRuntimeContext {
+interface SpawnEnemyRuntimeContext {
   enemies: Enemy[];
   enemyPool: Enemy[];
   hpMultiplier: number;
@@ -51,7 +51,7 @@ export const spawnEnemyRuntime = (
   context.enemies.push(enemy);
 };
 
-export interface UpdateEnemiesRuntimeContext {
+interface UpdateEnemiesRuntimeContext {
   bounds: Phaser.Geom.Rectangle;
   contactDamagePerSec: number;
   deltaMs: number;

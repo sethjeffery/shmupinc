@@ -1,6 +1,6 @@
 import type { ShopRules } from "./levels";
 
-export interface PricedItem {
+interface PricedItem {
   id: string;
   cost: number;
 }

@@ -1,6 +1,6 @@
 import type { Spawn, WaveDefinition } from "../data/waves";
 
-export interface WaveSchedulerConfig {
+interface WaveSchedulerConfig {
   getEnemyCount: () => number;
   getWaveDefinition: (index: number) => null | WaveDefinition;
   maxWaves?: number;

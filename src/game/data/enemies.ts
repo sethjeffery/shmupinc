@@ -26,4 +26,4 @@ export const resolveEnemyDefinition = (
   };
 };
 
-export type { BossPhase, EnemyDef, EnemyId } from "./enemyTypes";
+export type { EnemyDef } from "./enemyTypes";

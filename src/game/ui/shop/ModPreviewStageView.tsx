@@ -28,15 +28,17 @@ export default function ModPreviewStageView(props: {
           <div className={styles["shop-item-effects"]}>
             <div className={styles["shop-item-section-label"]}>Effects</div>
             <div className={styles["shop-item-effect-list"]}>
-              {props.effects.length > 0
-                ? props.effects.map((effect) => (
-                    <span className={styles["shop-item-effect"]} key={effect}>
-                      {effect}
-                    </span>
-                  ))
-                : (
-                    <span className={styles["shop-item-effect-muted"]}>Passive</span>
-                  )}
+              {props.effects.length > 0 ? (
+                props.effects.map((effect) => (
+                  <span className={styles["shop-item-effect"]} key={effect}>
+                    {effect}
+                  </span>
+                ))
+              ) : (
+                <span className={styles["shop-item-effect-muted"]}>
+                  Passive
+                </span>
+              )}
             </div>
           </div>
         </ShopInfoPanel>

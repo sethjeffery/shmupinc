@@ -66,12 +66,12 @@ export interface VectorShape {
   v: 2;
 }
 
-export interface VectorPoint {
+interface VectorPoint {
   x: number;
   y: number;
 }
 
-export interface VectorLine {
+interface VectorLine {
   from: VectorPoint;
   to: VectorPoint;
 }

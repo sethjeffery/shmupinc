@@ -7,7 +7,6 @@ import type { WeaponId } from "../../data/weapons";
 
 import { MODS } from "../../data/mods";
 import {
-  addResourceInSave,
   autoAttachWeaponsForShipInSave,
   createModInstanceInSave,
   createWeaponInstanceInSave,
@@ -19,14 +18,13 @@ import { canMountWeapon } from "../../data/weaponMounts";
 import { WEAPONS } from "../../data/weapons";
 
 const PRIMARY_RESOURCE_ID = "gold";
-const SELL_RATIO = 0.5;
 
-export interface ModMountPayload {
+interface ModMountPayload {
   instanceId: ModInstanceId;
   sourceMountId?: string;
 }
 
-export interface WeaponMountPayload {
+interface WeaponMountPayload {
   instanceId: WeaponInstanceId;
   sourceMountId?: string;
 }
@@ -120,55 +118,6 @@ export const purchaseModInSave = (save: SaveData, modId: ModId): void => {
   if (!spendResourceInSave(save, resourceId, mod.cost)) return;
 
   createModInstanceInSave(save, modId);
-};
-
-export const sellWeaponInstanceInSave = (
-  save: SaveData,
-  instanceId: WeaponInstanceId,
-): void => {
-  const index = save.ownedWeapons.findIndex((item) => item.id === instanceId);
-  if (index < 0) return;
-
-  const weaponId = save.ownedWeapons[index].weaponId;
-  const weapon = WEAPONS[weaponId];
-  if (!weapon) return;
-
-  for (const assignments of Object.values(save.mountedWeapons)) {
-    for (const entry of assignments) {
-      if (entry.weaponInstanceId === instanceId) {
-        entry.weaponInstanceId = null;
-        entry.modInstanceIds = [];
-      }
-    }
-  }
-
-  save.ownedWeapons.splice(index, 1);
-  const payout = Math.max(0, Math.round(weapon.cost * SELL_RATIO));
-  addResourceInSave(save, weapon.costResource ?? PRIMARY_RESOURCE_ID, payout);
-};
-
-export const sellModInstanceInSave = (
-  save: SaveData,
-  instanceId: ModInstanceId,
-): void => {
-  const index = save.ownedMods.findIndex((item) => item.id === instanceId);
-  if (index < 0) return;
-
-  const modId = save.ownedMods[index].modId;
-  const mod = MODS[modId];
-  if (!mod) return;
-
-  for (const assignments of Object.values(save.mountedWeapons)) {
-    for (const entry of assignments) {
-      entry.modInstanceIds = entry.modInstanceIds.filter(
-        (mountedModId) => mountedModId !== instanceId,
-      );
-    }
-  }
-
-  save.ownedMods.splice(index, 1);
-  const payout = Math.max(0, Math.round(mod.cost * SELL_RATIO));
-  addResourceInSave(save, mod.costResource ?? PRIMARY_RESOURCE_ID, payout);
 };
 
 export const detachWeaponFromMountInSave = (

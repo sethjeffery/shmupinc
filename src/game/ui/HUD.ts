@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-export interface HudStatus {
+interface HudStatus {
   hp: number;
   maxHp: number;
   gold: number;

@@ -7,13 +7,13 @@ export type ModIconKind = "aoe" | "bounce" | "homing" | "multi" | "power";
 
 export type ModIconVector = VectorShape;
 
-export interface ModMultiEffect {
-  count: 3;
+interface ModMultiEffect {
+  count: number;
   spreadDeg: number;
   projectileDamageMultiplier: number;
 }
 
-export interface ModAoeEffect {
+interface ModAoeEffect {
   radiusMultiplier?: number;
   radiusAdd?: number;
   damageMultiplier?: number;

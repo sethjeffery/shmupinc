@@ -4,7 +4,7 @@ import type Phaser from "phaser";
 
 import { circleOverlap } from "../Collision";
 
-export interface UpdatePickupsRuntimeContext {
+interface UpdatePickupsRuntimeContext {
   delta: number;
   goldPickups: ObjectPool<PickupGold>;
   magnetRadius: number;

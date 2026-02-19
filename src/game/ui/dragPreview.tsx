@@ -2,7 +2,7 @@ import { render } from "preact";
 
 import styles from "../scenes/ShopScene.module.css";
 
-export function getDragPreviewHost(): HTMLDivElement | null {
+function getDragPreviewHost(): HTMLDivElement | null {
   const host = document.getElementById("shop-drag-preview-root");
   return host instanceof HTMLDivElement ? host : null;
 }
