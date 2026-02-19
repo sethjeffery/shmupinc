@@ -1,12 +1,15 @@
-export type ShopCategory = "armory" | "loadout" | "ships";
+export type ShopCategory = "loadout" | "mods" | "ships" | "weapons";
 
-export type ShopTabAction = "show-armory" | "show-loadout" | "show-ships";
+export type ShopTabAction =
+  | "show-mods"
+  | "show-ships"
+  | "show-weapons";
 
 interface ShopTabDef {
   action: ShopTabAction;
   category: ShopCategory;
   description: string;
-  icon: "mount" | "ship" | "weapon";
+  icon: "mod" | "mount" | "ship" | "weapon";
   label: string;
   title: string;
 }
@@ -21,32 +24,32 @@ export const SHOP_TABS: readonly ShopTabDef[] = [
     title: "Ship",
   },
   {
-    action: "show-armory",
-    category: "armory",
-    description: "Browse weapons and mods.",
+    action: "show-weapons",
+    category: "weapons",
+    description: "Browse and test weapons.",
     icon: "weapon",
     label: "Weapons",
     title: "Weapons",
   },
   {
-    action: "show-loadout",
-    category: "loadout",
-    description: "Adjust mounted gear.",
-    icon: "mount",
-    label: "Loadout",
-    title: "Loadout",
+    action: "show-mods",
+    category: "mods",
+    description: "Browse and apply mods.",
+    icon: "mod",
+    label: "Mods",
+    title: "Mods",
   },
 ] as const;
 
 export const SHOP_CATEGORY_BY_ACTION: Readonly<
   Record<ShopTabAction, ShopCategory>
 > = {
-  "show-armory": "armory",
-  "show-loadout": "loadout",
+  "show-mods": "mods",
   "show-ships": "ships",
+  "show-weapons": "weapons",
 };
 
-export const DEFAULT_SHOP_CATEGORY: ShopCategory = "ships";
+export const DEFAULT_SHOP_CATEGORY: ShopCategory = "loadout";
 
 export const getShopTabByCategory = (
   category: ShopCategory,

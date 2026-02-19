@@ -1171,7 +1171,9 @@ const modSchema = z.object({
       multi: z
         .object({
           count: z
-            .literal(3)
+            .number()
+            .gte(2)
+            .lte(4)
             .describe("Number of shots to emit per base shot."),
           projectileDamageMultiplier: z
             .number()

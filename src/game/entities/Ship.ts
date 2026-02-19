@@ -37,6 +37,7 @@ export class Ship {
   hitbox: ShipHitbox;
   private flashTimer = 0;
   private gunAttachments: GunAttachment[] = [];
+  private shipStrokeWidth = 1;
 
   constructor(scene: Phaser.Scene, config: ShipConfig) {
     this.scene = scene;
@@ -125,6 +126,11 @@ export class Ship {
     this.redraw(this.flashTimer);
   }
 
+  setStrokeWidth(width: number): void {
+    this.shipStrokeWidth = Math.max(0.4, width);
+    this.redraw(this.flashTimer);
+  }
+
   flash(duration = 0.25): void {
     this.flashTimer = Math.max(this.flashTimer, duration);
     this.redraw(this.flashTimer);
@@ -139,7 +145,9 @@ export class Ship {
   private redraw(flashStrength: number): void {
     this.graphics.clear();
     this.drawGuns();
-    drawShipToGraphics(this.graphics, this.vector, this.radius);
+    drawShipToGraphics(this.graphics, this.vector, this.radius, {
+      lineWidth: this.shipStrokeWidth,
+    });
     if (flashStrength > 0.03) {
       const intensity = Phaser.Math.Clamp(flashStrength, 0, 1);
       this.graphics.lineStyle(

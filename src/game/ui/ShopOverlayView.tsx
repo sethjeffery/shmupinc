@@ -27,7 +27,7 @@ const tabClass = (
     .filter(Boolean)
     .join(" ");
 
-const ShopTabIcon = (props: { icon: "mount" | "ship" | "weapon" }) => {
+const ShopTabIcon = (props: { icon: "mod" | "mount" | "ship" | "weapon" }) => {
   if (props.icon === "ship") {
     return (
       <span
@@ -53,7 +53,6 @@ const ShopTabIcon = (props: { icon: "mount" | "ship" | "weapon" }) => {
 };
 
 export const ShopOverlayView = (props: {
-  onDeploy: () => void;
   onQuit: () => void;
   onTabSelect: (category: ShopCategory) => void;
   signals: ShopOverlaySignals;
@@ -70,11 +69,14 @@ export const ShopOverlayView = (props: {
       <div className={styles["shop-shell"]}>
         <aside className={styles["shop-nav"]}>
           <button
-            className={styles["shop-nav-start"]}
-            onClick={() => props.onDeploy()}
+            className={clsx(
+              styles["shop-nav-start"],
+              category === "loadout" ? styles["is-active"] : undefined,
+            )}
+            onClick={() => props.onTabSelect("loadout")}
             type="button"
           >
-            Start
+            Ready
           </button>
           <div className={styles["shop-nav-tabs"]}>
             {SHOP_TABS.map((tab) => (

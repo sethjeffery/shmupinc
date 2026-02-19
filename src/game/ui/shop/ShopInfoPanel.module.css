@@ -1,0 +1,68 @@
+.panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  align-content: start;
+  gap: 14px;
+  min-height: 0;
+}
+
+.header {
+  display: grid;
+  gap: 9px;
+}
+
+.title {
+  margin: 0;
+  font-family: "Orbitron", sans-serif;
+  font-size: clamp(20px, 2.4vw, 30px);
+  line-height: 1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #ecf9ff;
+  text-shadow: 0 0 16px rgba(125, 249, 255, 0.2);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.stream {
+  display: block;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.description {
+  margin: 0;
+  color: rgba(214, 232, 252, 0.95);
+  font-family: "Share Tech Mono", "Orbitron", monospace;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  white-space: pre-wrap;
+  display: inline;
+}
+
+.cursor {
+  margin-top: 0;
+  margin-left: 2px;
+  color: #ffd682;
+  font-size: 13px;
+  line-height: 1.2;
+  vertical-align: baseline;
+  animation: cursorBlink 0.68s steps(1, end) infinite;
+  text-shadow: 0 0 8px rgba(255, 209, 102, 0.45);
+}
+
+@keyframes cursorBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}

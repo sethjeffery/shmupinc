@@ -33,27 +33,40 @@
 }
 
 .shop-nav-start {
-  border: 1px solid rgba(125, 249, 255, 0.72);
-  border-radius: 14px;
-  min-height: 64px;
+  border: 1px solid rgba(125, 249, 255, 0.2);
+  border-radius: 12px;
+  min-height: 92px;
   background: linear-gradient(
-    135deg,
-    rgba(125, 249, 255, 0.92),
-    rgba(58, 196, 212, 0.9)
+    165deg,
+    rgba(17, 24, 38, 0.92),
+    rgba(11, 16, 28, 0.96)
   );
-  color: #031018;
+  color: rgba(209, 225, 246, 0.9);
+  display: grid;
+  justify-items: center;
+  align-content: center;
   font-family: "Orbitron", sans-serif;
-  font-size: 15px;
-  letter-spacing: 0.2em;
+  font-size: 11px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow:
-    0 0 20px rgba(125, 249, 255, 0.46),
-    0 0 34px rgba(125, 249, 255, 0.24);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .shop-nav-start:hover {
-  filter: brightness(1.05);
+  transform: translateY(-1px);
+  border-color: rgba(125, 249, 255, 0.4);
+}
+
+.shop-nav-start.is-active {
+  border-color: rgba(125, 249, 255, 0.75);
+  box-shadow:
+    0 0 16px rgba(125, 249, 255, 0.26),
+    inset 0 0 14px rgba(125, 249, 255, 0.16);
+  color: #eff9ff;
 }
 
 .shop-nav-tabs {
@@ -144,6 +157,28 @@
   border-radius: 999px;
 }
 
+.shop-nav-tab-icon--mod::before,
+.shop-nav-tab-icon--mod::after {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.shop-nav-tab-icon--mod::before {
+  transform: rotate(45deg);
+  opacity: 0.9;
+}
+
+.shop-nav-tab-icon--mod::after {
+  width: 4px;
+  height: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: currentColor;
+}
+
 .shop-nav-tab-icon--ship::before,
 .shop-nav-tab-icon--ship::after {
   display: none;
@@ -194,7 +229,7 @@
 .shop-main-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   gap: 12px;
   padding: 8px 0;
 }
@@ -342,6 +377,10 @@
     min-height: auto;
   }
 
+  .shop-title {
+    font-size: 16px;
+  }
+
   .shop-main-header {
     padding-top: 0;
   }
@@ -359,7 +398,7 @@
 
   .shop-nav-start {
     width: 100%;
-    min-height: 60px;
+    min-height: 82px;
   }
 
   .shop-nav-tabs {

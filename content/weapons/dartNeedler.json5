@@ -1,6 +1,6 @@
 {
   "id": "dartNeedler",
-  "name": "Dart Needler",
+  "name": "Dart Gun",
   "description": "Fast precision darts with steady cadence.",
   "cost": 170,
   "gunId": "dart",

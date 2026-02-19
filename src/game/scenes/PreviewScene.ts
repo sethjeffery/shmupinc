@@ -19,6 +19,20 @@ import {
 import { PlayerFiring } from "../systems/PlayerFiring";
 import { ObjectPool } from "../util/pool";
 
+interface PreviewPresentation {
+  fireEnabled: boolean;
+  shipScale: number;
+  shipX: number;
+  shipY: number;
+}
+
+const DEFAULT_PRESENTATION: PreviewPresentation = {
+  fireEnabled: true,
+  shipScale: 1,
+  shipX: 0.5,
+  shipY: 0.72,
+};
+
 export class PreviewScene extends Phaser.Scene {
   private ship!: Ship;
   private baseRadius = 17;
@@ -41,6 +55,8 @@ export class PreviewScene extends Phaser.Scene {
     mountedWeapons: MountedWeapon[];
     ship: ShipDefinition;
   };
+  private presentation: PreviewPresentation = { ...DEFAULT_PRESENTATION };
+  private pendingPresentation?: PreviewPresentation;
 
   private emitMissileTrail = (
     x: number,
@@ -88,6 +104,10 @@ export class PreviewScene extends Phaser.Scene {
       24,
     );
     this.ready = true;
+    if (this.pendingPresentation) {
+      this.applyPresentation(this.pendingPresentation);
+      this.pendingPresentation = undefined;
+    }
     if (this.pendingLoadout) {
       this.setLoadout(
         this.pendingLoadout.mountedWeapons,
@@ -106,9 +126,21 @@ export class PreviewScene extends Phaser.Scene {
     const delta = deltaMs / 1000;
     this.parallax.update(delta);
     this.particles.update(delta);
-    this.ship.setPosition(this.scale.width * 0.5, this.scale.height * 0.72);
+    this.ship.setPosition(
+      this.scale.width * this.presentation.shipX,
+      this.scale.height * this.presentation.shipY,
+    );
     this.updateFiring(delta);
     this.updateBullets(delta);
+  }
+
+  setPresentation(presentation: Partial<PreviewPresentation>): void {
+    const next = this.mergePresentation(this.presentation, presentation);
+    if (!this.ready) {
+      this.pendingPresentation = next;
+      return;
+    }
+    this.applyPresentation(next);
   }
 
   setLoadout(mountedWeapons: MountedWeapon[], ship: ShipDefinition): void {
@@ -119,8 +151,9 @@ export class PreviewScene extends Phaser.Scene {
     this.mountedWeapons = mountedWeapons;
     this.currentShip = ship;
     this.ship.setAppearance(ship.vector);
-    this.ship.setRadius(resolveShipRadius(ship, this.baseRadius));
-    this.ship.setHitbox(resolveShipHitbox(ship, this.baseRadius));
+    const scaledBaseRadius = this.getScaledBaseRadius();
+    this.ship.setRadius(resolveShipRadius(ship, scaledBaseRadius));
+    this.ship.setHitbox(resolveShipHitbox(ship, scaledBaseRadius));
     this.ship.setMountedWeapons(this.mountedWeapons);
     this.playerFiring.reset();
     this.bullets.forEachActive((bullet) => bullet.deactivate());
@@ -135,17 +168,26 @@ export class PreviewScene extends Phaser.Scene {
     this.cameras.main.setSize(width, height);
     this.bounds.setTo(0, 0, width, height);
     this.parallax.setBounds(this.bounds);
+    const scaledBaseRadius = this.getScaledBaseRadius();
     if (this.currentShip) {
-      this.ship.setRadius(resolveShipRadius(this.currentShip, this.baseRadius));
-      this.ship.setHitbox(resolveShipHitbox(this.currentShip, this.baseRadius));
+      this.ship.setRadius(
+        resolveShipRadius(this.currentShip, scaledBaseRadius),
+      );
+      this.ship.setHitbox(
+        resolveShipHitbox(this.currentShip, scaledBaseRadius),
+      );
     } else {
-      this.ship.setRadius(this.baseRadius);
-      this.ship.setHitbox({ kind: "circle", radius: this.baseRadius });
+      this.ship.setRadius(scaledBaseRadius);
+      this.ship.setHitbox({ kind: "circle", radius: scaledBaseRadius });
     }
-    this.ship.setPosition(width * 0.5, height * 0.72);
+    this.ship.setPosition(
+      width * this.presentation.shipX,
+      height * this.presentation.shipY,
+    );
   }
 
   private updateFiring(delta: number): void {
+    if (!this.presentation.fireEnabled) return;
     this.playerFiring.update(
       delta,
       this.ship.x,
@@ -169,5 +211,51 @@ export class PreviewScene extends Phaser.Scene {
         this.handleBulletExplosion,
       );
     });
+  }
+
+  private applyPresentation(presentation: PreviewPresentation): void {
+    const modeChanged =
+      this.presentation.fireEnabled !== presentation.fireEnabled ||
+      this.presentation.shipScale !== presentation.shipScale;
+    this.presentation = presentation;
+    this.ship.setStrokeWidth(
+      Math.max(1, 0.5 + this.presentation.shipScale * 0.5),
+    );
+    const scaledBaseRadius = this.getScaledBaseRadius();
+    if (this.currentShip) {
+      this.ship.setRadius(
+        resolveShipRadius(this.currentShip, scaledBaseRadius),
+      );
+      this.ship.setHitbox(
+        resolveShipHitbox(this.currentShip, scaledBaseRadius),
+      );
+    } else {
+      this.ship.setRadius(scaledBaseRadius);
+      this.ship.setHitbox({ kind: "circle", radius: scaledBaseRadius });
+    }
+    this.ship.setPosition(
+      this.scale.width * this.presentation.shipX,
+      this.scale.height * this.presentation.shipY,
+    );
+    if (modeChanged) {
+      this.playerFiring.reset();
+      this.bullets.forEachActive((bullet) => bullet.deactivate());
+    }
+  }
+
+  private mergePresentation(
+    current: PreviewPresentation,
+    next: Partial<PreviewPresentation>,
+  ): PreviewPresentation {
+    return {
+      fireEnabled: next.fireEnabled ?? current.fireEnabled,
+      shipScale: Math.max(0.2, next.shipScale ?? current.shipScale),
+      shipX: Phaser.Math.Clamp(next.shipX ?? current.shipX, 0.1, 0.9),
+      shipY: Phaser.Math.Clamp(next.shipY ?? current.shipY, 0.2, 0.9),
+    };
+  }
+
+  private getScaledBaseRadius(): number {
+    return this.baseRadius * this.presentation.shipScale;
   }
 }

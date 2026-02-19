@@ -1,0 +1,11 @@
+.canvas-area {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.24);
+  aspect-ratio: unset;
+}

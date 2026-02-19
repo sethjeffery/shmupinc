@@ -1,0 +1,48 @@
+.carousel {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 12px;
+  scrollbar-width: none;
+}
+
+.carousel-outer {
+  margin: -6px -12px 0;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+}
+
+.carousel-outer::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(
+    to right,
+    rgba(16, 24, 40, 0.95),
+    rgba(16, 24, 40, 0)
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.carousel-outer::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(
+    to left,
+    rgba(16, 24, 40, 0.95),
+    rgba(16, 24, 40, 0)
+  );
+  pointer-events: none;
+  z-index: 2;
+}

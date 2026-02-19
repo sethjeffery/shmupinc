@@ -1,6 +1,6 @@
 {
   "id": "gatlingArray",
-  "name": "Gatling Array",
+  "name": "Gatling Gun",
   "description": "High-rate array cycling across barrels.",
   "cost": 295,
   "gunId": "gatling",

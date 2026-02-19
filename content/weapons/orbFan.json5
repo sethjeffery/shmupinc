@@ -7,7 +7,7 @@
   "size": "small",
   "stats": {
     "fireRate": 3.2,
-    "bulletId": "orb",
+    "bulletId": "orbLight",
     "speed": 390,
     "damage": 0.72,
     "shots": [

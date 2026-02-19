@@ -6,9 +6,9 @@
   "gunId": "dart",
   "size": "large",
   "stats": {
-    "fireRate": 1.9,
-    "bulletId": "dart",
-    "speed": 700,
+    "fireRate": 1.5,
+    "bulletId": "dartHeavy",
+    "speed": 1000,
     "damage": 2.4,
     "shots": [
       {
