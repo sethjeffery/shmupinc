@@ -70,13 +70,16 @@ const UI_OPEN_ROUTES = new Set<UiRoute>([
 ]);
 
 const GAME_LOCK_ROUTES = new Set<UiRoute>(["play", "pause"]);
-const PRIMARY_GAME_ROUTES = new Set<UiRoute>(["hangar", "pause", "play"]);
+const APP_VISIBLE_ROUTES = new Set<UiRoute>(["gameover", "pause", "play"]);
+const ENGINE_ACTIVE_ROUTES = new Set<UiRoute>(["hangar", "pause", "play"]);
 
 const isUiOpenRoute = (route: UiRoute): boolean => UI_OPEN_ROUTES.has(route);
 const isGameLockRoute = (route: UiRoute): boolean =>
   GAME_LOCK_ROUTES.has(route);
-const isPrimaryGameRoute = (route: UiRoute): boolean =>
-  PRIMARY_GAME_ROUTES.has(route);
+const isAppVisibleRoute = (route: UiRoute): boolean =>
+  APP_VISIBLE_ROUTES.has(route);
+const isEngineActiveRoute = (route: UiRoute): boolean =>
+  ENGINE_ACTIVE_ROUTES.has(route);
 
 const isTextTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLInputElement ||
@@ -125,114 +128,133 @@ const UiRoot = (props: {
 }) => {
   const route = props.signals.route.value;
   const uiOpen = isUiOpenRoute(route);
-  const gameOverStats = props.signals.gameOver.value;
-  const progression = props.signals.progression.value;
-  const storyBeat = props.signals.storyBeat.value;
+
+  const renderActiveOverlay = () => {
+    switch (route) {
+      case "menu":
+        return (
+          <div
+            className={clsx(
+              styles.uiOverlay,
+              styles.uiOverlayMenu,
+              styles.isActive,
+            )}
+          >
+            <MenuOverlay
+              musicEnabled={props.signals.musicEnabled.value}
+              onAction={props.onAction}
+              soundEnabled={props.signals.soundEnabled.value}
+            />
+          </div>
+        );
+      case "pause":
+        return (
+          <div
+            className={clsx(
+              styles.uiOverlay,
+              styles.uiOverlayPause,
+              styles.isActive,
+            )}
+          >
+            <UiPanel
+              actions={[
+                { action: "resume", label: "Resume", primary: true },
+                { action: "restart", label: "Restart", primary: false },
+                { action: "quit", label: "Quit to Menu", primary: false },
+              ]}
+              onAction={props.onAction}
+              title="Paused"
+            />
+          </div>
+        );
+      case "gameover": {
+        const gameOverStats = props.signals.gameOver.value;
+        return (
+          <div
+            className={clsx(
+              styles.uiOverlay,
+              styles.uiOverlayGameOver,
+              styles.isActive,
+            )}
+          >
+            <UiPanel
+              actions={[
+                { action: "retry", label: "Retry", primary: true },
+                { action: "menu", label: "Main Menu", primary: false },
+              ]}
+              onAction={props.onAction}
+              statsText={`Wave ${gameOverStats.wave}\nGold earned: ${gameOverStats.gold}`}
+              title="Game Over"
+            />
+          </div>
+        );
+      }
+      case "progression": {
+        const progression = props.signals.progression.value;
+        return (
+          <div
+            className={clsx(
+              styles.uiOverlay,
+              styles.uiOverlayProgression,
+              styles.isActive,
+            )}
+          >
+            {progression ? (
+              <ProgressionOverlay
+                onAction={props.onAction}
+                view={progression}
+              />
+            ) : (
+              <UiPanel
+                actions={[
+                  { action: "menu", label: "Main Menu", primary: false },
+                ]}
+                onAction={props.onAction}
+                title="No Galaxy Data"
+              />
+            )}
+          </div>
+        );
+      }
+      case "story": {
+        const storyBeat = props.signals.storyBeat.value;
+        return (
+          <div className={clsx(styles.uiOverlay, styles.isActive)}>
+            <div className={styles.storyPanel}>
+              <div className={styles.storyTitle}>{storyBeat.title}</div>
+              <div className={styles.storyLines}>
+                {storyBeat.lines.map((line, index) => (
+                  <p key={`${index}-${line}`}>{line}</p>
+                ))}
+              </div>
+              <div className={styles.storyActions}>
+                <button
+                  className={styles.storyButton}
+                  onClick={() => props.onAction("story-continue")}
+                  type="button"
+                >
+                  Continue
+                </button>
+                <button
+                  className={styles.storySkip}
+                  onClick={() => props.onAction("story-skip")}
+                  type="button"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className={clsx(styles.uiRoot, uiOpen ? styles.isActive : undefined)}>
-      <div
-        className={clsx(
-          styles.uiOverlay,
-          styles.uiOverlayMenu,
-          route === "menu" ? styles.isActive : undefined,
-        )}
-      >
-        {route === "menu" ? (
-          <MenuOverlay
-            musicEnabled={props.signals.musicEnabled.value}
-            onAction={props.onAction}
-            soundEnabled={props.signals.soundEnabled.value}
-          />
-        ) : null}
-      </div>
-
-      <div
-        className={clsx(
-          styles.uiOverlay,
-          styles.uiOverlayPause,
-          route === "pause" ? styles.isActive : undefined,
-        )}
-      >
-        <UiPanel
-          actions={[
-            { action: "resume", label: "Resume", primary: true },
-            { action: "restart", label: "Restart", primary: false },
-            { action: "quit", label: "Quit to Menu", primary: false },
-          ]}
-          onAction={props.onAction}
-          title="Paused"
-        />
-      </div>
-
-      <div
-        className={clsx(
-          styles.uiOverlay,
-          styles.uiOverlayGameOver,
-          route === "gameover" ? styles.isActive : undefined,
-        )}
-      >
-        <UiPanel
-          actions={[
-            { action: "retry", label: "Retry", primary: true },
-            { action: "menu", label: "Main Menu", primary: false },
-          ]}
-          onAction={props.onAction}
-          statsText={`Wave ${gameOverStats.wave}\nGold earned: ${gameOverStats.gold}`}
-          title="Game Over"
-        />
-      </div>
-
-      <div
-        className={clsx(
-          styles.uiOverlay,
-          styles.uiOverlayProgression,
-          route === "progression" ? styles.isActive : undefined,
-        )}
-      >
-        {progression ? (
-          <ProgressionOverlay onAction={props.onAction} view={progression} />
-        ) : (
-          <UiPanel
-            actions={[{ action: "menu", label: "Main Menu", primary: false }]}
-            onAction={props.onAction}
-            title="No Galaxy Data"
-          />
-        )}
-      </div>
-
-      <div
-        className={clsx(
-          styles.uiOverlay,
-          styles.uiOverlayStory,
-          route === "story" ? styles.isActive : undefined,
-        )}
-      >
-        <div className={styles.storyPanel}>
-          <div className={styles.storyTitle}>{storyBeat.title}</div>
-          <div className={styles.storyLines}>
-            {storyBeat.lines.map((line, index) => (
-              <p key={`${index}-${line}`}>{line}</p>
-            ))}
-          </div>
-          <div className={styles.storyActions}>
-            <button
-              className={styles.storyButton}
-              onClick={() => props.onAction("story-continue")}
-              type="button"
-            >
-              Continue
-            </button>
-            <button
-              className={styles.storySkip}
-              onClick={() => props.onAction("story-skip")}
-              type="button"
-            >
-              Skip
-            </button>
-          </div>
-        </div>
-      </div>
+      {renderActiveOverlay()}
     </div>
   );
 };
@@ -325,7 +347,8 @@ export class UiRouter {
     const uiOpen = isUiOpenRoute(route);
     document.body.classList.toggle("ui-open", uiOpen);
     document.body.classList.toggle("game-locked", isGameLockRoute(route));
-    this.setPrimaryGameRendering(isPrimaryGameRoute(route));
+    document.body.classList.toggle("game-active", isAppVisibleRoute(route));
+    this.setEngineLoopActive(isEngineActiveRoute(route));
 
     if (route === "play") {
       void startOrResumePlayScene({
@@ -512,8 +535,7 @@ export class UiRouter {
     this.setRoute(this.storyNextRoute, { force: true });
   }
 
-  private setPrimaryGameRendering(enabled: boolean): void {
-    document.body.classList.toggle("play-engine-active", enabled);
+  private setEngineLoopActive(enabled: boolean): void {
     if (enabled) {
       this.game.loop.wake();
       return;

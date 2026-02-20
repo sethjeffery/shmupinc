@@ -5,7 +5,13 @@ import { createMenuBackgroundGame } from "../../menuBackground/createMenuBackgro
 
 import styles from "./MenuBackgroundCanvas.module.css";
 
-export const MenuBackgroundCanvas = ({ leaving }: { leaving?: boolean }) => {
+export const MenuBackgroundCanvas = ({
+  entering,
+  leaving,
+}: {
+  leaving?: boolean;
+  entering?: boolean;
+}) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<null | Phaser.Game>(null);
 
@@ -28,6 +34,7 @@ export const MenuBackgroundCanvas = ({ leaving }: { leaving?: boolean }) => {
       className={clsx(
         styles.menuBackgroundLayer,
         leaving ? styles.leaving : undefined,
+        entering ? styles.entering : undefined,
       )}
     >
       <div className={styles.menuBackgroundCanvas} ref={hostRef} />

@@ -12,6 +12,10 @@
   opacity: 0;
 }
 
+.menuBackgroundLayer.entering {
+  animation: fadeIn 2880ms cubic-bezier(0.18, 1, 0.32, 1) both;
+}
+
 .menuBackgroundCanvas {
   position: absolute;
   inset: 0;
@@ -46,4 +50,13 @@
       repeat;
   background-size: 56px 56px;
   pointer-events: none;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }

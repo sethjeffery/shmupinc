@@ -1,14 +1,10 @@
-import { signal } from "@preact/signals";
 import { clsx } from "clsx";
-import { useCallback, useEffect, useState } from "preact/hooks";
 
-const enterTimer = signal<null | number>(null);
-const exitTimer = signal<null | number>(null);
-
-const MENU_EXIT_MS = 820;
+const MENU_EXIT_MS = 520;
 const MENU_ENTRY_MS = 820;
 
 import { AudioControls } from "../../audio/AudioControls";
+import { useEnterLeave } from "../shop/hooks/useEnterLeave";
 import { MenuBackgroundCanvas } from "./MenuBackgroundCanvas";
 
 import styles from "./MenuOverlay.module.css";
@@ -18,36 +14,15 @@ export const MenuOverlay = (props: {
   onAction: (action: string, levelId?: string) => void;
   soundEnabled: boolean;
 }) => {
-  const [entering, setEntering] = useState(true);
-  const [leaving, setLeaving] = useState(false);
-  const [entered, setEntered] = useState(false);
   const { onAction } = props;
+  const { entered, entering, leave, leaving } = useEnterLeave({
+    entryDuration: MENU_ENTRY_MS,
+    exitDuration: MENU_EXIT_MS,
+  });
 
-  const startCampaign = useCallback((): void => {
-    if (leaving) return;
-    setLeaving(true);
-    if (exitTimer.value !== null) {
-      window.clearTimeout(exitTimer.value);
-    }
-    exitTimer.value = window.setTimeout(() => {
-      onAction("start");
-    }, MENU_EXIT_MS);
-  }, [leaving, onAction]);
-
-  useEffect(() => {
-    enterTimer.value = window.setTimeout(() => {
-      setEntered(true);
-      setEntering(false);
-    }, MENU_ENTRY_MS);
-    return () => {
-      if (exitTimer.value !== null) {
-        window.clearTimeout(exitTimer.value);
-      }
-      if (enterTimer.value !== null) {
-        window.clearTimeout(enterTimer.value);
-      }
-    };
-  }, []);
+  const startCampaign = () => {
+    void leave().then(() => onAction("start"));
+  };
 
   return (
     <div
@@ -58,7 +33,7 @@ export const MenuOverlay = (props: {
         entered ? styles.isEntered : undefined,
       )}
     >
-      <MenuBackgroundCanvas leaving={leaving} />
+      <MenuBackgroundCanvas leaving={leaving} entering={entering} />
       <div className={styles.menuCenter}>
         <div className={styles.menuTitleBlock}>
           <div className={styles.menuBadge}>Vector Combat Campaign</div>

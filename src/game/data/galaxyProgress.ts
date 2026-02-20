@@ -129,7 +129,7 @@ export const buildActiveGalaxyView = (
   return {
     currentLevelId: campaign.currentLevelId,
     decorations: galaxy.decorations ?? [],
-    description: galaxy.description,
+    description: "Select your next destination.",
     edges,
     id: galaxy.id,
     isComplete: isCampaignComplete(galaxy, completedSet),

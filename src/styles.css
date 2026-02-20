@@ -39,7 +39,17 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% 20%, #0f1422 0%, #07090f 60%), var(--bg-deep);
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(125, 249, 255, 0.08),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 80% 30%,
+      rgba(255, 209, 102, 0.08),
+      transparent 50%
+    ),
+    linear-gradient(160deg, rgba(8, 11, 18, 0.88), rgba(4, 6, 10, 0.95));
   font-family: "Space Grotesk", "Orbitron", sans-serif;
   color: var(--text);
   overflow-x: hidden;
@@ -56,13 +66,18 @@ body.game-locked {
   position: relative;
   z-index: 2;
   display: flex;
-  opacity: 1;
+  opacity: 0;
   transition: opacity 220ms ease;
+  pointer-events: none;
 }
 
-body:not(.play-engine-active) #app {
-  opacity: 0;
-  pointer-events: none;
+.game-active #app {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-active .outer-shell {
+  opacity: 1;
 }
 
 #app canvas {
@@ -109,6 +124,7 @@ body.ui-open canvas {
 }
 
 .outer-shell {
+  opacity: 0;
   position: fixed;
   inset: 0;
   z-index: 8;
@@ -132,6 +148,7 @@ body.ui-open canvas {
     var(--play-x) var(--play-y);
   mask-repeat: no-repeat;
   mask-composite: exclude;
+  transition: opacity 0.5s;
 }
 
 @supports not ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
@@ -260,6 +277,15 @@ body.ui-open canvas {
   transition-delay: 0.2s;
 }
 
+.progression-shell.is-entering {
+  animation: progressionSceneIn 560ms cubic-bezier(0.2, 0.84, 0.28, 1) both;
+}
+
+.progression-shell.is-leaving-menu {
+  animation: progressionSceneOutMenu 520ms ease both;
+  pointer-events: none;
+}
+
 .progression-map-frame {
   position: relative;
   height: min(720px, 86vh);
@@ -308,6 +334,7 @@ body.ui-open canvas {
 
 .progression-shell.is-launching {
   opacity: 0;
+  pointer-events: none;
 }
 
 .progression-shell.is-launching .progression-map {
@@ -330,6 +357,10 @@ body.ui-open canvas {
   stroke-linecap: round;
 }
 
+.progression-edge.is-sequenced {
+  animation: progressionEdgeDraw 0.42s cubic-bezier(0.18, 0.72, 0.32, 1) both;
+}
+
 .progression-edge.is-unlocked {
   stroke: rgba(125, 249, 255, 0.55);
 }
@@ -340,6 +371,14 @@ body.ui-open canvas {
 
 .progression-node {
   cursor: default;
+}
+
+.progression-node.is-sequenced {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.88);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: progressionNodeReveal 0.38s cubic-bezier(0.2, 0.82, 0.24, 1) both;
 }
 
 .progression-node circle {
@@ -420,8 +459,8 @@ body.ui-open canvas {
   position: absolute;
   z-index: 3;
   top: 14px;
-  left: 16px;
-  right: 16px;
+  left: 20px;
+  right: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -438,6 +477,15 @@ body.ui-open canvas {
   text-transform: uppercase;
   color: #f1f8ff;
   text-shadow: 0 0 12px rgba(125, 249, 255, 0.3);
+}
+
+.progression-map-title-text {
+  min-width: 12ch;
+}
+
+.progression-map-title-cursor {
+  animation: progressionTerminalCursor 0.9s steps(1, end) infinite;
+  color: rgba(125, 249, 255, 0.92);
 }
 
 .progression-map-menu {
@@ -472,7 +520,7 @@ body.ui-open canvas {
   position: absolute;
   z-index: 3;
   left: 20px;
-  top: 58px;
+  top: 50px;
   color: rgba(170, 232, 255, 0.96);
   font-family: "Orbitron", sans-serif;
   font-size: 11px;
@@ -517,6 +565,90 @@ body.ui-open canvas {
   }
 }
 
+@keyframes progressionSceneIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes progressionSceneOutMenu {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes progressionNodeReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes progressionEdgeDraw {
+  0% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes progressionTerminalCursor {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  51% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progression-shell.is-entering {
+    animation: none;
+  }
+
+  .progression-shell.is-leaving-menu {
+    animation: none;
+    opacity: 0;
+  }
+
+  .progression-map-title-cursor {
+    animation: none;
+  }
+
+  .progression-node.is-sequenced {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .progression-edge.is-sequenced {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 @media (max-width: 640px) {
   .progression-map-frame {
     min-height: min(580px, 80vh);
@@ -531,7 +663,11 @@ body.ui-open canvas {
   }
 
   .progression-node-label {
-    font-size: 15px;
+    font-size: 18px;
+  }
+
+  .progression-node-stars {
+    font-size: 17px;
   }
 
   .outer-label {
