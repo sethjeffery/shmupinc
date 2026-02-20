@@ -12,26 +12,24 @@ export default function ReadySlotView(props: {
   slot: ReadySlotModel;
 }) {
   const { slot } = props;
-  const icon = slot.isEmpty
-    ? (
-        <span
-          aria-hidden="true"
-          className={
-            slot.kind === "weapon"
-              ? styles["empty-weapon-icon"]
-              : styles["empty-mod-icon"]
-          }
-        />
-      )
-    : (
-        <ItemIcon
-          accentColor={slot.accentColor}
-          className={styles["slot-canvas"]}
-          kind={slot.kind}
-          shape={slot.shape}
-          size={52}
-        />
-      );
+  const icon = slot.isEmpty ? (
+    <span
+      aria-hidden="true"
+      className={
+        slot.kind === "weapon"
+          ? styles["empty-weapon-icon"]
+          : styles["empty-mod-icon"]
+      }
+    />
+  ) : (
+    <ItemIcon
+      accentColor={slot.accentColor}
+      className={styles["slot-canvas"]}
+      kind={slot.kind}
+      shape={slot.shape}
+      size={52}
+    />
+  );
 
   return (
     <ShopVectorIconButton

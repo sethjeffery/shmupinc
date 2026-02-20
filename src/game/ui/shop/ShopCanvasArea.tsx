@@ -49,7 +49,10 @@ export default function ShopCanvasArea(props: {
 
   const syncPreviewCanvasSize = useCallback(() => {
     if (!previewRootElRef.current) return;
-    const cssWidth = Math.max(0, Math.round(previewRootElRef.current.clientWidth));
+    const cssWidth = Math.max(
+      0,
+      Math.round(previewRootElRef.current.clientWidth),
+    );
     const cssHeight = Math.max(
       0,
       Math.round(previewRootElRef.current.clientHeight),
@@ -129,7 +132,9 @@ export default function ShopCanvasArea(props: {
     };
     previewGameRef.current = new Phaser.Game(previewConfig);
     // applyPreviewLoadout();
-    resizeObserverRef.current = new ResizeObserver(() => syncPreviewCanvasSize());
+    resizeObserverRef.current = new ResizeObserver(() =>
+      syncPreviewCanvasSize(),
+    );
     resizeObserverRef.current.observe(previewRootElRef.current);
     applyDefaultPresentation();
     applyPreviewLoadout();
