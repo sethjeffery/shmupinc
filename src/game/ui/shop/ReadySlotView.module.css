@@ -1,5 +1,10 @@
 .slot {
-  border: 1px solid rgba(125, 249, 255, 0.22);
+  --border-color: rgba(125, 249, 255, 0.22);
+  --glow-color: rgba(125, 249, 255, 0);
+  border: 1px solid var(--border-color);
+  box-shadow:
+    0 0 14px var(--glow-color),
+    0 2px var(--border-color);
   border-radius: 10px;
   background: rgba(11, 18, 30, 0.82);
   color: #def0ff;
@@ -22,13 +27,20 @@
   min-width: 112px;
 }
 
+.slot:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0 14px var(--glow-color),
+    0 1px var(--border-color);
+}
+
 .slot:hover {
-  border-color: rgba(125, 249, 255, 0.5);
+  --border-color: rgba(125, 249, 255, 0.5);
 }
 
 .slot.is-active {
-  border-color: rgba(255, 209, 102, 0.9);
-  box-shadow: 0 0 14px rgba(255, 209, 102, 0.24);
+  --glow-color: rgba(255, 209, 102, 0.24);
+  --border-color: rgba(255, 209, 102, 0.9);
 }
 
 .slot.is-empty .slot-label {

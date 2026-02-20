@@ -24,7 +24,7 @@ interface BulletRuntimeContext {
     spec: Bullet["spec"],
     owner: Bullet["owner"],
   ) => void;
-  onDamagePlayer: (amount: number, fxX?: number, fxY?: number) => void;
+  onDamagePlayer?: (amount: number, fxX?: number, fxY?: number) => void;
   onEnemyKilled: (enemyIndex: number) => void;
   playArea: Phaser.Geom.Rectangle;
   playerAlive: boolean;
@@ -116,7 +116,7 @@ export const updateEnemyBulletsRuntime = (
     } else {
       ctx.onBulletImpact?.(bullet.x, bullet.y, bullet.spec, bullet.owner);
       bullet.deactivate();
-      ctx.onDamagePlayer(bullet.damage, bullet.x, bullet.y);
+      ctx.onDamagePlayer?.(bullet.damage, bullet.x, bullet.y);
     }
   });
 };

@@ -1,0 +1,49 @@
+.menuBackgroundLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition:
+    opacity 420ms ease,
+    transform 520ms ease,
+    filter 420ms ease;
+}
+
+.menuBackgroundLayer.leaving {
+  opacity: 0;
+}
+
+.menuBackgroundCanvas {
+  position: absolute;
+  inset: 0;
+  filter: blur(4px);
+  transform-origin: center;
+}
+
+.menuBackgroundCanvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.menuBackgroundTint {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(9, 17, 33, 0.5),
+    rgb(4, 9, 27, 0.25)
+  );
+  background-repeat: repeat;
+}
+
+.menuBackgroundTint::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(125, 249, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 249, 255, 0.03) 1px, transparent 1px)
+      repeat;
+  background-size: 56px 56px;
+  pointer-events: none;
+}

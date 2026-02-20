@@ -2,7 +2,7 @@ import "./styles.css";
 
 import { render } from "preact";
 
-import { createGame } from "./game/createGame";
+import { createGame, shouldUseMobileCoverScale } from "./game/createGame";
 import { PLAYFIELD_CORNER_RADIUS, computePlayArea } from "./game/util/playArea";
 import { setPlayfieldCssVars } from "./game/util/playfieldCssVars";
 import { UiRouter } from "./ui/router";
@@ -29,7 +29,9 @@ const startApp = async (): Promise<void> => {
   render(<OuterShell />, outerShellRoot);
 
   const updateOuterVars = (): void => {
-    const rect = computePlayArea(window.innerWidth, window.innerHeight);
+    const rect = shouldUseMobileCoverScale()
+      ? { height: window.innerHeight, width: window.innerWidth, x: 0, y: 0 }
+      : computePlayArea(window.innerWidth, window.innerHeight);
     setPlayfieldCssVars({
       cornerRadius: PLAYFIELD_CORNER_RADIUS,
       height: rect.height,

@@ -4,7 +4,6 @@ import { signal, type Signal } from "@preact/signals";
 import clsx from "clsx";
 import { render } from "preact";
 
-import { AudioControls } from "../game/audio/AudioControls";
 import { getAudioDirector } from "../game/audio/audioDirector";
 import {
   buildActiveGalaxyView,
@@ -14,6 +13,7 @@ import {
 } from "../game/data/galaxyProgress";
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
 import { STORY_BEATS } from "../game/data/storyBeats";
+import { MenuOverlay } from "../game/ui/title/MenuOverlay";
 import ProgressionOverlay from "./overlays/ProgressionOverlay";
 import {
   openHangarScene,
@@ -54,7 +54,6 @@ interface StoryBeatView {
 
 interface UiViewSignals {
   gameOver: Signal<GameOverStats>;
-  menuActions: Signal<PanelAction[]>;
   musicEnabled: Signal<boolean>;
   progression: Signal<GalaxyView | null>;
   route: Signal<UiRoute>;
@@ -71,10 +70,13 @@ const UI_OPEN_ROUTES = new Set<UiRoute>([
 ]);
 
 const GAME_LOCK_ROUTES = new Set<UiRoute>(["play", "pause"]);
+const PRIMARY_GAME_ROUTES = new Set<UiRoute>(["hangar", "pause", "play"]);
 
 const isUiOpenRoute = (route: UiRoute): boolean => UI_OPEN_ROUTES.has(route);
 const isGameLockRoute = (route: UiRoute): boolean =>
   GAME_LOCK_ROUTES.has(route);
+const isPrimaryGameRoute = (route: UiRoute): boolean =>
+  PRIMARY_GAME_ROUTES.has(route);
 
 const isTextTarget = (target: EventTarget | null): boolean =>
   target instanceof HTMLInputElement ||
@@ -117,47 +119,6 @@ const UiPanel = (props: {
   </div>
 );
 
-const MenuOverlay = (props: {
-  actions: PanelAction[];
-  musicEnabled: boolean;
-  onAction: (action: string, levelId?: string) => void;
-  soundEnabled: boolean;
-}) => (
-  <>
-    <div className={styles.menuShell}>
-      <div className={styles.menuShellHalo} />
-      <div className={styles.menuShellGrid} />
-      <div className={styles.menuShellBadge}>Vector Combat Campaign</div>
-      <div className={styles.menuShellTitle}>Shmup Inc</div>
-      <div className={styles.menuShellSubtitle}>
-        Push through hostile sectors, unlock loadouts, and keep the run clean.
-      </div>
-      <div className={styles.menuShellDivider} />
-      <div className={clsx(styles.uiActions, styles.menuShellActions)}>
-        {props.actions.map((item) => (
-          <button
-            className={panelButtonClass(item)}
-            disabled={Boolean(item.disabled)}
-            onClick={() => props.onAction(item.action, item.levelId)}
-            type="button"
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-      <div className={styles.menuShellHint}>
-        Drag to move. Auto-fire engages on hold.
-      </div>
-    </div>
-    <AudioControls
-      musicEnabled={props.musicEnabled}
-      onToggleMusic={() => props.onAction("toggle-music")}
-      onToggleSound={() => props.onAction("toggle-sound")}
-      soundEnabled={props.soundEnabled}
-    />
-  </>
-);
-
 const UiRoot = (props: {
   onAction: (action: string, levelId?: string) => void;
   signals: UiViewSignals;
@@ -177,12 +138,13 @@ const UiRoot = (props: {
           route === "menu" ? styles.isActive : undefined,
         )}
       >
-        <MenuOverlay
-          actions={props.signals.menuActions.value}
-          musicEnabled={props.signals.musicEnabled.value}
-          onAction={props.onAction}
-          soundEnabled={props.signals.soundEnabled.value}
-        />
+        {route === "menu" ? (
+          <MenuOverlay
+            musicEnabled={props.signals.musicEnabled.value}
+            onAction={props.onAction}
+            soundEnabled={props.signals.soundEnabled.value}
+          />
+        ) : null}
       </div>
 
       <div
@@ -196,7 +158,6 @@ const UiRoot = (props: {
           actions={[
             { action: "resume", label: "Resume", primary: true },
             { action: "restart", label: "Restart", primary: false },
-            { action: "hangar", label: "Hangar", primary: false },
             { action: "quit", label: "Quit to Menu", primary: false },
           ]}
           onAction={props.onAction}
@@ -214,7 +175,6 @@ const UiRoot = (props: {
         <UiPanel
           actions={[
             { action: "retry", label: "Retry", primary: true },
-            { action: "hangar", label: "Hangar", primary: false },
             { action: "menu", label: "Main Menu", primary: false },
           ]}
           onAction={props.onAction}
@@ -286,7 +246,6 @@ export class UiRouter {
   private storyClearLevelOnExit = false;
   private transitionToken = 0;
   private readonly routeSignal = signal<UiRoute>("menu");
-  private readonly menuActionsSignal = signal<PanelAction[]>([]);
   private readonly musicEnabledSignal = signal<boolean>(
     this.audio.getMusicEnabled(),
   );
@@ -315,7 +274,6 @@ export class UiRouter {
         onAction={(action, levelId) => this.handleAction(action, levelId)}
         signals={{
           gameOver: this.gameOverSignal,
-          menuActions: this.menuActionsSignal,
           musicEnabled: this.musicEnabledSignal,
           progression: this.progressionSignal,
           route: this.routeSignal,
@@ -367,6 +325,7 @@ export class UiRouter {
     const uiOpen = isUiOpenRoute(route);
     document.body.classList.toggle("ui-open", uiOpen);
     document.body.classList.toggle("game-locked", isGameLockRoute(route));
+    this.setPrimaryGameRendering(isPrimaryGameRoute(route));
 
     if (route === "play") {
       void startOrResumePlayScene({
@@ -381,6 +340,12 @@ export class UiRouter {
 
     if (route === "pause") {
       pausePlayScene(this.game);
+      return;
+    }
+
+    if (route === "gameover") {
+      stopPlayScene(this.game);
+      stopShopScene(this.game);
       return;
     }
 
@@ -449,10 +414,6 @@ export class UiRouter {
         this.setRoute("progression");
         break;
       }
-      case "hangar":
-        clearActiveLevel();
-        this.setRoute("hangar");
-        break;
       case "resume":
         this.setRoute("play");
         break;
@@ -514,9 +475,6 @@ export class UiRouter {
         return;
       }
     }
-    if (event.key === "Enter" && this.route === "menu") {
-      this.setRoute("progression");
-    }
   }
 
   private tryAutoStartLevel(): void {
@@ -530,24 +488,6 @@ export class UiRouter {
     ensureActiveGalaxy();
     this.refreshProgressionView();
     window.history.replaceState({}, "", window.location.pathname);
-  }
-
-  private buildMenuActions(): PanelAction[] {
-    const progression = buildActiveGalaxyView();
-    const currentNode = progression?.nodes.find(
-      (node) => node.id === progression.currentLevelId,
-    );
-    return [
-      {
-        action: currentNode ? "galaxy-node" : "progression",
-        disabled: !progression,
-        label: currentNode ? `Continue: ${currentNode.name}` : "Open Star Map",
-        levelId: currentNode?.id,
-        primary: true,
-      },
-      { action: "progression", label: "Campaign Map", primary: false },
-      { action: "hangar", label: "Hangar", primary: false },
-    ];
   }
 
   private openStoryBeat(
@@ -572,13 +512,17 @@ export class UiRouter {
     this.setRoute(this.storyNextRoute, { force: true });
   }
 
-  private refreshMenuActions(): void {
-    this.menuActionsSignal.value = this.buildMenuActions();
+  private setPrimaryGameRendering(enabled: boolean): void {
+    document.body.classList.toggle("play-engine-active", enabled);
+    if (enabled) {
+      this.game.loop.wake();
+      return;
+    }
+    this.game.loop.sleep();
   }
 
   private refreshProgressionView(): void {
     ensureActiveGalaxy();
     this.progressionSignal.value = buildActiveGalaxyView();
-    this.refreshMenuActions();
   }
 }

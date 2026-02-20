@@ -1,6 +1,11 @@
 .item {
+  --border-color: rgba(125, 249, 255, 0);
+  --glow-color: rgba(125, 249, 255, 0);
   min-width: 128px;
-  border: 1px solid rgba(125, 249, 255, 0);
+  border: 1px solid var(--border-color);
+  box-shadow:
+    0 0 16px var(--glow-color),
+    0 2px var(--border-color);
   border-radius: 12px;
   background: transparent;
   color: #dcecff;
@@ -18,19 +23,19 @@
 }
 
 .item:hover {
-  transform: translateY(-2px);
-  border-color: rgba(125, 249, 255, 0.42);
+  --border-color: rgba(125, 249, 255, 0.42);
+}
+
+.item:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0 16px var(--glow-color),
+    0 1px var(--border-color);
 }
 
 .item.is-selected {
-  border-color: rgba(125, 249, 255, 0.78);
-  box-shadow:
-    0 0 16px rgba(125, 249, 255, 0.25),
-    inset 0 0 12px rgba(125, 249, 255, 0.18);
-}
-
-.item.is-equipped {
-  box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.75) inset;
+  --border-color: rgba(125, 249, 255, 0.78);
+  --glow-color: rgba(125, 249, 255, 0.25);
 }
 
 .icon {

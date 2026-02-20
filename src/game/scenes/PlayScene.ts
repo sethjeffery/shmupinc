@@ -143,6 +143,10 @@ export class PlayScene extends Phaser.Scene {
   private hud!: HUD;
   private ship!: Ship;
   private playArea = new Phaser.Geom.Rectangle();
+  private visiblePlayArea = new Phaser.Geom.Rectangle();
+  private hudArea = new Phaser.Geom.Rectangle();
+  private viewportCropOffsetX = 0;
+  private viewportCropOffsetY = 0;
   private pointerActive = false;
   private firingInputActive = false;
   private target = new Phaser.Math.Vector2();
@@ -392,6 +396,7 @@ export class PlayScene extends Phaser.Scene {
       this.playArea.y + this.playArea.height + this.ship.radius * 2.4,
     );
     this.target.copy(this.defaultTarget);
+    this.updateViewportTracking(this.defaultTarget.x);
 
     this.fpsText = this.add
       .text(0, 0, "FPS --", {
@@ -420,7 +425,7 @@ export class PlayScene extends Phaser.Scene {
       this,
       () => this.goToShop(),
       () => this.pauseGame(),
-      this.playArea,
+      this.hudArea,
     );
     const activeSession = getActiveLevelSession();
     const activeLevel = activeSession?.level;
@@ -476,6 +481,7 @@ export class PlayScene extends Phaser.Scene {
     this.runElapsedMs += deltaMs;
     this.collisionResolver?.update(deltaMs);
     this.updateShip(delta);
+    this.updateViewportTracking();
     this.updateLowHealthEffect(delta);
     this.updateFiring(delta);
     this.updatePlayerBullets(delta);
@@ -971,10 +977,17 @@ export class PlayScene extends Phaser.Scene {
   private setTargetFromPointer(pointer: Phaser.Input.Pointer): void {
     const nativeEvent = pointer.event as PointerEvent | TouchEvent;
     const isTouchEvent = this.isTouchPointer(pointer);
+    const xRatio = Phaser.Math.Clamp(
+      (pointer.worldX - this.visiblePlayArea.x) /
+        Math.max(1, this.visiblePlayArea.width),
+      0,
+      1,
+    );
+    const targetX = this.playArea.x + this.playArea.width * xRatio;
     const targetY = isTouchEvent
       ? pointer.worldY - this.touchOffsetY
       : pointer.worldY;
-    this.target.set(pointer.worldX, targetY);
+    this.target.set(targetX, targetY);
     if (isTouchEvent && nativeEvent instanceof TouchEvent) {
       nativeEvent.preventDefault();
     }
@@ -1008,17 +1021,109 @@ export class PlayScene extends Phaser.Scene {
     this.damageJoltX = 0;
     this.damageJoltY = 0;
     this.applyCanvasFx();
-    this.updateOuterFrameVars();
     this.touchOffsetY = Math.round(
       Phaser.Math.Clamp(this.playArea.height * 0.12, 40, 120),
     );
     if (this.parallax) this.parallax.setBounds(this.playArea);
-    if (this.hud) this.hud.setBounds(this.playArea);
     if (this.levelRunner) this.levelRunner.setBounds(this.playArea);
     for (const enemy of this.enemies) {
       enemy.setPlayfieldSize(this.playArea.width, this.playArea.height);
     }
+    this.updateViewportTracking(this.ship?.x ?? this.defaultTarget.x);
+    this.updateOuterFrameVars();
+  }
+
+  private updateViewportTracking(trackX: number = this.ship?.x ?? 0): void {
+    const camera = this.cameras.main;
+    this.updateVisiblePlayArea();
+
+    const visibleWidth = this.visiblePlayArea.width;
+    const visibleHeight = this.visiblePlayArea.height;
+    const minScrollX = this.playArea.x - this.viewportCropOffsetX;
+    const maxScrollX =
+      this.playArea.x +
+      this.playArea.width -
+      visibleWidth -
+      this.viewportCropOffsetX;
+    const minScrollY = this.playArea.y - this.viewportCropOffsetY;
+    const maxScrollY =
+      this.playArea.y +
+      this.playArea.height -
+      visibleHeight -
+      this.viewportCropOffsetY;
+
+    let nextScrollX = minScrollX;
+    if (visibleWidth < this.playArea.width - 0.5) {
+      const worldRatio = Phaser.Math.Clamp(
+        (trackX - this.playArea.x) / Math.max(1, this.playArea.width),
+        0,
+        1,
+      );
+      const maxViewOffsetX = this.playArea.width - visibleWidth;
+      const desiredViewX = this.playArea.x + maxViewOffsetX * worldRatio;
+      nextScrollX = desiredViewX - this.viewportCropOffsetX;
+    }
+
+    const nextScrollY = Phaser.Math.Clamp(
+      camera.scrollY,
+      minScrollY,
+      maxScrollY,
+    );
+    camera.setScroll(
+      Phaser.Math.Clamp(nextScrollX, minScrollX, maxScrollX),
+      nextScrollY,
+    );
+
+    this.updateVisiblePlayArea();
+    this.updateHudArea();
+    if (this.hud) this.hud.setBounds(this.hudArea);
     this.positionFpsText();
+  }
+
+  private updateVisiblePlayArea(): void {
+    const canvasBounds = this.game.canvas.getBoundingClientRect();
+    const scaleX = canvasBounds.width / Math.max(1, this.scale.width);
+    const scaleY = canvasBounds.height / Math.max(1, this.scale.height);
+    const visibleLeftPx = Math.max(0, canvasBounds.left);
+    const visibleTopPx = Math.max(0, canvasBounds.top);
+    const visibleRightPx = Math.min(window.innerWidth, canvasBounds.right);
+    const visibleBottomPx = Math.min(window.innerHeight, canvasBounds.bottom);
+    const visibleWidthPx = Math.max(0, visibleRightPx - visibleLeftPx);
+    const visibleHeightPx = Math.max(0, visibleBottomPx - visibleTopPx);
+    const cropLeftPx = Math.max(0, visibleLeftPx - canvasBounds.left);
+    const cropTopPx = Math.max(0, visibleTopPx - canvasBounds.top);
+    const visibleWidth = Phaser.Math.Clamp(
+      visibleWidthPx / Math.max(0.0001, scaleX),
+      0,
+      this.playArea.width,
+    );
+    const visibleHeight = Phaser.Math.Clamp(
+      visibleHeightPx / Math.max(0.0001, scaleY),
+      0,
+      this.playArea.height,
+    );
+    this.viewportCropOffsetX = Phaser.Math.Clamp(
+      cropLeftPx / Math.max(0.0001, scaleX),
+      0,
+      Math.max(0, this.playArea.width - visibleWidth),
+    );
+    this.viewportCropOffsetY = Phaser.Math.Clamp(
+      cropTopPx / Math.max(0.0001, scaleY),
+      0,
+      Math.max(0, this.playArea.height - visibleHeight),
+    );
+
+    const minX = this.playArea.x;
+    const maxX = this.playArea.x + this.playArea.width - visibleWidth;
+    const minY = this.playArea.y;
+    const maxY = this.playArea.y + this.playArea.height - visibleHeight;
+    const camera = this.cameras.main;
+    this.visiblePlayArea.setTo(
+      Phaser.Math.Clamp(camera.scrollX + this.viewportCropOffsetX, minX, maxX),
+      Phaser.Math.Clamp(camera.scrollY + this.viewportCropOffsetY, minY, maxY),
+      visibleWidth,
+      visibleHeight,
+    );
   }
 
   private updateFps(deltaMs: number): void {
@@ -1033,9 +1138,26 @@ export class PlayScene extends Phaser.Scene {
 
   private positionFpsText(): void {
     if (!this.fpsText) return;
-    const x = this.playArea.x + this.playArea.width - 12;
-    const y = this.playArea.y + 36;
+    const x = this.hudArea.x + this.hudArea.width - 12;
+    const y = this.hudArea.y + 30;
     this.fpsText.setPosition(x, y);
+  }
+
+  private updateHudArea(): void {
+    const insetX = Phaser.Math.Clamp(this.visiblePlayArea.width * 0.018, 6, 14);
+    const insetY = Phaser.Math.Clamp(
+      this.visiblePlayArea.height * 0.014,
+      8,
+      18,
+    );
+    const width = Math.max(120, this.visiblePlayArea.width - insetX * 2);
+    const height = Math.max(120, this.visiblePlayArea.height - insetY * 2);
+    this.hudArea.setTo(
+      this.visiblePlayArea.x + insetX,
+      this.visiblePlayArea.y + insetY,
+      width,
+      height,
+    );
   }
 
   private updateLowHealthEffect(delta: number): void {
@@ -1049,14 +1171,19 @@ export class PlayScene extends Phaser.Scene {
 
   private updateOuterFrameVars(): void {
     const canvasBounds = this.game.canvas.getBoundingClientRect();
-    const scaleX = canvasBounds.width / this.scale.width;
-    const scaleY = canvasBounds.height / this.scale.height;
+    const x = Math.max(0, canvasBounds.left);
+    const y = Math.max(0, canvasBounds.top);
+    const right = Math.min(window.innerWidth, canvasBounds.right);
+    const bottom = Math.min(window.innerHeight, canvasBounds.bottom);
+    const width = Math.max(0, right - x);
+    const height = Math.max(0, bottom - y);
+    const scaleX = canvasBounds.width / Math.max(1, this.scale.width);
     setPlayfieldCssVars({
       cornerRadius: PLAYFIELD_CORNER_RADIUS * scaleX,
-      height: this.playArea.height * scaleY,
-      width: this.playArea.width * scaleX,
-      x: canvasBounds.left + this.playArea.x * scaleX,
-      y: canvasBounds.top + this.playArea.y * scaleY,
+      height,
+      width,
+      x,
+      y,
     });
   }
 
@@ -1083,6 +1210,9 @@ export class PlayScene extends Phaser.Scene {
           Phaser.Math.Clamp(this.target.y, minY, maxY),
         );
       }
+      this.updateViewportTracking(this.ship.x);
+    } else {
+      this.updateViewportTracking(this.defaultTarget.x);
     }
   };
 

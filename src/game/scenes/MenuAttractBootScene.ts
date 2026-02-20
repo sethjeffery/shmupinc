@@ -5,17 +5,13 @@ import {
   VECTOR_BEVEL_PIPELINE_KEY,
 } from "../render/vector/vectorBevelPostPipeline";
 
-export class BootScene extends Phaser.Scene {
+export class MenuAttractBootScene extends Phaser.Scene {
   constructor() {
-    super("BootScene");
-  }
-
-  preload(): void {
-    this.cameras.main.setBackgroundColor("#05060a");
+    super("MenuAttractBootScene");
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor("#05060a");
+    this.cameras.main.setBackgroundColor("#04060a");
     if (this.game.renderer.type === Phaser.WEBGL) {
       const renderer = this.game
         .renderer as Phaser.Renderer.WebGL.WebGLRenderer;
@@ -24,5 +20,6 @@ export class BootScene extends Phaser.Scene {
         VectorBevelPostPipeline,
       );
     }
+    this.scene.start("MenuAttractScene");
   }
 }

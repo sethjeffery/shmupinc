@@ -4,8 +4,16 @@ import { BootScene } from "./scenes/BootScene";
 import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "./util/playArea";
 
 const GAME_BACKGROUND = "#05060a";
+const MOBILE_COVER_QUERY = "(max-width: 900px) and (pointer: coarse)";
+
+export const shouldUseMobileCoverScale = (): boolean =>
+  typeof window !== "undefined" &&
+  window.matchMedia(MOBILE_COVER_QUERY).matches;
 
 export function createGame(): Phaser.Game {
+  const scaleMode = shouldUseMobileCoverScale()
+    ? Phaser.Scale.ENVELOP
+    : Phaser.Scale.FIT;
   const config: Phaser.Types.Core.GameConfig = {
     backgroundColor: GAME_BACKGROUND,
     fps: {
@@ -19,8 +27,7 @@ export function createGame(): Phaser.Game {
     scale: {
       autoCenter: Phaser.Scale.CENTER_BOTH,
       height: PLAYFIELD_BASE_HEIGHT,
-      max: { height: PLAYFIELD_BASE_HEIGHT, width: PLAYFIELD_BASE_WIDTH },
-      mode: Phaser.Scale.FIT,
+      mode: scaleMode,
       width: PLAYFIELD_BASE_WIDTH,
     },
     scene: [BootScene],

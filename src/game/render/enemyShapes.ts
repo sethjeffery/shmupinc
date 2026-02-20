@@ -1,7 +1,10 @@
 import type { EnemyVector } from "../data/enemyTypes";
 import type Phaser from "phaser";
 
-import { drawVectorToGraphics, type PhaserVectorStyle } from "./vector/drawPhaser";
+import {
+  drawVectorToGraphics,
+  type PhaserVectorStyle,
+} from "./vector/drawPhaser";
 
 export const DEFAULT_ENEMY_VECTOR: EnemyVector = {
   items: [
@@ -21,9 +24,14 @@ export const drawEnemyToGraphics = (
   radius: number,
   style?: PhaserVectorStyle,
 ): void => {
-  drawVectorToGraphics(graphics, vector, {
-    scale: radius,
-    x: 0,
-    y: 0,
-  }, style);
+  drawVectorToGraphics(
+    graphics,
+    vector,
+    {
+      scale: radius,
+      x: 0,
+      y: 0,
+    },
+    style,
+  );
 };

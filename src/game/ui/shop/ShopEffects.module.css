@@ -3,6 +3,7 @@
   gap: 6px;
   opacity: 0;
   animation: effectsOn 0.22s ease-out var(--effects-delay, 0.3s) forwards;
+  margin-top: 14px;
 }
 
 .list {

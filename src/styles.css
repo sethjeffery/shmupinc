@@ -56,6 +56,13 @@ body.game-locked {
   position: relative;
   z-index: 2;
   display: flex;
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+body:not(.play-engine-active) #app {
+  opacity: 0;
+  pointer-events: none;
 }
 
 #app canvas {

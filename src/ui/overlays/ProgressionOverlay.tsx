@@ -1,9 +1,13 @@
 import type { GalaxyView } from "../../game/data/galaxyProgress";
 
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 const PROGRESSION_MAP_WIDTH = 1000;
-const PROGRESSION_MAP_HEIGHT = 640;
+const PROGRESSION_MAP_BASE_HEIGHT = 640;
+const PROGRESSION_MAP_MAX_HEIGHT = 1800;
+const PROGRESSION_MAP_STAR_COUNT = 180;
+const PROGRESSION_MAP_BASE_ASPECT =
+  PROGRESSION_MAP_WIDTH / PROGRESSION_MAP_BASE_HEIGHT;
 
 interface AmbientStar {
   cx: number;
@@ -36,13 +40,27 @@ const createRng = (seedValue: number): (() => number) => {
 const sanitizeSvgId = (value: string): string =>
   value.replace(/[^a-zA-Z0-9_-]/g, "-");
 
-const buildAmbientStars = (galaxyId: string): AmbientStar[] => {
-  const rand = createRng(hashString(`stars:${galaxyId}`));
+const buildAmbientStars = (
+  galaxyId: string,
+  mapWidth: number,
+  mapHeight: number,
+): AmbientStar[] => {
+  const areaScale =
+    (mapWidth * mapHeight) /
+    (PROGRESSION_MAP_WIDTH * PROGRESSION_MAP_BASE_HEIGHT);
+  const starCount = Math.round(PROGRESSION_MAP_STAR_COUNT * areaScale);
+  const clampedCount = Math.max(
+    PROGRESSION_MAP_STAR_COUNT,
+    Math.min(460, starCount),
+  );
+  const rand = createRng(
+    hashString(`stars:${galaxyId}:${mapWidth}:${mapHeight}`),
+  );
   const stars: AmbientStar[] = [];
-  for (let index = 0; index < 180; index += 1) {
+  for (let index = 0; index < clampedCount; index += 1) {
     stars.push({
-      cx: rand() * PROGRESSION_MAP_WIDTH,
-      cy: rand() * PROGRESSION_MAP_HEIGHT,
+      cx: rand() * mapWidth,
+      cy: rand() * mapHeight,
       delaySec: rand() * 8,
       durationSec: 2.8 + rand() * 8.6,
       opacity: 0.2 + rand() * 0.7,
@@ -56,7 +74,9 @@ export default function ProgressionOverlay(props: {
   onAction: (action: string, levelId?: string) => void;
   view: GalaxyView;
 }) {
+  const mapFrameRef = useRef<HTMLDivElement | null>(null);
   const [launchingNodeId, setLaunchingNodeId] = useState<null | string>(null);
+  const [mapAspect, setMapAspect] = useState(PROGRESSION_MAP_BASE_ASPECT);
   const launchTimerRef = useRef<null | number>(null);
 
   useEffect(
@@ -79,8 +99,44 @@ export default function ProgressionOverlay(props: {
     launchTimerRef.current = null;
   }, [launchingNodeId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const frame = mapFrameRef.current;
+    if (!frame) return;
+    const updateAspect = (): void => {
+      const bounds = frame.getBoundingClientRect();
+      if (bounds.width <= 0 || bounds.height <= 0) return;
+      const nextAspect = bounds.width / bounds.height;
+      setMapAspect((previous) =>
+        Math.abs(previous - nextAspect) > 0.005 ? nextAspect : previous,
+      );
+    };
+    updateAspect();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      updateAspect();
+    });
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
+  const mapHeight = useMemo(() => {
+    const aspect = Math.max(0.01, mapAspect);
+    if (aspect >= PROGRESSION_MAP_BASE_ASPECT) {
+      return PROGRESSION_MAP_BASE_HEIGHT;
+    }
+    const targetHeight = Math.round(PROGRESSION_MAP_WIDTH / aspect);
+    return Math.min(PROGRESSION_MAP_MAX_HEIGHT, targetHeight);
+  }, [mapAspect]);
+
+  const projectY = (normalizedY: number): number =>
+    Math.max(0, Math.min(1, normalizedY)) * mapHeight;
+
   const svgPrefix = `progression-${sanitizeSvgId(props.view.id)}`;
-  const ambientStars = buildAmbientStars(props.view.id);
+  const ambientStars = useMemo(
+    () => buildAmbientStars(props.view.id, PROGRESSION_MAP_WIDTH, mapHeight),
+    [props.view.id, mapHeight],
+  );
   const nodeById = new Map(props.view.nodes.map((node) => [node.id, node]));
   const currentNode =
     props.view.nodes.find((node) => node.isCurrent) ??
@@ -108,7 +164,7 @@ export default function ProgressionOverlay(props: {
     <div
       className={`progression-shell${launchingNodeId ? " is-launching" : ""}`}
     >
-      <div className="progression-map-frame">
+      <div className="progression-map-frame" ref={mapFrameRef}>
         <svg
           className={`progression-map${launchingNodeId ? " is-launching" : ""}`}
           style={
@@ -120,7 +176,7 @@ export default function ProgressionOverlay(props: {
                 }
               : undefined
           }
-          viewBox={`0 0 ${PROGRESSION_MAP_WIDTH} ${PROGRESSION_MAP_HEIGHT}`}
+          viewBox={`0 0 ${PROGRESSION_MAP_WIDTH} ${mapHeight}`}
         >
           <defs>
             <linearGradient id={`${svgPrefix}-edge-active`} x1="0%" x2="100%">
@@ -151,9 +207,9 @@ export default function ProgressionOverlay(props: {
             const to = nodeById.get(edge.to);
             if (!from || !to) return null;
             const x1 = from.pos.x * PROGRESSION_MAP_WIDTH;
-            const y1 = from.pos.y * PROGRESSION_MAP_HEIGHT;
+            const y1 = projectY(from.pos.y);
             const x2 = to.pos.x * PROGRESSION_MAP_WIDTH;
-            const y2 = to.pos.y * PROGRESSION_MAP_HEIGHT;
+            const y2 = projectY(to.pos.y);
             const className = `progression-edge${
               edge.isCompleted
                 ? " is-complete"
@@ -181,7 +237,7 @@ export default function ProgressionOverlay(props: {
           })}
           {props.view.nodes.map((node) => {
             const x = node.pos.x * PROGRESSION_MAP_WIDTH;
-            const y = node.pos.y * PROGRESSION_MAP_HEIGHT;
+            const y = projectY(node.pos.y);
             const className = `progression-node${
               node.isCompleted ? " is-complete" : ""
             }${node.isCurrent ? " is-current" : ""}${

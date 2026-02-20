@@ -73,6 +73,14 @@ export class HUD {
   }
 
   setBounds(bounds: Phaser.Geom.Rectangle): void {
+    if (
+      this.bounds.x === bounds.x &&
+      this.bounds.y === bounds.y &&
+      this.bounds.width === bounds.width &&
+      this.bounds.height === bounds.height
+    ) {
+      return;
+    }
     this.bounds.setTo(bounds.x, bounds.y, bounds.width, bounds.height);
     this.redraw();
   }

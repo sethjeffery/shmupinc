@@ -63,7 +63,9 @@ const toColorVec3 = (color: number): [number, number, number] => [
   (color & 0xff) / 255,
 ];
 
-export class VectorBevelPostPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+export class VectorBevelPostPipeline
+  extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline
+{
   private depthPx = 5;
   private sampleCount = 6;
   private shadeAlpha = 1;
