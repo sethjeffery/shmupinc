@@ -6,6 +6,10 @@ import Phaser from "phaser";
 import { GUNS } from "../data/guns";
 import { drawGunToGraphics } from "../render/gunShapes";
 import { drawShipToGraphics } from "../render/shipShapes";
+import {
+  applyVectorBevelFx,
+  computeVectorBevelDepthPx,
+} from "../render/vector/vectorBevelFx";
 
 interface GunAttachment {
   color: number;
@@ -53,6 +57,7 @@ export class Ship {
 
     this.graphics = scene.add.graphics();
     this.graphics.setDepth(10);
+    this.updateVectorBevel();
     this.redraw(0);
     this.setPosition(this.x, this.y);
   }
@@ -96,6 +101,7 @@ export class Ship {
 
   setRadius(radius: number): void {
     this.radius = radius;
+    this.updateVectorBevel();
     this.redraw(this.flashTimer);
   }
 
@@ -146,6 +152,10 @@ export class Ship {
     this.graphics.clear();
     this.drawGuns();
     drawShipToGraphics(this.graphics, this.vector, this.radius, {
+      bevel: {
+        depthPx: computeVectorBevelDepthPx(this.radius, 3, 8),
+        layerAlpha: 0.98,
+      },
       lineWidth: this.shipStrokeWidth,
     });
     if (flashStrength > 0.03) {
@@ -178,6 +188,15 @@ export class Ship {
         attachment.rotationRad,
       );
     }
+  }
+
+  private updateVectorBevel(): void {
+    applyVectorBevelFx(this.graphics, {
+      depthPx: computeVectorBevelDepthPx(this.radius),
+      samples: 8,
+      shadeAlpha: 1,
+      shadeColor: 0xffffff,
+    });
   }
 
   destroy(): void {

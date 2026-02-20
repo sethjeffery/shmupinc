@@ -16,6 +16,7 @@ export const drawModToCanvas = (
   y: number,
   size: number,
   accent: number,
+  rotationRad = 0,
 ): void => {
   const stroke = accent;
   const fill = scaleColor(accent, 0.32);
@@ -23,8 +24,12 @@ export const drawModToCanvas = (
   drawVectorToCanvas(
     ctx,
     icon,
-    { scale: size, x, y },
+    { rotationRad, scale: size, x, y },
     {
+      bevel: {
+        depthPx: Math.max(2, Math.min(4, Math.round(size * 0.25))),
+        layerAlpha: 0.96,
+      },
       fillStyle: `#${fill.toString(16).padStart(6, "0")}`,
       lineWidth: 2,
       strokeStyle: `#${stroke.toString(16).padStart(6, "0")}`,

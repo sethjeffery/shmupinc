@@ -99,7 +99,7 @@ export default function ShopLoadoutDrawer(props: {
                       className={styles["item-canvas"]}
                       kind={choice.iconKind}
                       shape={choice.shape}
-                      size={44}
+                      size={88}
                     />
                   </span>
                   <span className={styles.copy}>

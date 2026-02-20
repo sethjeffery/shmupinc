@@ -36,13 +36,16 @@ export default function ModPreviewStageView(props: {
       </ShopInfoPanel>
 
       <ShopSpinningMod>
-        <ItemIcon
-          accentColor={props.accentColor}
-          className={styles.icon}
-          kind="mod"
-          shape={props.shape}
-          size={180}
-        />
+        {(rotationRad) => (
+          <ItemIcon
+            accentColor={props.accentColor}
+            className={styles.icon}
+            kind="mod"
+            rotationRad={rotationRad}
+            shape={props.shape}
+            size={180}
+          />
+        )}
       </ShopSpinningMod>
     </ShopPreviewStage>
   );

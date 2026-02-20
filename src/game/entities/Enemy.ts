@@ -9,6 +9,10 @@ import {
   DEFAULT_ENEMY_VECTOR,
   drawEnemyToGraphics,
 } from "../render/enemyShapes";
+import {
+  applyVectorBevelFx,
+  computeVectorBevelDepthPx,
+} from "../render/vector/vectorBevelFx";
 import { FireScriptRunner } from "../systems/FireScriptRunner";
 import { MoveScriptRunner } from "../systems/MoveScriptRunner";
 import { PLAYFIELD_BASE_HEIGHT, PLAYFIELD_BASE_WIDTH } from "../util/playArea";
@@ -61,6 +65,7 @@ export class Enemy {
 
     this.graphics = scene.add.graphics();
     this.graphics.setDepth(5);
+    this.updateVectorBevel();
     this.redraw(0);
     this.graphics.setPosition(this.x, this.y);
     this.applyRotationMode();
@@ -88,6 +93,7 @@ export class Enemy {
     this.y = this.moveRunner.y;
     this.graphics.setVisible(true);
     this.graphics.setPosition(this.x, this.y);
+    this.updateVectorBevel();
     this.redraw(0);
     this.applyRotationMode();
   }
@@ -265,16 +271,18 @@ export class Enemy {
       lineBlend.b,
     );
 
-    this.graphics.lineStyle(
-      2 + dyingProgress * 0.7 + flashBlend * 0.7,
-      lineColor,
-      1,
-    );
+    this.graphics.lineStyle(1, lineColor, 1);
     this.graphics.fillStyle(fill, 0.92 + flashBlend * 0.08);
     drawEnemyToGraphics(
       this.graphics,
       style.vector ?? DEFAULT_ENEMY_VECTOR,
       this.radius,
+      {
+        bevel: {
+          depthPx: computeVectorBevelDepthPx(this.radius, 3, 8),
+          layerAlpha: 0.97,
+        },
+      },
     );
     if (flashBlend > 0.04) {
       this.graphics.lineStyle(
@@ -306,5 +314,14 @@ export class Enemy {
     const dy = this.y - previousY;
     if (dx * dx + dy * dy < 0.0001) return;
     this.graphics.setRotation(Math.atan2(dy, dx) + Math.PI / 2);
+  }
+
+  private updateVectorBevel(): void {
+    applyVectorBevelFx(this.graphics, {
+      depthPx: computeVectorBevelDepthPx(this.radius),
+      samples: 10,
+      shadeAlpha: 1,
+      shadeColor: 0xffffff,
+    });
   }
 }

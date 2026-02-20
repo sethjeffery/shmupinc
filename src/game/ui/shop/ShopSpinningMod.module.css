@@ -3,21 +3,11 @@
   top: 50%;
   left: 75%;
   transform: translate(-50%, -50%);
-  animation: spin 14s linear infinite;
 }
 
 @media (max-width: 960px) {
   .rotator {
     top: 78%;
     left: 50%;
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
   }
 }

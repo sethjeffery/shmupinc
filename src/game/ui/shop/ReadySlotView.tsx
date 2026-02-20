@@ -27,7 +27,7 @@ export default function ReadySlotView(props: {
       className={styles["slot-canvas"]}
       kind={slot.kind}
       shape={slot.shape}
-      size={52}
+      size={104}
     />
   );
 

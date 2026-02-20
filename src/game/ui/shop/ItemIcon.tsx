@@ -14,6 +14,7 @@ export function ItemIcon(props: {
   className?: string;
   size?: number;
   kind: CardIconKind;
+  rotationRad?: number;
 }) {
   const size = Math.max(24, Math.round(props.size ?? 100));
   return (
@@ -26,6 +27,7 @@ export function ItemIcon(props: {
           colorHex: formatColor(props.accentColor),
           colorValue: props.accentColor,
           kind: props.kind,
+          rotationRad: props.rotationRad,
           shape: props.shape,
         })
       }

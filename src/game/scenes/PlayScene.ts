@@ -361,6 +361,7 @@ export class PlayScene extends Phaser.Scene {
       radius: resolveShipRadius(stats.ship),
       vector: stats.ship.vector,
     });
+    this.ship.setStrokeWidth(1);
     this.ship.setMountedWeapons(this.mountedWeapons);
     this.collisionResolver = new PlayerCollisionResolver(
       {

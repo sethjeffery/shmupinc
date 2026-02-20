@@ -1,5 +1,10 @@
 import Phaser from "phaser";
 
+import {
+  applyVectorBevelFx,
+  computeVectorBevelDepthPx,
+} from "../render/vector/vectorBevelFx";
+
 export class PickupGold {
   scene: Phaser.Scene;
   x: number;
@@ -39,6 +44,7 @@ export class PickupGold {
 
     this.graphics = scene.add.graphics();
     this.graphics.setDepth(6);
+    this.updateVectorBevel();
     this.redraw();
     this.graphics.setVisible(false);
     this.lifetimeMs = 9000;
@@ -138,5 +144,14 @@ export class PickupGold {
       -this.radius * 0.28,
       this.radius * 0.2,
     );
+  }
+
+  private updateVectorBevel(): void {
+    applyVectorBevelFx(this.graphics, {
+      depthPx: computeVectorBevelDepthPx(this.radius, 2, 4),
+      samples: 6,
+      shadeAlpha: 1,
+      shadeColor: 0xffffff,
+    });
   }
 }

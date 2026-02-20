@@ -11,6 +11,7 @@ interface DrawIconOptions {
   colorHex: string;
   colorValue: number;
   kind: CardIconKind;
+  rotationRad?: number;
   shape: VectorShape;
 }
 
@@ -43,7 +44,14 @@ export const drawShopIcon = (options: DrawIconOptions): void => {
     return;
   }
 
-  drawCenteredIcon(ctx, options.shape, width, height, options.colorValue);
+  drawCenteredIcon(
+    ctx,
+    options.shape,
+    width,
+    height,
+    options.colorValue,
+    options.rotationRad,
+  );
 };
 
 const drawCenteredIcon = (
@@ -52,6 +60,7 @@ const drawCenteredIcon = (
   canvasWidth: number,
   canvasHeight: number,
   colorValue: number,
+  rotationRad = 0,
 ): void => {
   const bounds = getIconBounds(icon);
   const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
@@ -69,6 +78,7 @@ const drawCenteredIcon = (
     canvasHeight * 0.5 - localCenterY * scale,
     scale,
     colorValue,
+    rotationRad,
   );
 };
 
@@ -86,7 +96,13 @@ const drawShip = (
   ctx.fillStyle = fill;
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 2;
-  drawShipToCanvas(ctx, vector, r);
+  drawShipToCanvas(ctx, vector, r, {
+    bevel: {
+      depthPx: Math.max(2, Math.min(5, Math.round(r * 0.26))),
+      layerAlpha: 0.97,
+    },
+    lineWidth: 2,
+  });
   ctx.restore();
 };
 

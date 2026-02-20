@@ -4,6 +4,10 @@ import type { CompiledPathItem, CompiledVectorItem } from "./compile";
 import { getCompiledVectorShape } from "./cache";
 
 export interface CanvasVectorStyle {
+  bevel?: {
+    depthPx: number;
+    layerAlpha?: number;
+  };
   fillStyle?: string;
   lineWidth: number;
   strokeStyle?: string;
@@ -36,6 +40,8 @@ const transformPoint = (
 
 const toCssColor = (value: number): string =>
   `#${value.toString(16).padStart(6, "0")}`;
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 const drawPathItem = (
   ctx: CanvasRenderingContext2D,
@@ -170,15 +176,32 @@ export const drawVectorToCanvas = (
   style?: CanvasVectorStyle,
 ): void => {
   const compiled = getCompiledVectorShape(shape);
-  for (const item of compiled.items) {
-    if (item.t === "p") {
-      drawPathItem(ctx, item, transform, style);
-      continue;
+  const drawCompiled = (layerTransform: VectorTransform): void => {
+    for (const item of compiled.items) {
+      if (item.t === "p") {
+        drawPathItem(ctx, item, layerTransform, style);
+        continue;
+      }
+      if (item.t === "c") {
+        drawCircleItem(ctx, item, layerTransform, style);
+        continue;
+      }
+      drawEllipseItem(ctx, item, layerTransform, style);
     }
-    if (item.t === "c") {
-      drawCircleItem(ctx, item, transform, style);
-      continue;
+  };
+
+  const bevelDepth = Math.max(0, Math.round(style?.bevel?.depthPx ?? 0));
+  if (bevelDepth > 0) {
+    const baseAlpha = ctx.globalAlpha;
+    const layerAlpha = clamp01(style?.bevel?.layerAlpha ?? 1);
+    const bevelTransform: VectorTransform = { ...transform };
+    for (let offset = bevelDepth; offset >= 1; offset -= 1) {
+      ctx.globalAlpha = baseAlpha * layerAlpha;
+      bevelTransform.y = transform.y + offset;
+      drawCompiled(bevelTransform);
     }
-    drawEllipseItem(ctx, item, transform, style);
+    ctx.globalAlpha = baseAlpha;
   }
+
+  drawCompiled(transform);
 };

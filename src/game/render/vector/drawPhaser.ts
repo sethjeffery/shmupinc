@@ -1,17 +1,24 @@
 import type { VectorShape } from "../../data/vectorShape";
 import type { CompiledPathItem, CompiledVectorItem } from "./compile";
 import type { VectorTransform } from "./drawCanvas";
-import type Phaser from "phaser";
+
+import Phaser from "phaser";
 
 import { getCompiledVectorShape } from "./cache";
 
 export interface PhaserVectorStyle {
+  bevel?: {
+    depthPx: number;
+    layerAlpha?: number;
+  };
   fillAlpha?: number;
   fillColor?: number;
   lineAlpha?: number;
   lineColor?: number;
   lineWidth?: number;
 }
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 const transformPoint = (
   transform: VectorTransform,
@@ -189,15 +196,39 @@ export const drawVectorToGraphics = (
   style?: PhaserVectorStyle,
 ): void => {
   const compiled = getCompiledVectorShape(shape);
-  for (const item of compiled.items) {
-    if (item.t === "p") {
-      drawPathItem(graphics, item, transform, style);
-      continue;
+  const drawCompiled = (
+    layerTransform: VectorTransform,
+    layerStyle: PhaserVectorStyle | undefined,
+  ): void => {
+    for (const item of compiled.items) {
+      if (item.t === "p") {
+        drawPathItem(graphics, item, layerTransform, layerStyle);
+        continue;
+      }
+      if (item.t === "c") {
+        drawCircleItem(graphics, item, layerTransform, layerStyle);
+        continue;
+      }
+      drawEllipseItem(graphics, item, layerTransform, layerStyle);
     }
-    if (item.t === "c") {
-      drawCircleItem(graphics, item, transform, style);
-      continue;
+  };
+
+  const bevelDepth = Math.max(0, Math.round(style?.bevel?.depthPx ?? 0));
+  const useSoftwareBevel =
+    bevelDepth > 0 && graphics.scene.game.renderer.type !== Phaser.WEBGL;
+  if (useSoftwareBevel) {
+    const layerAlpha = clamp01(style?.bevel?.layerAlpha ?? 1);
+    const bevelStyle: PhaserVectorStyle = {
+      ...style,
+      fillAlpha: (style?.fillAlpha ?? graphics.defaultFillAlpha) * layerAlpha,
+      lineAlpha: (style?.lineAlpha ?? graphics.defaultStrokeAlpha) * layerAlpha,
+    };
+    const bevelTransform: VectorTransform = { ...transform };
+    for (let offset = bevelDepth; offset >= 1; offset -= 1) {
+      bevelTransform.y = transform.y + offset;
+      drawCompiled(bevelTransform, bevelStyle);
     }
-    drawEllipseItem(graphics, item, transform, style);
   }
+
+  drawCompiled(transform, style);
 };
