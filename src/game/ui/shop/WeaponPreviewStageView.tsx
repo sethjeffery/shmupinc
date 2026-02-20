@@ -1,9 +1,14 @@
-import type { ComponentChildren } from "preact";
+import type { MountedWeapon } from "../../data/save";
+import type { ShipDefinition } from "../../data/ships";
 
 import ShopCanvasArea from "./ShopCanvasArea";
+import { ShopEffects } from "./ShopEffects";
 import ShopInfoPanel from "./ShopInfoPanel";
+import { ShopLabel } from "./ShopLabel";
+import { ShopPreviewStage } from "./ShopPreviewStage";
+import { ShopStats } from "./ShopStats";
 
-import styles from "../../scenes/ShopScene.module.css";
+import styles from "./WeaponPreviewStageView.module.css";
 
 interface WeaponPreviewStatViewModel {
   fill: number;
@@ -11,93 +16,44 @@ interface WeaponPreviewStatViewModel {
 }
 
 export default function WeaponPreviewStageView(props: {
-  action: ComponentChildren;
+  action?: string;
+  actionDisabled?: boolean;
+  onAction?: () => void;
   description: string;
   effects: string[];
   fitsCurrentShip: boolean;
-  previewRootRef: (element: HTMLDivElement | null) => void;
+  previewLoadout: {
+    mountedWeapons: MountedWeapon[];
+    ship: ShipDefinition;
+  };
   sizeLabel: string;
-  statStepCount: number;
   stats: WeaponPreviewStatViewModel[];
   title: string;
   visibleDescription: string;
 }) {
   return (
-    <div className={`${styles["shop-preview-stage"]} ${styles["is-weapon"]}`}>
-      <div className={styles["shop-item-preview-grid"]}>
-        <ShopInfoPanel
-          actions={props.action}
-          className={styles["shop-item-preview-info"]}
-          description={props.description}
-          streamClassName={styles["shop-item-preview-stream"]}
-          title={props.title}
-          titleClassName={styles["shop-item-preview-name"]}
-          visibleDescription={props.visibleDescription}
-        >
-          <div className={styles["shop-weapon-size"]}>
-            <div className={styles["shop-item-section-label"]}>Size</div>
-            <div className={styles["shop-weapon-size-value"]}>
-              {props.sizeLabel}
-            </div>
-            {!props.fitsCurrentShip ? (
-              <div className={styles["shop-weapon-size-warning"]}>
-                Will not fit on your ship
-              </div>
-            ) : null}
-          </div>
-
-          <div className={styles["shop-item-stats"]}>
-            {props.stats.map((stat) => {
-              const filledSteps = Math.max(
-                0,
-                Math.min(
-                  props.statStepCount,
-                  Math.round(stat.fill * props.statStepCount),
-                ),
-              );
-              return (
-                <div className={styles["shop-item-stat"]} key={stat.label}>
-                  <div className={styles["shop-item-stat-head"]}>
-                    <span className={styles["shop-item-stat-label"]}>
-                      {stat.label}
-                    </span>
-                  </div>
-                  <span className={styles["shop-item-stat-rail"]}>
-                    {Array.from({ length: filledSteps }, (_, step) => (
-                      <span
-                        className={styles["shop-item-stat-step"]}
-                        key={`${stat.label}-step-${step}`}
-                      />
-                    ))}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className={styles["shop-item-effects"]}>
-            <div className={styles["shop-item-section-label"]}>Effects</div>
-            <div className={styles["shop-item-effect-list"]}>
-              {props.effects.length > 0 ? (
-                props.effects.map((effect) => (
-                  <span className={styles["shop-item-effect"]} key={effect}>
-                    {effect}
-                  </span>
-                ))
-              ) : (
-                <span className={styles["shop-item-effect-muted"]}>None</span>
-              )}
-            </div>
-          </div>
-        </ShopInfoPanel>
-
-        <div className={styles["shop-item-preview-visual"]}>
-          <ShopCanvasArea
-            className={styles["shop-preview-canvas"]}
-            previewRootRef={props.previewRootRef}
-          />
+    <ShopPreviewStage>
+      <ShopInfoPanel
+        action={props.action}
+        actionDisabled={props.actionDisabled}
+        onAction={props.onAction}
+        description={props.description}
+        title={props.title}
+        visibleDescription={props.visibleDescription}
+      >
+        <div className={styles.size}>
+          <ShopLabel>Size</ShopLabel>
+          <div className={styles.sizeValue}>{props.sizeLabel}</div>
+          {!props.fitsCurrentShip ? (
+            <div className={styles.sizeWarning}>Will not fit on your ship</div>
+          ) : null}
         </div>
-      </div>
-    </div>
+
+        <ShopStats stats={props.stats} key={props.title} />
+        <ShopEffects effects={props.effects} key={props.title} />
+      </ShopInfoPanel>
+
+      <ShopCanvasArea previewLoadout={props.previewLoadout} />
+    </ShopPreviewStage>
   );
 }

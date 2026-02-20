@@ -1,0 +1,19 @@
+.stage {
+  position: relative;
+  min-height: clamp(360px, 60vh, 780px);
+  height: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(125, 249, 255, 0.14);
+  background: linear-gradient(
+    160deg,
+    rgba(13, 19, 31, 0.92),
+    rgba(8, 12, 20, 0.95)
+  );
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  .stage {
+    min-height: clamp(420px, 80vh, 760px);
+  }
+}

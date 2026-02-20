@@ -1,0 +1,32 @@
+.mountRow {
+  display: grid;
+  gap: 6px;
+}
+
+.mountName {
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(184, 208, 236, 0.9);
+}
+
+.slots {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+}
+
+.link {
+  flex: 0 0 26px;
+  align-self: center;
+  border-radius: 999px;
+  border-top: solid 1px rgba(125, 249, 255, 0.22);
+  box-shadow: 0 0 8px rgba(125, 249, 255, 0.24);
+  margin: 0 -11px;
+}
+
+.link.disabled {
+  border-top-color: rgba(125, 249, 255, 0.24);
+}

@@ -1,0 +1,67 @@
+.item {
+  min-width: 128px;
+  border: 1px solid rgba(125, 249, 255, 0);
+  border-radius: 12px;
+  background: transparent;
+  color: #dcecff;
+  padding: 12px 10px;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(125, 249, 255, 0.42);
+}
+
+.item.is-selected {
+  border-color: rgba(125, 249, 255, 0.78);
+  box-shadow:
+    0 0 16px rgba(125, 249, 255, 0.25),
+    inset 0 0 12px rgba(125, 249, 255, 0.18);
+}
+
+.item.is-equipped {
+  box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.75) inset;
+}
+
+.icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas {
+  width: 52px;
+  height: 52px;
+  display: block;
+  filter: drop-shadow(0 0 8px var(--accent));
+}
+
+.name {
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meta {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.item.is-owned .meta {
+  color: #069a5a;
+}

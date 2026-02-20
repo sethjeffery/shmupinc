@@ -1,0 +1,94 @@
+.slot {
+  border: 1px solid rgba(125, 249, 255, 0.22);
+  border-radius: 10px;
+  background: rgba(11, 18, 30, 0.82);
+  color: #def0ff;
+  min-width: 112px;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.slot.is-weapon {
+  min-width: 126px;
+}
+
+.slot.is-mod {
+  min-width: 112px;
+}
+
+.slot:hover {
+  border-color: rgba(125, 249, 255, 0.5);
+}
+
+.slot.is-active {
+  border-color: rgba(255, 209, 102, 0.9);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.24);
+}
+
+.slot.is-empty .slot-label {
+  color: rgba(183, 205, 233, 0.78);
+}
+
+.slot.is-disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.slot-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-canvas {
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 0 7px rgba(125, 249, 255, 0.28));
+}
+
+.empty-weapon-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px solid rgba(125, 249, 255, 0.62);
+  box-shadow:
+    inset 0 0 10px rgba(125, 249, 255, 0.2),
+    0 0 10px rgba(125, 249, 255, 0.28);
+}
+
+.empty-mod-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px dashed rgba(125, 249, 255, 0.5);
+  box-shadow:
+    inset 0 0 10px rgba(125, 249, 255, 0.14),
+    0 0 8px rgba(125, 249, 255, 0.2);
+}
+
+.slot-label {
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+@media (max-width: 640px) {
+  .slot {
+    min-width: 120px;
+  }
+
+  .slot.is-mod {
+    min-width: 112px;
+  }
+}

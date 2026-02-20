@@ -107,14 +107,19 @@ interface EditorShellRefs {
   validationStatus: HTMLDivElement;
 }
 
-const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
+const ContentEditorShell = (props: {
+  setRef: <K extends keyof EditorShellRefs>(
+    key: K,
+    element: EditorShellRefs[K] | null,
+  ) => void;
+}) => (
   <>
     <aside className="content-editor__sidebar">
       <div className="content-editor__title">Content</div>
       <div
         className="content-editor__tree"
         ref={(element) => {
-          props.refs.treeContainer = element ?? undefined;
+          props.setRef("treeContainer", element);
         }}
       />
     </aside>
@@ -123,7 +128,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
         <div
           className="content-editor__file"
           ref={(element) => {
-            props.refs.fileLabel = element ?? undefined;
+            props.setRef("fileLabel", element);
           }}
         >
           No file selected
@@ -133,7 +138,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
             className="content-editor__status"
             data-status="validation"
             ref={(element) => {
-              props.refs.validationStatus = element ?? undefined;
+              props.setRef("validationStatus", element);
             }}
             title="Waiting for validation."
           >
@@ -145,7 +150,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               data-action="save"
               disabled
               ref={(element) => {
-                props.refs.saveButton = element ?? undefined;
+                props.setRef("saveButton", element);
               }}
               type="button"
             >
@@ -156,7 +161,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               data-action="play"
               disabled
               ref={(element) => {
-                props.refs.playButton = element ?? undefined;
+                props.setRef("playButton", element);
               }}
               type="button"
             >
@@ -167,7 +172,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               data-action="restart"
               disabled
               ref={(element) => {
-                props.refs.restartButton = element ?? undefined;
+                props.setRef("restartButton", element);
               }}
               type="button"
             >
@@ -180,14 +185,14 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
         <div
           className="content-editor__editor"
           ref={(element) => {
-            props.refs.editorContainer = element ?? undefined;
+            props.setRef("editorContainer", element);
           }}
         />
         <div className="content-editor__side">
           <section
             className="content-editor__panel"
             ref={(element) => {
-              props.refs.modIconSection = element ?? undefined;
+              props.setRef("modIconSection", element);
             }}
           >
             <div className="content-editor__panel-title">Mod Icon</div>
@@ -195,7 +200,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               <div
                 className="content-editor__mod-icon-preview"
                 ref={(element) => {
-                  props.refs.modIconCanvasHost = element ?? undefined;
+                  props.setRef("modIconCanvasHost", element);
                 }}
               />
             </div>
@@ -203,7 +208,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
           <section
             className="content-editor__panel"
             ref={(element) => {
-              props.refs.previewSection = element ?? undefined;
+              props.setRef("previewSection", element);
             }}
           >
             <div className="content-editor__panel-title">Preview</div>
@@ -211,28 +216,28 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               className="content-editor__panel-body"
               data-panel="preview"
               ref={(element) => {
-                props.refs.previewPanel = element ?? undefined;
+                props.setRef("previewPanel", element);
               }}
             >
               <div
                 className="content-editor__preview-text"
                 data-preview="text"
                 ref={(element) => {
-                  props.refs.previewText = element ?? undefined;
+                  props.setRef("previewText", element);
                 }}
               />
               <div
                 className="content-editor__preview-tabs"
                 data-preview="tabs"
                 ref={(element) => {
-                  props.refs.previewTabs = element ?? undefined;
+                  props.setRef("previewTabs", element);
                 }}
               />
               <div
                 className="content-editor__preview-canvas"
                 data-preview="canvas"
                 ref={(element) => {
-                  props.refs.previewCanvasHost = element ?? undefined;
+                  props.setRef("previewCanvasHost", element);
                 }}
               />
             </div>
@@ -243,14 +248,14 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               className="content-editor__panel-body content-editor__schema"
               data-panel="schema"
               ref={(element) => {
-                props.refs.schemaPanel = element ?? undefined;
+                props.setRef("schemaPanel", element);
               }}
             />
           </section>
           <section
             className="content-editor__panel"
             ref={(element) => {
-              props.refs.referenceSection = element ?? undefined;
+              props.setRef("referenceSection", element);
             }}
           >
             <div className="content-editor__panel-title">References</div>
@@ -258,14 +263,14 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               className="content-editor__panel-body content-editor__references"
               data-panel="references"
               ref={(element) => {
-                props.refs.referencePanel = element ?? undefined;
+                props.setRef("referencePanel", element);
               }}
             />
           </section>
           <section
             className="content-editor__panel content-editor__panel--bezier"
             ref={(element) => {
-              props.refs.bezierSection = element ?? undefined;
+              props.setRef("bezierSection", element);
             }}
           >
             <div className="content-editor__panel-title">Bezier</div>
@@ -273,19 +278,19 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
               className="content-editor__panel-body content-editor__bezier"
               data-panel="bezier"
               ref={(element) => {
-                props.refs.bezierPanel = element ?? undefined;
+                props.setRef("bezierPanel", element);
               }}
             >
               <div
                 className="content-editor__bezier-stage"
                 ref={(element) => {
-                  props.refs.bezierStage = element ?? undefined;
+                  props.setRef("bezierStage", element);
                 }}
               >
                 <canvas
                   className="content-editor__bezier-canvas"
                   ref={(element) => {
-                    props.refs.bezierCanvas = element ?? undefined;
+                    props.setRef("bezierCanvas", element);
                   }}
                 />
               </div>
@@ -293,7 +298,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
                 className="content-editor__bezier-info"
                 data-bezier="info"
                 ref={(element) => {
-                  props.refs.bezierInfo = element ?? undefined;
+                  props.setRef("bezierInfo", element);
                 }}
               />
             </div>
@@ -305,7 +310,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
                 <input
                   data-debug="hazards"
                   ref={(element) => {
-                    props.refs.hazardToggle = element ?? undefined;
+                    props.setRef("hazardToggle", element);
                   }}
                   type="checkbox"
                 />
@@ -315,7 +320,7 @@ const ContentEditorShell = (props: { refs: Partial<EditorShellRefs> }) => (
                 <input
                   data-debug="spawns"
                   ref={(element) => {
-                    props.refs.spawnToggle = element ?? undefined;
+                    props.setRef("spawnToggle", element);
                   }}
                   type="checkbox"
                 />
@@ -347,7 +352,13 @@ export const initContentEditor = (): void => {
   }
   root.className = "content-editor";
   const refs: Partial<EditorShellRefs> = {};
-  render(<ContentEditorShell refs={refs} />, root);
+  const setRef = <K extends keyof EditorShellRefs>(
+    key: K,
+    element: EditorShellRefs[K] | null,
+  ): void => {
+    refs[key] = element ?? undefined;
+  };
+  render(<ContentEditorShell setRef={setRef} />, root);
 
   const treeContainer = requireRef(refs.treeContainer, "treeContainer");
   const editorContainer = requireRef(refs.editorContainer, "editorContainer");

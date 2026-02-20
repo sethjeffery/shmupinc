@@ -8,14 +8,10 @@ export default function ShopTopCarousel(props: {
   carouselClassName?: string;
   children: ComponentChildren;
   className?: string;
-  kind?: "mods" | "ships" | "weapons";
 }) {
   return (
     <div className={clsx(styles["carousel-outer"], props.className)}>
-      <div
-        className={clsx(styles.carousel, props.carouselClassName)}
-        data-kind={props.kind}
-      >
+      <div className={clsx(styles.carousel, props.carouselClassName)}>
         {props.children}
       </div>
     </div>

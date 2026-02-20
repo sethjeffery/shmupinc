@@ -1,0 +1,17 @@
+.size {
+  display: grid;
+  gap: 4px;
+}
+
+.sizeValue {
+  font-family: "Orbitron", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f2fcff;
+}
+
+.sizeWarning {
+  font-size: 11px;
+  color: #ffbc9a;
+}

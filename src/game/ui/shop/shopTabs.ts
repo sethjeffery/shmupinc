@@ -1,3 +1,5 @@
+import type { CardIconKind } from "./iconPainter";
+
 export type ShopCategory = "loadout" | "mods" | "ships" | "weapons";
 
 type ShopTabAction = "show-mods" | "show-ships" | "show-weapons";
@@ -6,7 +8,7 @@ interface ShopTabDef {
   action: ShopTabAction;
   category: ShopCategory;
   description: string;
-  icon: "mod" | "mount" | "ship" | "weapon";
+  icon: CardIconKind;
   label: string;
   title: string;
 }

@@ -102,25 +102,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.item-canvas {
+  width: 44px;
+  height: 44px;
   filter: drop-shadow(0 0 8px var(--accent));
 }
 
 .copy {
   min-width: 0;
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 
 .label {
   font-family: "Orbitron", sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: #ebf8ff;
 }
 
 .meta {
-  font-size: 10px;
+  font-size: 11px;
   color: rgba(190, 212, 238, 0.82);
 }
 

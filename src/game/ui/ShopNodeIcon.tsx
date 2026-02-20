@@ -1,4 +1,5 @@
 import { useEffect } from "preact/hooks";
+import { useRef } from "preact/hooks";
 
 import styles from "../scenes/ShopScene.module.css";
 
@@ -7,9 +8,9 @@ export default function ShopNodeIcon(props: {
   size?: number;
   onDraw: (canvas: HTMLCanvasElement) => void;
 }) {
-  let canvasRef: HTMLCanvasElement | null = null;
+  const canvasElRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
-    if (canvasRef) props.onDraw(canvasRef);
+    if (canvasElRef.current) props.onDraw(canvasElRef.current);
   });
   const size = Math.max(24, Math.round(props.size ?? 100));
   return (
@@ -17,7 +18,7 @@ export default function ShopNodeIcon(props: {
       className={props.className ?? styles["shop-node-icon"]}
       height={size}
       ref={(el) => {
-        canvasRef = el;
+        canvasElRef.current = el;
       }}
       width={size}
     />

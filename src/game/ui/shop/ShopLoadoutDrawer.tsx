@@ -1,6 +1,9 @@
-import type { ComponentChildren } from "preact";
+import type { VectorShape } from "../../data/vectorShape";
+import type { CardIconKind } from "./iconPainter";
 
 import clsx from "clsx";
+
+import { ItemIcon } from "./ItemIcon";
 
 import styles from "./ShopLoadoutDrawer.module.css";
 
@@ -9,12 +12,13 @@ const formatColor = (color: number): string =>
 
 export interface ShopLoadoutDrawerChoice {
   accentColor: number;
-  icon: ComponentChildren;
+  iconKind: CardIconKind;
   id: string;
   isCurrent: boolean;
   label: string;
   meta: string;
   onSelect: () => void;
+  shape: VectorShape;
 }
 
 export default function ShopLoadoutDrawer(props: {
@@ -61,17 +65,16 @@ export default function ShopLoadoutDrawer(props: {
           <div className={styles.empty}>{props.blockedMessage}</div>
         ) : (
           <div className={styles.list}>
-            <button
-              className={clsx(
-                styles.item,
-                props.canClear ? undefined : styles["is-disabled"],
-              )}
-              disabled={!props.canClear}
-              onClick={props.onClear}
-              type="button"
-            >
-              <span className={styles.label}>{props.clearLabel}</span>
-            </button>
+            {props.canClear ? (
+              <button
+                className={styles.item}
+                disabled={!props.canClear}
+                onClick={props.onClear}
+                type="button"
+              >
+                <span className={styles.label}>{props.clearLabel}</span>
+              </button>
+            ) : null}
             {props.choices.length === 0 ? (
               <div className={styles.empty}>{props.emptyMessage}</div>
             ) : (
@@ -90,7 +93,15 @@ export default function ShopLoadoutDrawer(props: {
                   }
                   type="button"
                 >
-                  <span className={styles.icon}>{choice.icon}</span>
+                  <span className={styles.icon}>
+                    <ItemIcon
+                      accentColor={choice.accentColor}
+                      className={styles["item-canvas"]}
+                      kind={choice.iconKind}
+                      shape={choice.shape}
+                      size={44}
+                    />
+                  </span>
                   <span className={styles.copy}>
                     <span className={styles.label}>{choice.label}</span>
                     <span className={styles.meta}>{choice.meta}</span>

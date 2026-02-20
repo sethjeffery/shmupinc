@@ -1,0 +1,61 @@
+.effects {
+  display: grid;
+  gap: 6px;
+  opacity: 0;
+  animation: effectsOn 0.22s ease-out var(--effects-delay, 0.3s) forwards;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.effect {
+  border-radius: 999px;
+  border: 1px solid rgba(125, 249, 255, 0.28);
+  background: rgba(10, 18, 30, 0.72);
+  padding: 4px 9px;
+  font-family: "Orbitron", sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d9eeff;
+  opacity: 0;
+  animation: effectOn 0.22s ease-out var(--effect-delay, 0.3s) forwards;
+}
+
+.muted {
+  font-size: 11px;
+  color: rgba(190, 212, 238, 0.82);
+}
+
+.title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #d4ebff;
+}
+
+@keyframes effectOn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes effectsOn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

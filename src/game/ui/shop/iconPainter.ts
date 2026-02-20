@@ -1,25 +1,27 @@
-import type { ModIconVector } from "../../data/modTypes";
-import type { ShipVector } from "../../data/shipTypes";
-import type { WeaponSize } from "../../data/weaponTypes";
+import type { VectorShape } from "../../data/vectorShape";
 
-import { GUNS, type GunDefinition } from "../../data/guns";
-import { drawGunToCanvas } from "../../render/gunShapes";
-import { drawModToCanvas, getModIconBounds } from "../../render/modShapes";
+import { drawModToCanvas } from "../../render/modShapes";
 import { drawShipToCanvas } from "../../render/shipShapes";
 import { getVectorBounds } from "../../render/vector/cache";
 
-export type CardIconKind = "gun" | "mod" | "ship";
+export type CardIconKind = "mod" | "ship" | "weapon";
 
 interface DrawIconOptions {
   canvas: HTMLCanvasElement;
   colorHex: string;
   colorValue: number;
   kind: CardIconKind;
-  modVector?: ModIconVector;
-  shipShape: ShipVector;
-  weaponSize?: WeaponSize;
-  gunId?: string;
+  shape: VectorShape;
 }
+
+const getIconBounds = (
+  icon: VectorShape,
+): {
+  maxX: number;
+  maxY: number;
+  minX: number;
+  minY: number;
+} => getVectorBounds(icon);
 
 export const drawShopIcon = (options: DrawIconOptions): void => {
   const ctx = options.canvas.getContext("2d");
@@ -36,89 +38,22 @@ export const drawShopIcon = (options: DrawIconOptions): void => {
       width * 0.28,
       options.colorHex,
       fill,
-      options.shipShape,
+      options.shape,
     );
     return;
   }
 
-  if (options.kind === "mod") {
-    if (options.modVector) {
-      drawCenteredModIcon(
-        ctx,
-        options.modVector,
-        width,
-        height,
-        options.colorValue,
-      );
-    } else {
-      drawVacantMountIcon(
-        ctx,
-        width / 2,
-        height / 2,
-        width * 0.3,
-        options.colorHex,
-      );
-    }
-    return;
-  }
-
-  const gun = options.gunId ? GUNS[options.gunId] : null;
-  if (gun) {
-    drawCenteredGunIcon(
-      ctx,
-      gun,
-      width,
-      height,
-      options.colorValue,
-      options.weaponSize,
-    );
-    return;
-  }
-
-  drawVacantMountIcon(
-    ctx,
-    width / 2,
-    height / 2,
-    width * 0.3,
-    options.colorHex,
-  );
+  drawCenteredIcon(ctx, options.shape, width, height, options.colorValue);
 };
 
-const drawCenteredGunIcon = (
+const drawCenteredIcon = (
   ctx: CanvasRenderingContext2D,
-  gun: GunDefinition,
-  canvasWidth: number,
-  canvasHeight: number,
-  colorValue: number,
-  weaponSize?: WeaponSize,
-): void => {
-  const bounds = getGunLocalBounds(gun);
-  const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
-  const localHeight = Math.max(0.001, bounds.maxY - bounds.minY);
-  const localMaxSpan = Math.max(localWidth, localHeight);
-  const targetSpan = canvasWidth * (weaponSize === "large" ? 0.476 : 0.364);
-  const scale = targetSpan / localMaxSpan;
-  const localCenterX = (bounds.minX + bounds.maxX) * 0.5;
-  const localCenterY = (bounds.minY + bounds.maxY) * 0.5;
-
-  drawGunToCanvas(
-    ctx,
-    gun,
-    canvasWidth * 0.5 - localCenterX * scale,
-    canvasHeight * 0.5 - localCenterY * scale,
-    scale,
-    colorValue,
-  );
-};
-
-const drawCenteredModIcon = (
-  ctx: CanvasRenderingContext2D,
-  icon: ModIconVector,
+  icon: VectorShape,
   canvasWidth: number,
   canvasHeight: number,
   colorValue: number,
 ): void => {
-  const bounds = getModIconBounds(icon);
+  const bounds = getIconBounds(icon);
   const localWidth = Math.max(0.001, bounds.maxX - bounds.minX);
   const localHeight = Math.max(0.001, bounds.maxY - bounds.minY);
   const localMaxSpan = Math.max(localWidth, localHeight);
@@ -137,34 +72,6 @@ const drawCenteredModIcon = (
   );
 };
 
-const getGunLocalBounds = (
-  gun: GunDefinition,
-): {
-  maxX: number;
-  maxY: number;
-  minX: number;
-  minY: number;
-} => {
-  return getVectorBounds(gun.vector);
-};
-
-const drawVacantMountIcon = (
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-  color: string,
-): void => {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.strokeStyle = toRgba(color, 0.9, 1.05);
-  ctx.lineWidth = Math.max(2, size * 0.12);
-  ctx.beginPath();
-  ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-};
-
 const drawShip = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -172,7 +79,7 @@ const drawShip = (
   r: number,
   stroke: string,
   fill: string,
-  vector: ShipVector,
+  vector: VectorShape,
 ): void => {
   ctx.save();
   ctx.translate(x, y);

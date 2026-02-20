@@ -1,6 +1,5 @@
 import type { ModIconVector } from "../data/modTypes";
 
-import { getVectorBounds } from "./vector/cache";
 import { drawVectorToCanvas } from "./vector/drawCanvas";
 
 const scaleColor = (color: number, factor: number): number => {
@@ -9,15 +8,6 @@ const scaleColor = (color: number, factor: number): number => {
   const b = Math.min(255, Math.round((color & 0xff) * factor));
   return (r << 16) | (g << 8) | b;
 };
-
-export const getModIconBounds = (
-  icon: ModIconVector,
-): {
-  maxX: number;
-  maxY: number;
-  minX: number;
-  minY: number;
-} => getVectorBounds(icon);
 
 export const drawModToCanvas = (
   ctx: CanvasRenderingContext2D,

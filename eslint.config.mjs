@@ -1,8 +1,11 @@
 import js from "@eslint/js";
 import perfectionist from "eslint-plugin-perfectionist";
 import tseslint from "typescript-eslint";
+import reactHooks from "eslint-plugin-react-hooks";
+import { defineConfig } from "eslint/config";
 
-export default tseslint.config(
+export default defineConfig([
+  reactHooks.configs.flat.recommended,
   {
     ignores: ["dist", "node_modules"],
   },
@@ -53,4 +56,4 @@ export default tseslint.config(
       ],
     },
   },
-);
+]);

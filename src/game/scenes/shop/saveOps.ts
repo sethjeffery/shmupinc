@@ -16,6 +16,7 @@ import {
 import { SHIPS } from "../../data/ships";
 import { canMountWeapon } from "../../data/weaponMounts";
 import { WEAPONS } from "../../data/weapons";
+import { ensureMountAssignments } from "../../ui/shop/utils/weapons";
 
 const PRIMARY_RESOURCE_ID = "gold";
 
@@ -29,27 +30,13 @@ interface WeaponMountPayload {
   sourceMountId?: string;
 }
 
-const ensureMountAssignments = (
-  save: SaveData,
-  ship: ShipDefinition,
-): MountAssignment[] => {
-  if (!save.mountedWeapons[ship.id]) {
-    save.mountedWeapons[ship.id] = ship.mounts.map((mount) => ({
-      modInstanceIds: [],
-      mountId: mount.id,
-      weaponInstanceId: null,
-    }));
-  }
-  return save.mountedWeapons[ship.id];
-};
-
 const getSelectedShipAssignments = (
   save: SaveData,
 ): { assignments: MountAssignment[]; ship: ShipDefinition } | null => {
   const ship = SHIPS[save.selectedShipId];
   if (!ship) return null;
   return {
-    assignments: ensureMountAssignments(save, ship),
+    assignments: ensureMountAssignments(save.mountedWeapons, ship),
     ship,
   };
 };
@@ -69,7 +56,7 @@ export const selectOrPurchaseShipInSave = (
 
     const selectedShip = SHIPS[save.selectedShipId];
     const selectedAssignments = selectedShip
-      ? ensureMountAssignments(save, selectedShip)
+      ? ensureMountAssignments(save.mountedWeapons, selectedShip)
       : [];
     const preferredWeaponIds = selectedAssignments
       .map((entry) => entry.weaponInstanceId)
@@ -176,22 +163,6 @@ export const assignWeaponToMountInSave = (
   }
 
   target.weaponInstanceId = payload.instanceId;
-};
-
-export const detachModFromMountInSave = (
-  save: SaveData,
-  mountId: string,
-  modInstanceId: ModInstanceId,
-): void => {
-  const selected = getSelectedShipAssignments(save);
-  if (!selected) return;
-
-  const entry = selected.assignments.find((item) => item.mountId === mountId);
-  if (!entry) return;
-
-  entry.modInstanceIds = entry.modInstanceIds.filter(
-    (id) => id !== modInstanceId,
-  );
 };
 
 export const assignModToMountInSave = (

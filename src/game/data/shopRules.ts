@@ -7,7 +7,7 @@ interface PricedItem {
 
 export function filterShopItems<T extends PricedItem>(
   items: T[],
-  rules: null | ShopRules,
+  rules: null | ShopRules | undefined,
   allowed: string[] | undefined,
   cap: number | undefined,
 ): T[] {

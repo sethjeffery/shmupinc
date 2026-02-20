@@ -5,3 +5,95 @@
   grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
 }
+
+.ship-strip {
+  gap: 8px;
+  min-height: 94px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.start-mission {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 7;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 209, 102, 0.9);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 209, 102, 0.92),
+    rgba(255, 159, 74, 0.9)
+  );
+  color: #160a00;
+  font-family: "Orbitron", sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  min-width: 320px;
+  min-height: 64px;
+  padding: 0 20px;
+  cursor: pointer;
+  box-shadow:
+    0 0 22px rgba(255, 194, 82, 0.48),
+    0 0 32px rgba(255, 159, 74, 0.28);
+  animation: loadoutMissionPulse 1.4s ease-in-out infinite;
+}
+
+.start-mission:hover {
+  filter: brightness(1.04);
+}
+
+.config-title {
+  margin: 0;
+  font-family: "Orbitron", sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ecf9ff;
+}
+
+.mount-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+@media (max-width: 960px) {
+  .start-mission {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    transform: none;
+    min-width: 0;
+    min-height: 54px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .start-mission {
+    min-height: 50px;
+    padding: 0 14px;
+    letter-spacing: 0.11em;
+  }
+}
+
+@keyframes loadoutMissionPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 18px rgba(255, 194, 82, 0.42),
+      0 0 28px rgba(255, 159, 74, 0.24);
+  }
+  50% {
+    box-shadow:
+      0 0 28px rgba(255, 194, 82, 0.62),
+      0 0 44px rgba(255, 159, 74, 0.34);
+  }
+}

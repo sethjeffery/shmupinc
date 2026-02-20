@@ -1,67 +1,172 @@
-import type {
-  ShopMarketAreaItem,
-  ShopMarketItemIconRenderer,
-} from "./ShopMarketArea.types";
-import type { ComponentChildren } from "preact";
+import type { ShopRules } from "../../data/levels";
+import type { SaveData } from "../../data/save";
+import type { ShipDefinition } from "../../data/ships";
+import type { ShopCarouselItem as ShopCarouselItemModel } from "../../scenes/ShopScene";
 
-import clsx from "clsx";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 
+import { MODS } from "../../data/mods";
+import { hasRequiredUnlocks } from "../../data/save";
+import { useTypewriter } from "./hooks/useTypewriter";
+import ModPreviewStageView from "./ModPreviewStageView";
+import ShopCarouselItem from "./ShopCarouselItem";
 import ShopTopCarousel from "./ShopTopCarousel";
+import { formatCost } from "./utils/formatting";
+import {
+  describeModEffectTags,
+  getFilteredMods,
+  getModAccentColor,
+  getVisibleMods,
+  isModEquipped,
+} from "./utils/mods";
 
-import sceneStyles from "../../scenes/ShopScene.module.css";
 import styles from "./ModsAreaView.module.css";
 
-const formatColor = (color: number): string =>
-  `#${color.toString(16).padStart(6, "0")}`;
+function buildModCarouselItems(
+  save: SaveData,
+  selectedShip: ShipDefinition,
+  shopRules?: ShopRules,
+): readonly ShopCarouselItemModel[] {
+  const allowedModIds = new Set(
+    getFilteredMods(shopRules).map((item) => item.id),
+  );
 
-export default function ModsAreaView(props: {
-  items: readonly ShopMarketAreaItem[];
-  onItemClick: (item: ShopMarketAreaItem) => void;
-  previewContent: ComponentChildren;
-  renderItemIcon: ShopMarketItemIconRenderer;
-  selectedKey: null | string;
+  return getVisibleMods(save.ownedMods, shopRules)
+    .sort((a, b) => a.cost - b.cost)
+    .filter((mod) => {
+      const owned = save.ownedMods.some(
+        (instance) => instance.modId === mod.id,
+      );
+      return owned || hasRequiredUnlocks(save, mod.requiresUnlocks);
+    })
+    .map((mod) => {
+      const owned = save.ownedMods.some(
+        (instance) => instance.modId === mod.id,
+      );
+      const accentColor = getModAccentColor(mod.iconKind);
+      return {
+        accentColor,
+        cost: mod.cost,
+        costLabel: owned
+          ? undefined
+          : formatCost(mod.cost, mod.costResource ?? "gold"),
+        costResource: mod.costResource ?? "gold",
+        description: mod.description,
+        equipped: isModEquipped(
+          selectedShip,
+          mod.id,
+          save.mountedWeapons,
+          save.ownedMods,
+        ),
+        id: mod.id,
+        kind: "mod",
+        name: mod.name,
+        owned,
+        purchasable: !owned && allowedModIds.has(mod.id),
+        shape: mod.icon,
+      } satisfies ShopCarouselItemModel;
+    });
+}
+
+export default function ModsAreaView({
+  onAction,
+  onItemClick,
+  save,
+  selectedShip,
+  shopRules,
+}: {
+  onAction?: (item: ShopCarouselItemModel) => void;
+  onItemClick?: (item: ShopCarouselItemModel) => void;
+  save: SaveData;
+  selectedShip: ShipDefinition;
+  shopRules?: ShopRules;
 }) {
+  const items = useMemo(
+    () => buildModCarouselItems(save, selectedShip, shopRules),
+    [save, selectedShip, shopRules],
+  );
+
+  const [selectedItemId, setSelectedItemId] = useState<null | string>(
+    () => (items.find((item) => item.equipped) ?? items[0])?.id ?? null,
+  );
+
+  useEffect(() => {
+    if (items.length === 0) {
+      if (selectedItemId !== null) setSelectedItemId(null);
+      return;
+    }
+    if (selectedItemId && items.some((item) => item.id === selectedItemId)) {
+      return;
+    }
+    setSelectedItemId(
+      (items.find((item) => item.equipped) ?? items[0])?.id ?? null,
+    );
+  }, [items, selectedItemId]);
+
+  const handleItemClick = useCallback(
+    (item: ShopCarouselItemModel) => {
+      setSelectedItemId(item.id);
+      onItemClick?.(item);
+    },
+    [onItemClick],
+  );
+
+  const selectedItem =
+    (selectedItemId
+      ? items.find((item) => item.id === selectedItemId)
+      : undefined) ??
+    items.find((item) => item.equipped) ??
+    items[0] ??
+    null;
+
+  const mod = selectedItem ? MODS[selectedItem.id] : undefined;
+  const title = useTypewriter(mod?.name ?? "", 25, { restartKey: mod?.id });
+  const visibleDescription = useTypewriter(mod?.description ?? "", 15, {
+    offset: 500,
+    restartKey: mod?.id,
+  });
+
+  if (!selectedItem) return null;
+
+  const action = !selectedItem.owned
+    ? "Buy"
+    : selectedItem.equipped
+      ? "Equipped"
+      : "Equip";
+  const actionDisabled = Boolean(selectedItem.owned && selectedItem.equipped);
+
   return (
     <div className={styles["mods-area"]}>
-      <ShopTopCarousel kind="mods">
-        {props.items.map((item) => {
-          const selected = `${item.kind}-${item.id}` === props.selectedKey;
+      <ShopTopCarousel>
+        {items.map((item) => {
           return (
-            <button
-              className={clsx(
-                sceneStyles["shop-carousel-item"],
-                selected ? sceneStyles["is-selected"] : undefined,
-                item.owned ? sceneStyles["is-owned"] : undefined,
-                item.kind === "ship"
-                  ? sceneStyles["is-ship"]
-                  : item.kind === "weapon"
-                    ? sceneStyles["is-weapon"]
-                    : sceneStyles["is-mod"],
-                item.equipped ? sceneStyles["is-equipped"] : undefined,
-              )}
+            <ShopCarouselItem
+              accentColor={item.accentColor}
+              equipped={item.equipped}
+              kind="mod"
               key={`${item.kind}-${item.id}`}
-              onClick={() => props.onItemClick(item)}
-              style={
-                {
-                  "--accent": formatColor(item.accentColor),
-                } as Record<string, string>
-              }
-              type="button"
-            >
-              <span className={sceneStyles["shop-carousel-item-icon"]}>
-                {props.renderItemIcon(item)}
-              </span>
-              <span className={sceneStyles["shop-carousel-item-name"]}>
-                {item.name}
-              </span>
-              <span className={sceneStyles["shop-carousel-item-cost"]}>
-                {item.owned ? "Owned" : item.costLabel}
-              </span>
-            </button>
+              meta={item.owned ? "Owned" : item.costLabel}
+              name={item.name}
+              onClick={() => handleItemClick(item)}
+              owned={item.owned}
+              selected={item.id === selectedItem.id}
+              shape={item.shape}
+            />
           );
         })}
       </ShopTopCarousel>
-      {props.previewContent}
+
+      <ModPreviewStageView
+        accentColor={selectedItem.accentColor}
+        action={action}
+        actionDisabled={actionDisabled}
+        description={mod?.description ?? ""}
+        effects={mod ? describeModEffectTags(mod) : []}
+        onAction={() => onAction?.(selectedItem)}
+        shape={selectedItem.shape}
+        title={title}
+        visibleDescription={visibleDescription}
+      />
     </div>
   );
 }

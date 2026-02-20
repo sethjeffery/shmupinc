@@ -1,0 +1,11 @@
+.icon {
+  width: 180px;
+  height: 180px;
+  margin: 0;
+  filter: drop-shadow(0 0 18px rgba(125, 249, 255, 0.48));
+}
+
+.passive {
+  font-size: 11px;
+  color: rgba(190, 212, 238, 0.82);
+}

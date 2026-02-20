@@ -1,20 +1,19 @@
+import type { ShopRules } from "../data/levels";
+import type { SaveData } from "../data/save";
+import type { ShipDefinition } from "../data/shipTypes";
+import type { ShopCarouselItem } from "../scenes/ShopScene";
+import type { CardIconKind } from "./shop/iconPainter";
 import type { ComponentChild } from "preact";
 
-import { type Signal } from "@preact/signals";
 import clsx from "clsx";
 import { useState } from "preact/hooks";
 
+import ModsAreaView from "./shop/ModsAreaView";
+import ShipAreaView from "./shop/ShipAreaView";
 import { SHOP_TABS, type ShopCategory } from "./shop/shopTabs";
+import WeaponsAreaView from "./shop/WeaponsAreaView";
 
 import styles from "./ShopOverlayView.module.css";
-
-interface ShopOverlaySignals {
-  category: Signal<ShopCategory>;
-  content: Signal<ComponentChild>;
-  gold: Signal<string>;
-  missionActive: Signal<boolean>;
-  missionText: Signal<string>;
-}
 
 const tabClass = (
   activeCategory: ShopCategory,
@@ -27,7 +26,7 @@ const tabClass = (
     .filter(Boolean)
     .join(" ");
 
-const ShopTabIcon = (props: { icon: "mod" | "mount" | "ship" | "weapon" }) => {
+const ShopTabIcon = (props: { icon: CardIconKind }) => {
   if (props.icon === "ship") {
     return (
       <span
@@ -55,12 +54,21 @@ const ShopTabIcon = (props: { icon: "mod" | "mount" | "ship" | "weapon" }) => {
 const ShopOverlayView = (props: {
   onQuit: () => void;
   onTabSelect: (category: ShopCategory) => void;
-  signals: ShopOverlaySignals;
+  missionActive: boolean;
+  category: ShopCategory;
+  gold: string;
+  missionText: string;
+  save: SaveData;
+  selectedShip: ShipDefinition;
+  shopRules?: ShopRules;
+  content: ComponentChild;
+  onItemAction: (item: ShopCarouselItem) => void;
+  onItemClick: (item: ShopCarouselItem) => void;
 }) => {
-  const category = props.signals.category.value;
+  const category = props.category;
   const missionClass = clsx(
     styles["shop-mission"],
-    props.signals.missionActive.value ? styles["is-active"] : undefined,
+    props.missionActive ? styles["is-active"] : undefined,
   );
   const [confirmQuit, setConfirmQuit] = useState(false);
 
@@ -99,19 +107,42 @@ const ShopOverlayView = (props: {
           <header className={styles["shop-main-header"]}>
             <div className={styles["shop-header-meta"]}>
               <div className={styles["shop-title"]}>Hangar Exchange</div>
-              <div className={missionClass}>
-                {props.signals.missionText.value}
-              </div>
+              <div className={missionClass}>{props.missionText}</div>
             </div>
             <div className={styles["shop-gold"]} aria-label="Gold">
               <span className={styles["shop-gold-icon"]} />
-              <span className={styles["shop-gold-value"]}>
-                {props.signals.gold.value}
-              </span>
+              <span className={styles["shop-gold-value"]}>{props.gold}</span>
             </div>
           </header>
           <div className={styles["shop-main-content"]}>
-            {props.signals.content.value}
+            {category === "ships" ? (
+              <ShipAreaView
+                onAction={props.onItemAction}
+                onItemClick={props.onItemClick}
+                save={props.save}
+                selectedShip={props.selectedShip}
+                shopRules={props.shopRules}
+              />
+            ) : null}
+            {category === "weapons" ? (
+              <WeaponsAreaView
+                onAction={props.onItemAction}
+                onItemClick={props.onItemClick}
+                save={props.save}
+                selectedShip={props.selectedShip}
+                shopRules={props.shopRules}
+              />
+            ) : null}
+            {category === "mods" ? (
+              <ModsAreaView
+                onAction={props.onItemAction}
+                onItemClick={props.onItemClick}
+                save={props.save}
+                selectedShip={props.selectedShip}
+                shopRules={props.shopRules}
+              />
+            ) : null}
+            {category === "loadout" ? props.content : null}
           </div>
         </section>
 

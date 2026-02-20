@@ -1,52 +1,49 @@
-import type { ComponentChildren } from "preact";
+import type { VectorShape } from "../../data/vectorShape";
 
+import { ItemIcon } from "./ItemIcon";
+import { ShopEffects } from "./ShopEffects";
 import ShopInfoPanel from "./ShopInfoPanel";
+import { ShopPreviewStage } from "./ShopPreviewStage";
 import ShopSpinningMod from "./ShopSpinningMod";
 
-import styles from "../../scenes/ShopScene.module.css";
+import styles from "./ModPreviewStageView.module.css";
 
 export default function ModPreviewStageView(props: {
-  action: ComponentChildren;
+  accentColor: number;
+  action?: string;
+  actionDisabled?: boolean;
   description: string;
   effects: string[];
+  onAction?: () => void;
+  shape: VectorShape;
   title: string;
-  visual: ComponentChildren;
   visibleDescription: string;
 }) {
   return (
-    <div className={`${styles["shop-preview-stage"]} ${styles["is-mod"]}`}>
-      <div className={styles["shop-item-preview-grid"]}>
-        <ShopInfoPanel
-          actions={props.action}
-          className={styles["shop-item-preview-info"]}
-          description={props.description}
-          streamClassName={styles["shop-item-preview-stream"]}
-          title={props.title}
-          titleClassName={styles["shop-item-preview-name"]}
-          visibleDescription={props.visibleDescription}
-        >
-          <div className={styles["shop-item-effects"]}>
-            <div className={styles["shop-item-section-label"]}>Effects</div>
-            <div className={styles["shop-item-effect-list"]}>
-              {props.effects.length > 0 ? (
-                props.effects.map((effect) => (
-                  <span className={styles["shop-item-effect"]} key={effect}>
-                    {effect}
-                  </span>
-                ))
-              ) : (
-                <span className={styles["shop-item-effect-muted"]}>
-                  Passive
-                </span>
-              )}
-            </div>
-          </div>
-        </ShopInfoPanel>
+    <ShopPreviewStage>
+      <ShopInfoPanel
+        action={props.action}
+        actionDisabled={props.actionDisabled}
+        description={props.description}
+        onAction={props.onAction}
+        title={props.title}
+        visibleDescription={props.visibleDescription}
+      >
+        <ShopEffects effects={props.effects} title="Effects" />
+        {props.effects.length === 0 ? (
+          <div className={styles.passive}>Passive</div>
+        ) : null}
+      </ShopInfoPanel>
 
-        <div className={styles["shop-item-preview-visual"]}>
-          <ShopSpinningMod>{props.visual}</ShopSpinningMod>
-        </div>
-      </div>
-    </div>
+      <ShopSpinningMod>
+        <ItemIcon
+          accentColor={props.accentColor}
+          className={styles.icon}
+          kind="mod"
+          shape={props.shape}
+          size={180}
+        />
+      </ShopSpinningMod>
+    </ShopPreviewStage>
   );
 }

@@ -1,0 +1,14 @@
+.shop-node-icon {
+  width: 85px;
+  height: 85px;
+  margin: -8px -16px -16px;
+  display: block;
+  filter: drop-shadow(0 0 7px rgba(125, 249, 255, 0.3));
+}
+
+.shop-node-icon--hull {
+  width: 140px;
+  height: 140px;
+  filter: drop-shadow(0 0 16px rgba(125, 249, 255, 0.45))
+    drop-shadow(0 0 30px rgba(125, 249, 255, 0.2));
+}
