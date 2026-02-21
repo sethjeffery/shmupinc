@@ -41,8 +41,8 @@ const loadContentEntries = (): ContentEntry[] => {
 let cachedRegistry: ContentRegistry | null = null;
 
 const EMPTY_REGISTRY: ContentRegistry = {
-  beatsById: {},
   bulletsById: {},
+  charactersById: {},
   enemiesById: {},
   galaxiesById: {},
   gunsById: {},

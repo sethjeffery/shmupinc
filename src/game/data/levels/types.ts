@@ -86,8 +86,6 @@ export interface LevelDefinition {
   id: string;
   title: string;
   pressureProfile: PressureProfile;
-  preBeatId?: string;
-  postBeatId?: string;
   waves: WaveDefinition[];
   hazards?: HazardScript[];
   objectiveSet?: ObjectiveSetDefinition;

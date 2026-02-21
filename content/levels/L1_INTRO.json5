@@ -6,8 +6,6 @@
     "secondary": ["focus"]
   },
   "objectiveSetId": "obj_s1_l1",
-  "preBeatId": "beat_s1_l1_pre",
-  "postBeatId": "beat_s1_l1_post",
   "waveIds": ["intro-intro", "intro-approach", "intro-cross", "intro-harass"],
   "shopId": "shop_intro",
   "winCondition": {

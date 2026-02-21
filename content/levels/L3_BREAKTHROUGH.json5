@@ -6,8 +6,6 @@
     "secondary": ["enemy", "focus"]
   },
   "objectiveSetId": "obj_s1_l3",
-  "preBeatId": "beat_s1_l3_pre",
-  "postBeatId": "beat_s1_l3_post",
   "waveIds": [
     "breakthrough-storm",
     "breakthrough-surge",

@@ -41,20 +41,6 @@ export const REFERENCE_PICKERS: ReferencePicker[] = [
     registryKey: "objectivesById",
   },
   {
-    contentKind: "beats",
-    key: "preBeatId",
-    label: "Pre-beat",
-    mode: "single",
-    registryKey: "beatsById",
-  },
-  {
-    contentKind: "beats",
-    key: "postBeatId",
-    label: "Post-beat",
-    mode: "single",
-    registryKey: "beatsById",
-  },
-  {
     contentKind: "guns",
     key: "gunId",
     label: "Gun",

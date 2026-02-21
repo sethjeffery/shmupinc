@@ -18,9 +18,6 @@ const toTitle = (id: string): string => {
     .join(" ");
 };
 
-const toBeatSlug = (id: string): string =>
-  `beat_${id.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
-
 const readJsonFile = async (filePath: string): Promise<unknown> => {
   const raw = await fs.readFile(filePath, "utf-8");
   return JSON5.parse(raw) as unknown;
@@ -89,10 +86,7 @@ const runScaffoldLevel = async (
     }
   }
 
-  const beatSlug = toBeatSlug(id);
   base.id = id;
-  base.postBeatId = `${beatSlug}_post`;
-  base.preBeatId = `${beatSlug}_pre`;
   base.title = toTitle(id) || id;
 
   await writeJsonFile(targetPath, base);

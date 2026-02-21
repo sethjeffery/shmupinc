@@ -1250,7 +1250,6 @@ export class PlayScene extends Phaser.Scene {
         advanceActiveGalaxyOnLevelClear(activeSession.id);
       }
     }
-    const beatId = activeSession?.level.postBeatId;
     const nextRoute = activeSession?.returnRoute ?? "menu";
     clearActiveLevel();
     this.particles.spawnRing(
@@ -1292,7 +1291,7 @@ export class PlayScene extends Phaser.Scene {
       to: 1,
     });
     this.time.delayedCall(VICTORY_ROUTE_DELAY_MS, () => {
-      emitVictoryRoute(this.game, beatId, nextRoute);
+      emitVictoryRoute(this.game, nextRoute);
     });
   }
 

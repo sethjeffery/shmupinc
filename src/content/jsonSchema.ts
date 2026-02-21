@@ -91,12 +91,6 @@ export const buildJsonSchemaForKind = (
         Object.keys(registry.objectivesById),
       );
     }
-    if (props.preBeatId) {
-      setEnumOnProperty(props.preBeatId, Object.keys(registry.beatsById));
-    }
-    if (props.postBeatId) {
-      setEnumOnProperty(props.postBeatId, Object.keys(registry.beatsById));
-    }
 
     if (props.winCondition) {
       const winOptions = getUnionOptions(props.winCondition);

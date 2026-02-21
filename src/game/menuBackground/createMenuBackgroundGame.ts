@@ -4,7 +4,7 @@ import { MenuAttractBootScene } from "../scenes/MenuAttractBootScene";
 import { MenuAttractScene } from "../scenes/MenuAttractScene";
 
 export const createMenuBackgroundGame = (
-  parent: string | HTMLElement,
+  parent: HTMLElement | string,
 ): Phaser.Game => {
   const initialWidth =
     typeof window === "undefined" ? 1280 : Math.max(1, window.innerWidth);

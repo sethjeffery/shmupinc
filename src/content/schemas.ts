@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CONTENT_KINDS = [
-  "beats",
+  "characters",
   "bullets",
   "enemies",
   "galaxies",
@@ -881,11 +881,49 @@ const waveSchema = z.object({
   spawns: z.array(spawnSchema).describe("Spawn events for this wave."),
 });
 
-const beatSchema = z.object({
-  id: idField("Unique beat id."),
-  lines: z.array(z.string()).describe("Story lines shown in the beat overlay."),
-  title: z.string().describe("Headline for the beat overlay."),
+const characterExpressionSchema = z.object({
+  expression: idField("Expression key, such as neutral, focused, or angry."),
+  image: z.string().min(1).describe("Avatar image path or URL."),
 });
+
+const characterSchema = z
+  .object({
+    avatars: z
+      .array(characterExpressionSchema)
+      .min(1)
+      .describe("Available avatar images grouped by expression."),
+    defaultExpression: idField("Default expression key when none is specified.")
+      .optional()
+      .default("neutral"),
+    id: idField("Unique character id."),
+    name: z.string().describe("Display name."),
+  })
+  .superRefine((character, ctx) => {
+    const seen = new Set<string>();
+    character.avatars.forEach((avatar, index) => {
+      if (seen.has(avatar.expression)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate expression "${avatar.expression}".`,
+          path: ["avatars", index, "expression"],
+        });
+        return;
+      }
+      seen.add(avatar.expression);
+    });
+    if (
+      character.defaultExpression &&
+      !character.avatars.some(
+        (avatar) => avatar.expression === character.defaultExpression,
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `defaultExpression "${character.defaultExpression}" is not defined in avatars.`,
+        path: ["defaultExpression"],
+      });
+    }
+  });
 
 const shopSchema = z.object({
   allowedMods: idArray(
@@ -1021,8 +1059,6 @@ const levelSchema = z.object({
   objectiveSetId: idField(
     "Objective set to evaluate on level clear.",
   ).optional(),
-  postBeatId: idField("Beat id shown after victory.").optional(),
-  preBeatId: idField("Beat id shown before the shop.").optional(),
   pressureProfile: pressureProfileSchema.describe("Intended pressure mix."),
   shopId: idField("Shop rules to apply before play.").optional(),
   title: z.string().describe("Level title shown in UI."),
@@ -1275,8 +1311,8 @@ const shipSchema = z
   });
 
 export const contentSchemas = {
-  beats: beatSchema,
   bullets: bulletSchema,
+  characters: characterSchema,
   enemies: enemySchema,
   galaxies: galaxySchema,
   guns: gunSchema,
@@ -1291,7 +1327,7 @@ export const contentSchemas = {
   weapons: weaponSchema,
 } satisfies Record<ContentKind, z.ZodSchema>;
 
-export type BeatContent = z.infer<typeof beatSchema>;
+export type CharacterContent = z.infer<typeof characterSchema>;
 export type BulletContent = z.infer<typeof bulletSchema>;
 export type EnemyContent = z.infer<typeof enemySchema>;
 export type GalaxyContent = z.infer<typeof galaxySchema>;

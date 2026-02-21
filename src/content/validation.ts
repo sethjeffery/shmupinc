@@ -17,7 +17,7 @@ import type {
   FireStep,
 } from "../game/data/scripts";
 import type { ShipDefinition } from "../game/data/shipTypes";
-import type { StoryBeat } from "../game/data/storyBeatTypes";
+import type { StoryCharacter } from "../game/data/storyCharacterTypes";
 import type { WaveDefinition } from "../game/data/waves";
 import type {
   WeaponDefinition,
@@ -25,8 +25,8 @@ import type {
   WeaponStats,
 } from "../game/data/weaponTypes";
 import type {
-  BeatContent,
   BulletContent,
+  CharacterContent,
   ContentKind,
   EnemyContent,
   GalaxyContent,
@@ -61,7 +61,7 @@ export interface ContentEntry {
 
 export interface ContentRegistry {
   bulletsById: Record<string, BulletContent>;
-  beatsById: Record<string, StoryBeat>;
+  charactersById: Record<string, StoryCharacter>;
   enemiesById: Record<string, EnemyDef>;
   galaxiesById: Record<string, GalaxyDefinition>;
   gunsById: Record<string, GunDefinition>;
@@ -438,8 +438,8 @@ export const buildContentRegistry = (
 ): ContentBuildResult => {
   const errors: ContentError[] = [];
 
-  const beatsById: Record<string, StoryBeat> = {};
   const bulletsById: Record<string, BulletContent> = {};
+  const charactersById: Record<string, StoryCharacter> = {};
   const enemiesById: Record<string, EnemyContent> = {};
   const gunsById: Record<string, GunContent> = {};
   const galaxiesById: Record<string, GalaxyContent> = {};
@@ -469,17 +469,18 @@ export const buildContentRegistry = (
     const value = result.data;
     const id = (value as { id: string }).id;
     switch (entry.kind) {
-      case "beats":
-        if (beatsById[id]) {
+      case "characters":
+        if (charactersById[id]) {
           addDuplicateError(errors, entry.path, entry.kind, id);
           break;
         }
         {
-          const beat = value as BeatContent;
-          beatsById[id] = {
-            id: beat.id,
-            lines: beat.lines,
-            title: beat.title,
+          const character = value as CharacterContent;
+          charactersById[id] = {
+            avatars: character.avatars,
+            defaultExpression: character.defaultExpression,
+            id: character.id,
+            name: character.name,
           };
         }
         break;
@@ -871,21 +872,6 @@ export const buildContentRegistry = (
         `Missing shop "${level.shopId}".`,
       );
     }
-
-    if (level.preBeatId && !beatsById[level.preBeatId]) {
-      addReferenceError(
-        errors,
-        `levels/${id}`,
-        `Missing beat "${level.preBeatId}".`,
-      );
-    }
-    if (level.postBeatId && !beatsById[level.postBeatId]) {
-      addReferenceError(
-        errors,
-        `levels/${id}`,
-        `Missing beat "${level.postBeatId}".`,
-      );
-    }
     if (
       level.winCondition.kind === "defeatBoss" &&
       !resolvedEnemies[level.winCondition.bossId]
@@ -923,8 +909,6 @@ export const buildContentRegistry = (
       hazards: hazards.length ? hazards : undefined,
       id: level.id,
       objectiveSet,
-      postBeatId: level.postBeatId,
-      preBeatId: level.preBeatId,
       pressureProfile: level.pressureProfile,
       shopRules,
       title: level.title,
@@ -936,8 +920,8 @@ export const buildContentRegistry = (
   return {
     errors,
     registry: {
-      beatsById,
       bulletsById,
+      charactersById,
       enemiesById: resolvedEnemies,
       galaxiesById: resolvedGalaxies,
       gunsById: resolvedGuns,

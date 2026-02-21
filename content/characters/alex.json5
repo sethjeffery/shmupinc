@@ -1,0 +1,46 @@
+{
+  "id": "alex",
+  "name": "Alex",
+  "avatars": [
+    {
+      "expression": "angry",
+      "image": "/story/characters/alex-angry.png"
+    },
+    {
+      "expression": "embarrassed",
+      "image": "/story/characters/alex-embarrassed.png"
+    },
+    {
+      "expression": "facepalm",
+      "image": "/story/characters/alex-facepalm.png"
+    },
+    {
+      "expression": "happy",
+      "image": "/story/characters/alex-happy.png"
+    },
+    {
+      "expression": "laughing",
+      "image": "/story/characters/alex-laughing.png"
+    },
+    {
+      "expression": "neutral",
+      "image": "/story/characters/alex-neutral.png"
+    },
+    {
+      "expression": "sad",
+      "image": "/story/characters/alex-sad.png"
+    },
+    {
+      "expression": "stressed",
+      "image": "/story/characters/alex-stressed.png"
+    },
+    {
+      "expression": "surprised",
+      "image": "/story/characters/alex-surprised.png"
+    },
+    {
+      "expression": "worried",
+      "image": "/story/characters/alex-worried.png"
+    }
+  ]
+}

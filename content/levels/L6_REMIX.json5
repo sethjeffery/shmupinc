@@ -6,8 +6,6 @@
     "secondary": ["space", "throughput"]
   },
   "objectiveSetId": "obj_s1_l6",
-  "preBeatId": "beat_s1_l6_pre",
-  "postBeatId": "beat_s1_l6_post",
   "waveIds": [
     "remix-press",
     "remix-cross",

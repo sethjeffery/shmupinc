@@ -6,8 +6,6 @@
     "secondary": ["space", "enemy"]
   },
   "objectiveSetId": "obj_s1_l4",
-  "preBeatId": "beat_s1_l4_pre",
-  "postBeatId": "beat_s1_l4_post",
   "waveIds": ["deadline-rush", "deadline-pincer", "deadline-break"],
   "hazardIds": ["deadline-left", "deadline-right"],
   "shopId": "shop_deadline",

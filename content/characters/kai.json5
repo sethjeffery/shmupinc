@@ -1,0 +1,42 @@
+{
+  "id": "kai",
+  "name": "Kai",
+  "avatars": [
+    {
+      "expression": "content",
+      "image": "/story/characters/kai-content.png"
+    },
+    {
+      "expression": "facepalm",
+      "image": "/story/characters/kai-facepalm.png"
+    },
+    {
+      "expression": "happy",
+      "image": "/story/characters/kai-happy.png"
+    },
+    {
+      "expression": "laughing",
+      "image": "/story/characters/kai-laughing.png"
+    },
+    {
+      "expression": "nervous",
+      "image": "/story/characters/kai-nervous.png"
+    },
+    {
+      "expression": "neutral",
+      "image": "/story/characters/kai-neutral.png"
+    },
+    {
+      "expression": "scared",
+      "image": "/story/characters/kai-scared.png"
+    },
+    {
+      "expression": "stressed",
+      "image": "/story/characters/kai-stressed.png"
+    },
+    {
+      "expression": "worried",
+      "image": "/story/characters/kai-worried.png"
+    }
+  ]
+}

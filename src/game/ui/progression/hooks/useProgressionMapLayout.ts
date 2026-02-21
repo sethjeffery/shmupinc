@@ -59,7 +59,8 @@ export const useProgressionMapLayout = () => {
     return Math.min(PROGRESSION_MAP_MAX_HEIGHT, targetHeight);
   }, [mapAspect, mapWidth]);
 
-  const projectX = (normalizedX: number): number => clampUnit(normalizedX) * mapWidth;
+  const projectX = (normalizedX: number): number =>
+    clampUnit(normalizedX) * mapWidth;
   const projectY = (normalizedY: number): number =>
     clampUnit(normalizedY) * mapHeight;
 

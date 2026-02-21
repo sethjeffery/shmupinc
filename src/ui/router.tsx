@@ -12,7 +12,6 @@ import {
   type GalaxyView,
 } from "../game/data/galaxyProgress";
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
-import { STORY_BEATS } from "../game/data/storyBeats";
 import ProgressionOverlay from "../game/ui/progression/ProgressionOverlay";
 import { MenuOverlay } from "../game/ui/title/MenuOverlay";
 import {
@@ -31,8 +30,7 @@ export type UiRoute =
   | "menu"
   | "pause"
   | "play"
-  | "progression"
-  | "story";
+  | "progression";
 
 interface GameOverStats {
   gold: number;
@@ -47,18 +45,12 @@ interface PanelAction {
   primary: boolean;
 }
 
-interface StoryBeatView {
-  lines: string[];
-  title: string;
-}
-
 interface UiViewSignals {
   gameOver: Signal<GameOverStats>;
   musicEnabled: Signal<boolean>;
   progression: Signal<GalaxyView | null>;
   route: Signal<UiRoute>;
   soundEnabled: Signal<boolean>;
-  storyBeat: Signal<StoryBeatView>;
 }
 
 const UI_OPEN_ROUTES = new Set<UiRoute>([
@@ -66,7 +58,6 @@ const UI_OPEN_ROUTES = new Set<UiRoute>([
   "pause",
   "gameover",
   "progression",
-  "story",
 ]);
 
 const GAME_LOCK_ROUTES = new Set<UiRoute>(["play", "pause"]);
@@ -216,37 +207,6 @@ const UiRoot = (props: {
           </div>
         );
       }
-      case "story": {
-        const storyBeat = props.signals.storyBeat.value;
-        return (
-          <div className={clsx(styles.uiOverlay, styles.isActive)}>
-            <div className={styles.storyPanel}>
-              <div className={styles.storyTitle}>{storyBeat.title}</div>
-              <div className={styles.storyLines}>
-                {storyBeat.lines.map((line, index) => (
-                  <p key={`${index}-${line}`}>{line}</p>
-                ))}
-              </div>
-              <div className={styles.storyActions}>
-                <button
-                  className={styles.storyButton}
-                  onClick={() => props.onAction("story-continue")}
-                  type="button"
-                >
-                  Continue
-                </button>
-                <button
-                  className={styles.storySkip}
-                  onClick={() => props.onAction("story-skip")}
-                  type="button"
-                >
-                  Skip
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      }
       default:
         return null;
     }
@@ -264,8 +224,6 @@ export class UiRouter {
   private game: Phaser.Game;
   private route: UiRoute = "menu";
   private root: HTMLElement;
-  private storyNextRoute: UiRoute = "menu";
-  private storyClearLevelOnExit = false;
   private transitionToken = 0;
   private readonly routeSignal = signal<UiRoute>("menu");
   private readonly musicEnabledSignal = signal<boolean>(
@@ -276,10 +234,6 @@ export class UiRouter {
   private readonly soundEnabledSignal = signal<boolean>(
     this.audio.getSoundEnabled(),
   );
-  private readonly storyBeatSignal = signal<StoryBeatView>({
-    lines: ["Awaiting mission data."],
-    title: "Mission Brief",
-  });
 
   constructor(game: Phaser.Game) {
     this.game = game;
@@ -300,7 +254,6 @@ export class UiRouter {
           progression: this.progressionSignal,
           route: this.routeSignal,
           soundEnabled: this.soundEnabledSignal,
-          storyBeat: this.storyBeatSignal,
         }}
       />,
       this.root,
@@ -313,18 +266,6 @@ export class UiRouter {
       this.gameOverSignal.value = stats;
       this.setRoute("gameover");
     });
-    this.game.events.on(
-      "ui:story",
-      (payload: {
-        beatId: string;
-        clearLevelOnExit?: boolean;
-        nextRoute?: UiRoute;
-      }) => {
-        this.openStoryBeat(payload.beatId, payload.nextRoute ?? "menu", {
-          clearLevelOnExit: payload.clearLevelOnExit,
-        });
-      },
-    );
 
     this.setRoute("menu", { force: true });
     this.tryAutoStartLevel();
@@ -372,12 +313,6 @@ export class UiRouter {
       return;
     }
 
-    if (route === "story") {
-      stopPlayScene(this.game);
-      stopShopScene(this.game);
-      return;
-    }
-
     if (route === "progression") {
       stopPlayScene(this.game);
       stopShopScene(this.game);
@@ -402,7 +337,7 @@ export class UiRouter {
     }
   }
 
-  private startStoryLevel(
+  private startLevel(
     levelId: string,
     options?: {
       returnRoute?: UiRoute;
@@ -420,11 +355,7 @@ export class UiRouter {
       this.setRoute("menu");
       return;
     }
-    if (level.preBeatId) {
-      this.openStoryBeat(level.preBeatId, "hangar");
-    } else {
-      this.setRoute("hangar");
-    }
+    this.setRoute("hangar");
   }
 
   private handleAction(action: string, levelId?: string): void {
@@ -456,7 +387,7 @@ export class UiRouter {
         if (!levelId) break;
         const launch = launchGalaxyNode(levelId);
         if (!launch) break;
-        this.startStoryLevel(launch.levelId, {
+        this.startLevel(launch.levelId, {
           returnRoute: "progression",
           source: {
             galaxyId: launch.galaxyId,
@@ -465,10 +396,6 @@ export class UiRouter {
         });
         break;
       }
-      case "story-continue":
-      case "story-skip":
-        this.resolveStory();
-        break;
       case "toggle-music": {
         const next = !this.musicEnabledSignal.value;
         this.audio.setMusicEnabled(next);
@@ -504,35 +431,13 @@ export class UiRouter {
     const params = new URLSearchParams(window.location.search);
     const levelId = params.get("level");
     if (levelId) {
-      this.startStoryLevel(levelId);
+      this.startLevel(levelId);
       window.history.replaceState({}, "", window.location.pathname);
       return;
     }
     ensureActiveGalaxy();
     this.refreshProgressionView();
     window.history.replaceState({}, "", window.location.pathname);
-  }
-
-  private openStoryBeat(
-    beatId: string,
-    nextRoute: UiRoute,
-    options?: { clearLevelOnExit?: boolean },
-  ): void {
-    const beat = STORY_BEATS[beatId];
-    this.storyBeatSignal.value = {
-      lines: beat?.lines?.length ? beat.lines : ["Awaiting mission data."],
-      title: beat?.title ?? "Mission Brief",
-    };
-    this.storyNextRoute = nextRoute;
-    this.storyClearLevelOnExit = options?.clearLevelOnExit ?? false;
-    this.setRoute("story", { force: true });
-  }
-
-  private resolveStory(): void {
-    if (this.storyClearLevelOnExit) {
-      clearActiveLevel();
-    }
-    this.setRoute(this.storyNextRoute, { force: true });
   }
 
   private setEngineLoopActive(enabled: boolean): void {
