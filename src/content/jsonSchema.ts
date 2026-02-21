@@ -76,9 +76,6 @@ export const buildJsonSchemaForKind = (
   }
 
   if (kind === "levels") {
-    if (props.waveIds) {
-      setEnumOnArrayItems(props.waveIds, Object.keys(registry.wavesById));
-    }
     if (props.hazardIds) {
       setEnumOnArrayItems(props.hazardIds, Object.keys(registry.hazardsById));
     }
@@ -119,6 +116,44 @@ export const buildJsonSchemaForKind = (
       const bossProps = bossOption ? getProperties(bossOption) : null;
       if (bossProps?.bossId) {
         setEnumOnProperty(bossProps.bossId, Object.keys(registry.enemiesById));
+      }
+    }
+
+    if (props.events) {
+      const eventItem = getItemsSchema(props.events);
+      const eventOptions = getUnionOptions(eventItem);
+
+      const waveOption = eventOptions.find((option) => {
+        const optionProps = getProperties(option);
+        return (
+          optionProps?.kind &&
+          (optionProps.kind as { const?: string }).const === "wave"
+        );
+      });
+      const waveProps = waveOption ? getProperties(waveOption) : null;
+      if (waveProps?.waveId) {
+        setEnumOnProperty(waveProps.waveId, Object.keys(registry.wavesById));
+      }
+
+      const conversationOption = eventOptions.find((option) => {
+        const optionProps = getProperties(option);
+        return (
+          optionProps?.kind &&
+          (optionProps.kind as { const?: string }).const === "conversation"
+        );
+      });
+      const conversationProps = conversationOption
+        ? getProperties(conversationOption)
+        : null;
+      if (conversationProps?.moments) {
+        const momentItem = getItemsSchema(conversationProps.moments);
+        const momentProps = getProperties(momentItem);
+        if (momentProps?.characterId) {
+          setEnumOnProperty(
+            momentProps.characterId,
+            Object.keys(registry.charactersById),
+          );
+        }
       }
     }
   }

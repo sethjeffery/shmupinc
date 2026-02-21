@@ -960,7 +960,9 @@ const shopSchema = z.object({
 
 const winConditionSchema = z.union([
   z.object({
-    kind: z.literal("clearWaves").describe("Win when all waves finish."),
+    kind: z
+      .literal("clearWaves")
+      .describe("Win when all scripted level events finish."),
   }),
   z.object({
     bossId: idField("Boss enemy id."),
@@ -969,6 +971,39 @@ const winConditionSchema = z.union([
   z.object({
     durationMs: z.number().positive().describe("Required survival time (ms)."),
     kind: z.literal("survive").describe("Win by surviving the timer."),
+  }),
+]);
+
+const levelConversationMomentSchema = z.object({
+  characterId: idField("Optional speaking character id.").optional(),
+  durationMs: z
+    .number()
+    .positive()
+    .describe("Optional override for message duration in ms.")
+    .optional(),
+  expression: idField("Optional character expression id.").optional(),
+  placement: z
+    .enum(["bottom", "top"])
+    .describe("Dialog placement.")
+    .optional(),
+  text: z.string().min(1).describe("Dialog line."),
+  transition: z
+    .enum(["smooth", "urgent", "wham"])
+    .describe("Dialog transition style.")
+    .optional(),
+});
+
+const levelEventSchema = z.union([
+  z.object({
+    kind: z.literal("wave").describe("Run a wave."),
+    waveId: idField("Wave id to run."),
+  }),
+  z.object({
+    kind: z.literal("conversation").describe("Run a conversation sequence."),
+    moments: z
+      .array(levelConversationMomentSchema)
+      .min(1)
+      .describe("Ordered dialog moments."),
   }),
 ]);
 
@@ -1054,6 +1089,10 @@ const levelSchema = z.object({
   endCondition: winConditionSchema
     .describe("Optional override that ends the level early.")
     .optional(),
+  events: z
+    .array(levelEventSchema)
+    .min(1)
+    .describe("Ordered level events (combat and story)."),
   hazardIds: idArray("Hazards to spawn at level start.").default([]),
   id: idField("Unique level id."),
   objectiveSetId: idField(
@@ -1062,7 +1101,6 @@ const levelSchema = z.object({
   pressureProfile: pressureProfileSchema.describe("Intended pressure mix."),
   shopId: idField("Shop rules to apply before play.").optional(),
   title: z.string().describe("Level title shown in UI."),
-  waveIds: idArray("Ordered list of wave ids to run."),
   winCondition: winConditionSchema.describe("Primary victory condition."),
 });
 

@@ -6,12 +6,12 @@
     "secondary": ["space", "throughput"]
   },
   "objectiveSetId": "obj_s1_l6",
-  "waveIds": [
-    "remix-press",
-    "remix-cross",
-    "remix-breakpoint",
-    "remix-overload",
-    "remix-spiral"
+  "events": [
+    { "kind": "wave", "waveId": "remix-press" },
+    { "kind": "wave", "waveId": "remix-cross" },
+    { "kind": "wave", "waveId": "remix-breakpoint" },
+    { "kind": "wave", "waveId": "remix-overload" },
+    { "kind": "wave", "waveId": "remix-spiral" }
   ],
   "hazardIds": ["remix-left", "remix-right"],
   "shopId": "shop_remix",

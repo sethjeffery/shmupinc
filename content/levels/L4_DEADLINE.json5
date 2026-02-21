@@ -6,7 +6,11 @@
     "secondary": ["space", "enemy"]
   },
   "objectiveSetId": "obj_s1_l4",
-  "waveIds": ["deadline-rush", "deadline-pincer", "deadline-break"],
+  "events": [
+    { "kind": "wave", "waveId": "deadline-rush" },
+    { "kind": "wave", "waveId": "deadline-pincer" },
+    { "kind": "wave", "waveId": "deadline-break" }
+  ],
   "hazardIds": ["deadline-left", "deadline-right"],
   "shopId": "shop_deadline",
   "winCondition": {

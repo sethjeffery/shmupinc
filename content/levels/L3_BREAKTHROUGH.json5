@@ -6,11 +6,11 @@
     "secondary": ["enemy", "focus"]
   },
   "objectiveSetId": "obj_s1_l3",
-  "waveIds": [
-    "breakthrough-storm",
-    "breakthrough-surge",
-    "breakthrough-push",
-    "breakthrough-weave"
+  "events": [
+    { "kind": "wave", "waveId": "breakthrough-storm" },
+    { "kind": "wave", "waveId": "breakthrough-surge" },
+    { "kind": "wave", "waveId": "breakthrough-push" },
+    { "kind": "wave", "waveId": "breakthrough-weave" }
   ],
   "shopId": "shop_breakthrough",
   "winCondition": {

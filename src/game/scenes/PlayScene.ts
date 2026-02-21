@@ -7,6 +7,10 @@ import type { EmitBullet } from "../systems/FireScriptRunner";
 
 import Phaser from "phaser";
 
+import {
+  normalizeDialogMomentPayloads,
+  showDialogMoment,
+} from "../../ui/dialogMoment";
 import { getAudioDirector } from "../audio/audioDirector";
 import { DEBUG_PLAYER_BULLETS } from "../data/bullets";
 import { advanceActiveGalaxyOnLevelClear } from "../data/galaxyProgress";
@@ -458,6 +462,12 @@ export class PlayScene extends Phaser.Scene {
             allowBottomEject,
           ),
         scene: this,
+        showConversation: (moments) => {
+          const payloads = normalizeDialogMomentPayloads(moments);
+          if (payloads.length === 0) return 0;
+          showDialogMoment(payloads, this.game);
+          return payloads.reduce((total, moment) => total + moment.durationMs, 0);
+        },
         spawnEnemy: (enemyId, x, y, hpMultiplier, overrides) =>
           this.spawnEnemy(enemyId, x, y, hpMultiplier, overrides),
       });

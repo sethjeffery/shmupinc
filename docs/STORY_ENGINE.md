@@ -18,6 +18,19 @@ This is a **combat-integrated communications system**.
 
 ---
 
+# Level Timeline Model
+
+Levels are authored as an ordered `events` timeline.
+
+Event types:
+
+- `wave`: starts a combat wave.
+- `conversation`: plays one or more dialog moments (using character avatars, expression, placement, transition, and duration options).
+
+This replaces the old `waveIds`-only progression model and makes story beats first-class level data.
+
+---
+
 # Design Principles
 
 ## 1. Arcade First

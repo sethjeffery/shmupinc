@@ -82,11 +82,30 @@ export type LevelEndCondition =
   | { kind: "defeatBoss"; bossId: EnemyId }
   | { kind: "survive"; durationMs: number };
 
+export interface LevelConversationMoment {
+  characterId?: string;
+  durationMs?: number;
+  expression?: string;
+  placement?: "bottom" | "top";
+  text: string;
+  transition?: "smooth" | "urgent" | "wham";
+}
+
+export type LevelEvent =
+  | {
+      kind: "conversation";
+      moments: LevelConversationMoment[];
+    }
+  | {
+      kind: "wave";
+      wave: WaveDefinition;
+    };
+
 export interface LevelDefinition {
+  events: LevelEvent[];
   id: string;
   title: string;
   pressureProfile: PressureProfile;
-  waves: WaveDefinition[];
   hazards?: HazardScript[];
   objectiveSet?: ObjectiveSetDefinition;
   shopRules?: ShopRules;

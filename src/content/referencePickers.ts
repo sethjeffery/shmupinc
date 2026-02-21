@@ -13,13 +13,6 @@ export interface ReferencePicker {
 
 export const REFERENCE_PICKERS: ReferencePicker[] = [
   {
-    contentKind: "waves",
-    key: "waveIds",
-    label: "Wave",
-    mode: "array",
-    registryKey: "wavesById",
-  },
-  {
     contentKind: "hazards",
     key: "hazardIds",
     label: "Hazard",

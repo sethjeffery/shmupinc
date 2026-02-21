@@ -6,7 +6,22 @@
     "secondary": ["focus"]
   },
   "objectiveSetId": "obj_s1_l1",
-  "waveIds": ["intro-intro", "intro-approach", "intro-cross", "intro-harass"],
+  "events": [
+    {
+      "kind": "conversation",
+      "moments": [
+        {
+          "characterId": "kai",
+          "expression": "surprised",
+          "text": "Where am I?"
+        }
+      ]
+    },
+    { "kind": "wave", "waveId": "intro-intro" },
+    { "kind": "wave", "waveId": "intro-approach" },
+    { "kind": "wave", "waveId": "intro-cross" },
+    { "kind": "wave", "waveId": "intro-harass" }
+  ],
   "shopId": "shop_intro",
   "winCondition": {
     "kind": "clearWaves"

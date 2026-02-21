@@ -6,7 +6,12 @@
     "secondary": ["enemy", "time"]
   },
   "objectiveSetId": "obj_s1_l7",
-  "waveIds": ["boss-approach", "boss-gauntlet", "boss-anvil", "boss-finale"],
+  "events": [
+    { "kind": "wave", "waveId": "boss-approach" },
+    { "kind": "wave", "waveId": "boss-gauntlet" },
+    { "kind": "wave", "waveId": "boss-anvil" },
+    { "kind": "wave", "waveId": "boss-finale" }
+  ],
   "shopId": "shop_boss",
   "winCondition": {
     "kind": "defeatBoss",

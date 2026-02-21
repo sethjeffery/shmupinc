@@ -1556,8 +1556,11 @@ export const initContentEditor = (): void => {
         setPanelVisible(previewSection, true);
         return;
       }
+      const waveCount = level.events.filter(
+        (event) => event.kind === "wave",
+      ).length;
       const lines = [
-        `Waves: ${level.waves.length}`,
+        `Waves: ${waveCount}`,
         `Hazards: ${level.hazards?.length ?? 0}`,
         `Win: ${level.winCondition.kind}`,
       ];

@@ -844,15 +844,55 @@ export const buildContentRegistry = (
 
   const resolvedLevels: Record<string, LevelDefinition> = {};
   for (const [id, level] of Object.entries(levelsById)) {
-    const missingWaves = level.waveIds.filter(
-      (waveId) => !resolvedWaves[waveId],
-    );
-    for (const missing of missingWaves) {
-      addReferenceError(errors, `levels/${id}`, `Missing wave "${missing}".`);
+    const events: LevelDefinition["events"] = [];
+    for (let eventIndex = 0; eventIndex < level.events.length; eventIndex += 1) {
+      const event = level.events[eventIndex];
+      if (event.kind === "wave") {
+        const resolvedWave = resolvedWaves[event.waveId];
+        if (!resolvedWave) {
+          addReferenceError(
+            errors,
+            `levels/${id}`,
+            `Missing wave "${event.waveId}" in events[${eventIndex}].`,
+          );
+          continue;
+        }
+        events.push({
+          kind: "wave",
+          wave: resolvedWave,
+        });
+        continue;
+      }
+
+      const moments = event.moments
+        .map((moment) => ({
+          ...moment,
+          text: moment.text.trim(),
+        }))
+        .filter((moment) => moment.text.length > 0);
+      if (moments.length === 0) {
+        addReferenceError(
+          errors,
+          `levels/${id}`,
+          `events[${eventIndex}] has no valid conversation moments.`,
+        );
+        continue;
+      }
+      for (let momentIndex = 0; momentIndex < moments.length; momentIndex += 1) {
+        const moment = moments[momentIndex];
+        if (moment.characterId && !charactersById[moment.characterId]) {
+          addReferenceError(
+            errors,
+            `levels/${id}`,
+            `Missing character "${moment.characterId}" in events[${eventIndex}].moments[${momentIndex}].`,
+          );
+        }
+      }
+      events.push({
+        kind: "conversation",
+        moments,
+      });
     }
-    const waves = level.waveIds
-      .map((waveId) => resolvedWaves[waveId])
-      .filter(Boolean);
 
     const missingHazards = (level.hazardIds ?? []).filter(
       (hazardId) => !resolvedHazards[hazardId],
@@ -906,13 +946,13 @@ export const buildContentRegistry = (
 
     resolvedLevels[id] = {
       endCondition: coerceEndCondition(level.endCondition),
+      events,
       hazards: hazards.length ? hazards : undefined,
       id: level.id,
       objectiveSet,
       pressureProfile: level.pressureProfile,
       shopRules,
       title: level.title,
-      waves,
       winCondition: coerceWinCondition(level.winCondition),
     };
   }

@@ -1,5 +1,5 @@
 import type { EnemyId } from "../data/enemyTypes";
-import type { LevelDefinition } from "../data/levels";
+import type { LevelConversationMoment, LevelDefinition } from "../data/levels";
 import type { EnemyOverride } from "../data/waves";
 import type Phaser from "phaser";
 
@@ -36,6 +36,7 @@ interface LevelRunnerContext {
     allowBottomEject?: boolean,
   ) => void;
   onVictory: () => void;
+  showConversation: (moments: LevelConversationMoment[]) => number;
 }
 
 export class LevelRunner {
@@ -45,52 +46,52 @@ export class LevelRunner {
   private hazards: Hazard[] = [];
   private completed = false;
   private bossSpawned = false;
-  private waveScheduler: WaveScheduler;
+  private activeWaveScheduler: null | WaveScheduler = null;
+  private activeConversationMs = 0;
+  private eventIndex = -1;
+  private waveNumber = 0;
   private hazardDebug?: Phaser.GameObjects.Graphics;
   private spawnDebug?: Phaser.GameObjects.Graphics;
 
   constructor(level: LevelDefinition, context: LevelRunnerContext) {
     this.level = level;
     this.context = context;
-    this.waveScheduler = new WaveScheduler({
-      getEnemyCount: () => this.context.getEnemyCount(),
-      getWaveDefinition: (index) => this.level.waves[index] ?? null,
-      maxWaves: this.level.waves.length,
-      spawn: (event) => {
-        const bossId = this.getBossTargetId();
-        if (bossId && event.enemyId === bossId) {
-          this.bossSpawned = true;
-        }
-        this.context.spawnEnemy(
-          event.enemyId,
-          event.x,
-          event.y,
-          1,
-          event.overrides,
-        );
-      },
-    });
   }
 
   start(): void {
     this.elapsedMs = 0;
     this.completed = false;
     this.bossSpawned = false;
+    this.activeWaveScheduler = null;
+    this.activeConversationMs = 0;
+    this.eventIndex = -1;
+    this.waveNumber = 0;
     this.buildHazards();
     this.setupDebug();
-    this.waveScheduler.start(0);
+    this.advanceEventQueue();
   }
 
   update(deltaMs: number): void {
     if (this.completed) return;
     this.elapsedMs += deltaMs;
     this.updateHazards(deltaMs);
-    this.waveScheduler.update(deltaMs);
+    if (this.activeWaveScheduler) {
+      this.activeWaveScheduler.update(deltaMs);
+      if (this.activeWaveScheduler.isComplete()) {
+        this.activeWaveScheduler = null;
+        this.advanceEventQueue();
+      }
+    } else if (this.activeConversationMs > 0) {
+      this.activeConversationMs = Math.max(0, this.activeConversationMs - deltaMs);
+      if (this.activeConversationMs === 0) {
+        this.advanceEventQueue();
+      }
+    }
     this.checkWinCondition();
   }
 
   getWaveNumber(): number {
-    return this.waveScheduler.getWaveNumber();
+    return this.waveNumber;
   }
 
   setBounds(bounds: Phaser.Geom.Rectangle): void {
@@ -158,7 +159,7 @@ export class LevelRunner {
       return;
     }
     if (condition.kind === "clearWaves") {
-      if (this.waveScheduler.isComplete()) {
+      if (this.isTimelineComplete() && this.context.getEnemyCount() === 0) {
         this.triggerVictory();
       }
       return;
@@ -180,6 +181,54 @@ export class LevelRunner {
     const condition = this.level.endCondition ?? this.level.winCondition;
     if (condition.kind === "defeatBoss") return condition.bossId;
     return null;
+  }
+
+  private isTimelineComplete(): boolean {
+    if (this.activeWaveScheduler) return false;
+    if (this.activeConversationMs > 0) return false;
+    return this.eventIndex >= this.level.events.length - 1;
+  }
+
+  private advanceEventQueue(): void {
+    while (!this.completed && !this.activeWaveScheduler && this.activeConversationMs <= 0) {
+      const next = this.level.events[this.eventIndex + 1];
+      if (!next) return;
+      this.eventIndex += 1;
+      if (next.kind === "wave") {
+        this.startWaveEvent(next.wave);
+        return;
+      }
+      const durationMs = this.context.showConversation(next.moments);
+      if (durationMs > 0) {
+        this.activeConversationMs = durationMs;
+        return;
+      }
+    }
+  }
+
+  private startWaveEvent(
+    wave: Extract<LevelDefinition["events"][number], { kind: "wave" }>["wave"],
+  ): void {
+    this.waveNumber += 1;
+    this.activeWaveScheduler = new WaveScheduler({
+      getEnemyCount: () => this.context.getEnemyCount(),
+      getWaveDefinition: (index) => (index === 0 ? wave : null),
+      maxWaves: 1,
+      spawn: (event) => {
+        const bossId = this.getBossTargetId();
+        if (bossId && event.enemyId === bossId) {
+          this.bossSpawned = true;
+        }
+        this.context.spawnEnemy(
+          event.enemyId,
+          event.x,
+          event.y,
+          1,
+          event.overrides,
+        );
+      },
+    });
+    this.activeWaveScheduler.start(0);
   }
 
   private setupDebug(): void {
@@ -219,8 +268,9 @@ export class LevelRunner {
     this.spawnDebug.clear();
     this.spawnDebug.lineStyle(1, 0x3fd2ff, 0.8);
     this.spawnDebug.fillStyle(0x3fd2ff, 0.2);
-    for (const wave of this.level.waves) {
-      for (const spawn of wave.spawns) {
+    for (const event of this.level.events) {
+      if (event.kind !== "wave") continue;
+      for (const spawn of event.wave.spawns) {
         const x = bounds.x + (0.5 + spawn.x) * bounds.width;
         const y = bounds.y + spawn.y * bounds.height;
         this.spawnDebug.strokeCircle(x, y, 6);

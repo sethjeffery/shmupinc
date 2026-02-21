@@ -6,7 +6,12 @@
     "secondary": ["focus", "throughput"]
   },
   "objectiveSetId": "obj_s1_l2",
-  "waveIds": ["squeeze-entry", "squeeze-lock", "squeeze-sweep", "squeeze-echo"],
+  "events": [
+    { "kind": "wave", "waveId": "squeeze-entry" },
+    { "kind": "wave", "waveId": "squeeze-lock" },
+    { "kind": "wave", "waveId": "squeeze-sweep" },
+    { "kind": "wave", "waveId": "squeeze-echo" }
+  ],
   "hazardIds": [],
   "shopId": "shop_squeeze",
   "winCondition": {

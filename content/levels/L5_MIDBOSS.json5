@@ -6,7 +6,11 @@
     "secondary": ["enemy", "space"]
   },
   "objectiveSetId": "obj_s1_l5",
-  "waveIds": ["midboss-approach", "midboss-screen", "midboss-fight"],
+  "events": [
+    { "kind": "wave", "waveId": "midboss-approach" },
+    { "kind": "wave", "waveId": "midboss-screen" },
+    { "kind": "wave", "waveId": "midboss-fight" }
+  ],
   "shopId": "shop_midboss",
   "winCondition": {
     "kind": "defeatBoss",
