@@ -1,3 +1,4 @@
+import type { DialogMomentView } from "./dialogMomentState";
 import type Phaser from "phaser";
 
 import { signal, type Signal } from "@preact/signals";
@@ -14,6 +15,8 @@ import {
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
 import ProgressionOverlay from "../game/ui/progression/ProgressionOverlay";
 import { MenuOverlay } from "../game/ui/title/MenuOverlay";
+import { DialogMomentController } from "./dialogMomentController";
+import { DialogMomentOverlay } from "./DialogMomentOverlay";
 import {
   openHangarScene,
   pausePlayScene,
@@ -46,6 +49,9 @@ interface PanelAction {
 }
 
 interface UiViewSignals {
+  dialogMomentComplete: (momentKey: string) => void;
+  dialogMomentShouldTransitionOut: (momentKey: string) => boolean;
+  dialogMoment: Signal<DialogMomentView | null>;
   gameOver: Signal<GameOverStats>;
   musicEnabled: Signal<boolean>;
   progression: Signal<GalaxyView | null>;
@@ -119,6 +125,7 @@ const UiRoot = (props: {
 }) => {
   const route = props.signals.route.value;
   const uiOpen = isUiOpenRoute(route);
+  const dialogMoment = props.signals.dialogMoment.value;
 
   const renderActiveOverlay = () => {
     switch (route) {
@@ -215,12 +222,24 @@ const UiRoot = (props: {
   return (
     <div className={clsx(styles.uiRoot, uiOpen ? styles.isActive : undefined)}>
       {renderActiveOverlay()}
+      {dialogMoment ? (
+        <DialogMomentOverlay
+          key={dialogMoment.transitionKey}
+          moment={dialogMoment}
+          onComplete={(momentKey) => props.signals.dialogMomentComplete(momentKey)}
+          shouldTransitionOut={(momentKey) =>
+            props.signals.dialogMomentShouldTransitionOut(momentKey)
+          }
+        />
+      ) : null}
     </div>
   );
 };
 
 export class UiRouter {
   private readonly audio = getAudioDirector();
+  private readonly dialogMomentController: DialogMomentController;
+  private disposed = false;
   private game: Phaser.Game;
   private route: UiRoute = "menu";
   private root: HTMLElement;
@@ -234,6 +253,16 @@ export class UiRouter {
   private readonly soundEnabledSignal = signal<boolean>(
     this.audio.getSoundEnabled(),
   );
+  private readonly handleRouteEvent = (route: UiRoute): void => {
+    this.setRoute(route);
+  };
+  private readonly handleGameOverEvent = (stats: GameOverStats): void => {
+    this.gameOverSignal.value = stats;
+    this.setRoute("gameover");
+  };
+  private readonly handleWindowKeyDown = (event: KeyboardEvent): void => {
+    this.handleKeyDown(event);
+  };
 
   constructor(game: Phaser.Game) {
     this.game = game;
@@ -243,12 +272,18 @@ export class UiRouter {
       throw new Error("Missing #ui-root host.");
     }
     this.root = root;
+    this.dialogMomentController = new DialogMomentController(game);
 
     this.refreshProgressionView();
     render(
       <UiRoot
         onAction={(action, levelId) => this.handleAction(action, levelId)}
         signals={{
+          dialogMoment: this.dialogMomentController.signal,
+          dialogMomentComplete: (momentKey) =>
+            this.dialogMomentController.complete(momentKey),
+          dialogMomentShouldTransitionOut: (momentKey) =>
+            this.dialogMomentController.shouldTransitionOut(momentKey),
           gameOver: this.gameOverSignal,
           musicEnabled: this.musicEnabledSignal,
           progression: this.progressionSignal,
@@ -259,16 +294,24 @@ export class UiRouter {
       this.root,
     );
 
-    window.addEventListener("keydown", (event) => this.handleKeyDown(event));
+    window.addEventListener("keydown", this.handleWindowKeyDown);
 
-    this.game.events.on("ui:route", (route: UiRoute) => this.setRoute(route));
-    this.game.events.on("ui:gameover", (stats: GameOverStats) => {
-      this.gameOverSignal.value = stats;
-      this.setRoute("gameover");
-    });
+    this.game.events.on("ui:route", this.handleRouteEvent);
+    this.game.events.on("ui:gameover", this.handleGameOverEvent);
+    this.game.events.once("destroy", () => this.dispose());
 
     this.setRoute("menu", { force: true });
     this.tryAutoStartLevel();
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    window.removeEventListener("keydown", this.handleWindowKeyDown);
+    this.game.events.off("ui:route", this.handleRouteEvent);
+    this.game.events.off("ui:gameover", this.handleGameOverEvent);
+    this.dialogMomentController.dispose();
+    render(null, this.root);
   }
 
   setRoute(

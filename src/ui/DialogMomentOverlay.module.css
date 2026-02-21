@@ -1,0 +1,227 @@
+.dialogMoment {
+  position: absolute;
+  left: 50%;
+  width: min(780px, calc(100vw - 28px));
+  pointer-events: none;
+  z-index: 24;
+  display: flex;
+  gap: 12px;
+  transform: translate(-50%, 0);
+}
+
+.dialogMoment.enteringSmooth {
+  animation: dialogMomentEnteringSmooth 220ms ease both;
+}
+
+.dialogMoment.enteringUrgent {
+  animation: dialogMomentEnteringUrgent 120ms cubic-bezier(0.15, 0.85, 0.25, 1)
+    both;
+}
+
+.dialogMoment.leavingSmooth {
+  animation: dialogMomentLeavingSmooth 220ms ease both;
+}
+
+.dialogMoment.leavingUrgent {
+  animation: dialogMomentLeavingUrgent 120ms ease-out both;
+}
+
+.dialogMoment.leavingWham {
+  animation: dialogMomentLeavingWham 90ms linear both;
+}
+
+.dialogMomentTop {
+  top: 14px;
+  --dialog-moment-exit-y: -8px;
+}
+
+.dialogMomentBottom {
+  bottom: 14px;
+  --dialog-moment-exit-y: 8px;
+}
+
+.dialogMomentCard {
+  flex: 1;
+  min-height: 74px;
+  gap: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(125, 249, 255, 0.26);
+  padding: 10px 12px;
+  background: linear-gradient(
+    145deg,
+    rgba(9, 14, 22, 0.52),
+    rgba(6, 10, 16, 0.56)
+  );
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.42),
+    inset 0 0 18px rgba(125, 249, 255, 0.07);
+  font-family: "Orbitron", sans-serif;
+  backdrop-filter: blur(5px);
+}
+
+.dialogMomentCardWhamA {
+  animation: dialogMomentWhamShakeA 150ms steps(2, jump-none) 2;
+}
+
+.dialogMomentCardWhamB {
+  animation: dialogMomentWhamShakeB 150ms steps(2, jump-none) 2;
+}
+
+.dialogMomentNoAvatar {
+  grid-template-columns: 1fr;
+}
+
+.dialogMomentAvatarFrame {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dialogMomentAvatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dialogMomentName {
+  font-size: 12px;
+  color: rgb(91, 209, 255);
+}
+
+.dialogMomentText {
+  font-size: 18px;
+  margin: 0;
+  min-height: 1.35em;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  color: #ebf4ff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 640px) {
+  .dialogMoment {
+    width: min(780px, calc(100vw - 16px));
+  }
+
+  .dialogMomentCard {
+    min-height: 66px;
+    grid-template-columns: 48px 1fr;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .dialogMomentAvatarFrame {
+    width: 66px;
+    height: 66px;
+  }
+
+  .dialogMomentText {
+    font-size: 11px;
+  }
+}
+
+@keyframes dialogMomentEnteringSmooth {
+  0% {
+    transform: translate(-50%, -8px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes dialogMomentEnteringUrgent {
+  0% {
+    transform: translate(-50%, -12px) scale(0.985);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dialogMomentLeavingSmooth {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, var(--dialog-moment-exit-y, 8px));
+    opacity: 0;
+  }
+}
+
+@keyframes dialogMomentLeavingUrgent {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, calc(var(--dialog-moment-exit-y, 8px) * 1.25));
+    opacity: 0;
+  }
+}
+
+@keyframes dialogMomentLeavingWham {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, var(--dialog-moment-exit-y, 8px));
+    opacity: 0;
+  }
+}
+
+@keyframes dialogMomentWhamShakeA {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  25% {
+    transform: translate(-1.5px, 0.5px) rotate(-0.25deg);
+  }
+
+  50% {
+    transform: translate(1.5px, -0.5px) rotate(0.2deg);
+  }
+
+  75% {
+    transform: translate(-0.8px, 0.8px) rotate(-0.15deg);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+@keyframes dialogMomentWhamShakeB {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  25% {
+    transform: translate(1.5px, -0.5px) rotate(0.25deg);
+  }
+
+  50% {
+    transform: translate(-1.5px, 0.5px) rotate(-0.2deg);
+  }
+
+  75% {
+    transform: translate(0.8px, -0.8px) rotate(0.15deg);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}

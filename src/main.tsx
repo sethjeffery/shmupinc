@@ -44,7 +44,10 @@ const startApp = async (): Promise<void> => {
   window.addEventListener("resize", updateOuterVars);
 
   const game = createGame();
-  new UiRouter(game);
+  const router = new UiRouter(game);
+  window.addEventListener("beforeunload", () => router.dispose(), {
+    once: true,
+  });
 };
 
 void startApp();
