@@ -86,12 +86,22 @@ export interface LevelConversationMoment {
   characterId?: string;
   durationMs?: number;
   expression?: string;
-  placement?: "bottom" | "top";
+  placement?: "bottom" | "center" | "top";
   text: string;
   transition?: "smooth" | "urgent" | "wham";
 }
 
-export type LevelEvent =
+export interface LevelEventCondition {
+  firstClearOnly?: boolean;
+  hpRatioGte?: number;
+  hpRatioLte?: number;
+  maxTimes?: number;
+  maxHpGte?: number;
+  maxHpLte?: number;
+  repeatOnly?: boolean;
+}
+
+export type LevelEventAction =
   | {
       kind: "conversation";
       moments: LevelConversationMoment[];
@@ -100,6 +110,18 @@ export type LevelEvent =
       kind: "wave";
       wave: WaveDefinition;
     };
+
+export interface LevelEventBranchOption {
+  event: LevelEventAction;
+  when?: LevelEventCondition;
+}
+
+export type LevelEvent =
+  | {
+      kind: "branch";
+      options: LevelEventBranchOption[];
+    }
+  | LevelEventAction;
 
 export interface LevelDefinition {
   events: LevelEvent[];

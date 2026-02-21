@@ -44,6 +44,7 @@ export interface SaveData {
   activeGalaxyId: null | string;
   claimedObjectiveIds: string[];
   galaxyCampaign: Record<string, GalaxyCampaignState>;
+  levelBranchOptionCounts: Record<string, number>;
   levelStars: Record<string, number>;
   ownedWeapons: WeaponInstance[];
   ownedMods: ModInstance[];
@@ -51,6 +52,7 @@ export interface SaveData {
   nextWeaponInstanceId: number;
   nextModInstanceId: number;
   resources: Record<ResourceId, number>;
+  uiTutorialTriggerCounts: Record<string, number>;
   unlocks: UnlockId[];
   unlockedShips: ShipId[];
   selectedShipId: ShipId;
@@ -68,6 +70,7 @@ const defaultSave: SaveData = {
   activeGalaxyId: null,
   claimedObjectiveIds: [],
   galaxyCampaign: {},
+  levelBranchOptionCounts: {},
   levelStars: {},
   mountedWeapons: {},
   nextModInstanceId: 1,
@@ -76,6 +79,7 @@ const defaultSave: SaveData = {
   ownedWeapons: [],
   resources: { gold: 0 },
   selectedShipId: STARTER_SHIP_ID,
+  uiTutorialTriggerCounts: {},
   unlockedShips: [STARTER_SHIP_ID],
   unlocks: [],
 };
@@ -333,6 +337,40 @@ const normalizeLevelStars = (save: SaveData): void => {
   save.levelStars = normalized;
 };
 
+const normalizeLevelBranchOptionCounts = (save: SaveData): void => {
+  const levels = getLevels();
+  const normalized: Record<string, number> = {};
+  for (const [key, count] of Object.entries(
+    save.levelBranchOptionCounts ?? {},
+  )) {
+    const match = /^([^:]+):(\d+):(\d+)$/.exec(key);
+    if (!match) continue;
+    const levelId = match[1];
+    if (!levels[levelId]) continue;
+    const safeCount = Number.isFinite(count)
+      ? Math.max(0, Math.round(count))
+      : 0;
+    if (safeCount <= 0) continue;
+    normalized[key] = safeCount;
+  }
+  save.levelBranchOptionCounts = normalized;
+};
+
+const normalizeUiTutorialTriggerCounts = (save: SaveData): void => {
+  const normalized: Record<string, number> = {};
+  for (const [key, count] of Object.entries(
+    save.uiTutorialTriggerCounts ?? {},
+  )) {
+    if (!key || key.trim().length === 0) continue;
+    const safeCount = Number.isFinite(count)
+      ? Math.max(0, Math.round(count))
+      : 0;
+    if (safeCount <= 0) continue;
+    normalized[key] = safeCount;
+  }
+  save.uiTutorialTriggerCounts = normalized;
+};
+
 const normalizeGalaxyCampaign = (save: SaveData): void => {
   const galaxies = getGalaxies();
   const normalizedCampaign: Record<string, GalaxyCampaignState> = {};
@@ -417,6 +455,8 @@ export function loadSave(): SaveData {
   normalizeNextWeaponInstanceId(cached);
   normalizeNextModInstanceId(cached);
   normalizeMountedWeapons(cached);
+  normalizeLevelBranchOptionCounts(cached);
+  normalizeUiTutorialTriggerCounts(cached);
   normalizeLevelStars(cached);
   normalizeGalaxyCampaign(cached);
   ensureDefaultLoadout(cached);
@@ -442,6 +482,8 @@ export function mutateSave(
   normalizeResources(save);
   normalizeUnlocks(save);
   normalizeClaimedObjectives(save);
+  normalizeLevelBranchOptionCounts(save);
+  normalizeUiTutorialTriggerCounts(save);
   normalizeLevelStars(save);
   normalizeGalaxyCampaign(save);
   normalizeMountedWeapons(save);
@@ -645,3 +687,50 @@ export const createWeaponInstanceInSave = (
   save: SaveData,
   weaponId: WeaponId,
 ): WeaponInstance => createWeaponInstance(save, weaponId);
+
+const getLevelBranchOptionKey = (
+  levelId: string,
+  eventIndex: number,
+  optionIndex: number,
+): string => `${levelId}:${eventIndex}:${optionIndex}`;
+
+export const getLevelBranchOptionCount = (
+  levelId: string,
+  eventIndex: number,
+  optionIndex: number,
+  save: SaveData = loadSave(),
+): number => {
+  const key = getLevelBranchOptionKey(levelId, eventIndex, optionIndex);
+  const value = save.levelBranchOptionCounts[key] ?? 0;
+  return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+};
+
+export const incrementLevelBranchOptionCount = (
+  levelId: string,
+  eventIndex: number,
+  optionIndex: number,
+): SaveData =>
+  mutateSave((save) => {
+    const key = getLevelBranchOptionKey(levelId, eventIndex, optionIndex);
+    save.levelBranchOptionCounts[key] =
+      getLevelBranchOptionCount(levelId, eventIndex, optionIndex, save) + 1;
+  });
+
+export const getUiTutorialTriggerCount = (
+  triggerId: string,
+  save: SaveData = loadSave(),
+): number => {
+  if (!triggerId || triggerId.trim().length === 0) return 0;
+  const value = save.uiTutorialTriggerCounts[triggerId] ?? 0;
+  return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+};
+
+export const incrementUiTutorialTriggerCount = (
+  triggerId: string,
+): SaveData => {
+  if (!triggerId || triggerId.trim().length === 0) return loadSave();
+  return mutateSave((save) => {
+    save.uiTutorialTriggerCounts[triggerId] =
+      getUiTutorialTriggerCount(triggerId, save) + 1;
+  });
+};

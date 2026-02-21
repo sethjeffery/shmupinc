@@ -6,7 +6,7 @@ import type Phaser from "phaser";
 import { CONTACT_DAMAGE_PER_SEC } from "./combatConstants";
 import { getDebugFlags } from "./DebugFlags";
 import { createHazard, type Hazard, type PlayerSnapshot } from "./hazards";
-import { WaveScheduler } from "./WaveScheduler";
+import { LevelEventTimeline, visitEventWaveSpawns } from "./LevelEventTimeline";
 
 interface LevelRunnerContext {
   scene: Phaser.Scene;
@@ -26,6 +26,14 @@ interface LevelRunnerContext {
     radius: number;
     alive: boolean;
   };
+  getPlayerHpRatio: () => number;
+  getPlayerMaxHp: () => number;
+  getBranchOptionSelectionCount: (
+    eventIndex: number,
+    optionIndex: number,
+  ) => number;
+  isFirstClearRun: () => boolean;
+  markBranchOptionSelected: (eventIndex: number, optionIndex: number) => void;
   applyContactDamage: (amount: number, fxX?: number, fxY?: number) => void;
   pushPlayer: (
     offsetX: number,
@@ -46,52 +54,57 @@ export class LevelRunner {
   private hazards: Hazard[] = [];
   private completed = false;
   private bossSpawned = false;
-  private activeWaveScheduler: null | WaveScheduler = null;
-  private activeConversationMs = 0;
-  private eventIndex = -1;
-  private waveNumber = 0;
+  private eventTimeline: LevelEventTimeline;
   private hazardDebug?: Phaser.GameObjects.Graphics;
   private spawnDebug?: Phaser.GameObjects.Graphics;
 
   constructor(level: LevelDefinition, context: LevelRunnerContext) {
     this.level = level;
     this.context = context;
+    this.eventTimeline = new LevelEventTimeline(level.events, {
+      getBranchOptionSelectionCount: (eventIndex, optionIndex) =>
+        this.context.getBranchOptionSelectionCount(eventIndex, optionIndex),
+      getEnemyCount: this.context.getEnemyCount,
+      getPlayerHpRatio: this.context.getPlayerHpRatio,
+      getPlayerMaxHp: this.context.getPlayerMaxHp,
+      isFirstClearRun: this.context.isFirstClearRun,
+      markBranchOptionSelected: this.context.markBranchOptionSelected,
+      showConversation: this.context.showConversation,
+      spawnFromWave: (event) => {
+        const bossId = this.getBossTargetId();
+        if (bossId && event.enemyId === bossId) {
+          this.bossSpawned = true;
+        }
+        this.context.spawnEnemy(
+          event.enemyId,
+          event.x,
+          event.y,
+          1,
+          event.overrides,
+        );
+      },
+    });
   }
 
   start(): void {
     this.elapsedMs = 0;
     this.completed = false;
     this.bossSpawned = false;
-    this.activeWaveScheduler = null;
-    this.activeConversationMs = 0;
-    this.eventIndex = -1;
-    this.waveNumber = 0;
     this.buildHazards();
     this.setupDebug();
-    this.advanceEventQueue();
+    this.eventTimeline.start();
   }
 
   update(deltaMs: number): void {
     if (this.completed) return;
     this.elapsedMs += deltaMs;
     this.updateHazards(deltaMs);
-    if (this.activeWaveScheduler) {
-      this.activeWaveScheduler.update(deltaMs);
-      if (this.activeWaveScheduler.isComplete()) {
-        this.activeWaveScheduler = null;
-        this.advanceEventQueue();
-      }
-    } else if (this.activeConversationMs > 0) {
-      this.activeConversationMs = Math.max(0, this.activeConversationMs - deltaMs);
-      if (this.activeConversationMs === 0) {
-        this.advanceEventQueue();
-      }
-    }
+    this.eventTimeline.update(deltaMs);
     this.checkWinCondition();
   }
 
   getWaveNumber(): number {
-    return this.waveNumber;
+    return this.eventTimeline.getWaveNumber();
   }
 
   setBounds(bounds: Phaser.Geom.Rectangle): void {
@@ -159,7 +172,10 @@ export class LevelRunner {
       return;
     }
     if (condition.kind === "clearWaves") {
-      if (this.isTimelineComplete() && this.context.getEnemyCount() === 0) {
+      if (
+        this.eventTimeline.isComplete() &&
+        this.context.getEnemyCount() === 0
+      ) {
         this.triggerVictory();
       }
       return;
@@ -181,54 +197,6 @@ export class LevelRunner {
     const condition = this.level.endCondition ?? this.level.winCondition;
     if (condition.kind === "defeatBoss") return condition.bossId;
     return null;
-  }
-
-  private isTimelineComplete(): boolean {
-    if (this.activeWaveScheduler) return false;
-    if (this.activeConversationMs > 0) return false;
-    return this.eventIndex >= this.level.events.length - 1;
-  }
-
-  private advanceEventQueue(): void {
-    while (!this.completed && !this.activeWaveScheduler && this.activeConversationMs <= 0) {
-      const next = this.level.events[this.eventIndex + 1];
-      if (!next) return;
-      this.eventIndex += 1;
-      if (next.kind === "wave") {
-        this.startWaveEvent(next.wave);
-        return;
-      }
-      const durationMs = this.context.showConversation(next.moments);
-      if (durationMs > 0) {
-        this.activeConversationMs = durationMs;
-        return;
-      }
-    }
-  }
-
-  private startWaveEvent(
-    wave: Extract<LevelDefinition["events"][number], { kind: "wave" }>["wave"],
-  ): void {
-    this.waveNumber += 1;
-    this.activeWaveScheduler = new WaveScheduler({
-      getEnemyCount: () => this.context.getEnemyCount(),
-      getWaveDefinition: (index) => (index === 0 ? wave : null),
-      maxWaves: 1,
-      spawn: (event) => {
-        const bossId = this.getBossTargetId();
-        if (bossId && event.enemyId === bossId) {
-          this.bossSpawned = true;
-        }
-        this.context.spawnEnemy(
-          event.enemyId,
-          event.x,
-          event.y,
-          1,
-          event.overrides,
-        );
-      },
-    });
-    this.activeWaveScheduler.start(0);
   }
 
   private setupDebug(): void {
@@ -268,14 +236,11 @@ export class LevelRunner {
     this.spawnDebug.clear();
     this.spawnDebug.lineStyle(1, 0x3fd2ff, 0.8);
     this.spawnDebug.fillStyle(0x3fd2ff, 0.2);
-    for (const event of this.level.events) {
-      if (event.kind !== "wave") continue;
-      for (const spawn of event.wave.spawns) {
-        const x = bounds.x + (0.5 + spawn.x) * bounds.width;
-        const y = bounds.y + spawn.y * bounds.height;
-        this.spawnDebug.strokeCircle(x, y, 6);
-        this.spawnDebug.fillCircle(x, y, 3);
-      }
-    }
+    visitEventWaveSpawns(this.level.events, (spawn) => {
+      const x = bounds.x + (0.5 + spawn.x) * bounds.width;
+      const y = bounds.y + spawn.y * bounds.height;
+      this.spawnDebug?.strokeCircle(x, y, 6);
+      this.spawnDebug?.fillCircle(x, y, 3);
+    });
   }
 }

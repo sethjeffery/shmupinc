@@ -1,0 +1,24 @@
+{
+  "id": "progression-intro",
+  "route": "progression",
+  "when": {
+    "maxTimes": 1
+  },
+  "moments": [
+    {
+      "characterId": "alex",
+      "text": "This is the progression screen. You got past the first waypoint, great job!",
+      "placement": "center"
+    },
+    {
+      "characterId": "kai",
+      "text": "Progression? Waypoint?",
+      "placement": "center"
+    },
+    {
+      "characterId": "alex",
+      "text": "I'll explain along the way, Kai.",
+      "placement": "center"
+    }
+  ]
+}

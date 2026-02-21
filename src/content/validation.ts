@@ -3,6 +3,7 @@ import type { GalaxyDefinition } from "../game/data/galaxyTypes";
 import type { GunDefinition } from "../game/data/gunTypes";
 import type {
   HazardScript,
+  LevelEventAction,
   LevelDefinition,
   ShopRules,
 } from "../game/data/levels/types";
@@ -18,6 +19,7 @@ import type {
 } from "../game/data/scripts";
 import type { ShipDefinition } from "../game/data/shipTypes";
 import type { StoryCharacter } from "../game/data/storyCharacterTypes";
+import type { UiRouteTutorialTrigger } from "../game/data/uiTutorialTypes";
 import type { WaveDefinition } from "../game/data/waves";
 import type {
   WeaponDefinition,
@@ -38,6 +40,7 @@ import type {
   SoundContent,
   ShipContent,
   ShopContent,
+  TutorialContent,
   WaveContent,
   WeaponContent,
 } from "./schemas";
@@ -72,6 +75,7 @@ export interface ContentRegistry {
   soundsById: Record<string, SoundContent>;
   shipsById: Record<string, ShipDefinition>;
   shopsById: Record<string, ShopRules>;
+  tutorialsById: Record<string, UiRouteTutorialTrigger>;
   wavesById: Record<string, WaveDefinition>;
   weaponsById: Record<string, WeaponDefinition>;
 }
@@ -450,6 +454,7 @@ export const buildContentRegistry = (
   const soundsById: Record<string, SoundContent> = {};
   const shipsById: Record<string, ShipContent> = {};
   const shopsById: Record<string, ShopContent> = {};
+  const tutorialsById: Record<string, TutorialContent> = {};
   const wavesById: Record<string, WaveContent> = {};
   const weaponsById: Record<string, WeaponContent> = {};
 
@@ -563,6 +568,13 @@ export const buildContentRegistry = (
           break;
         }
         shopsById[id] = value as ShopContent;
+        break;
+      case "tutorials":
+        if (tutorialsById[id]) {
+          addDuplicateError(errors, entry.path, entry.kind, id);
+          break;
+        }
+        tutorialsById[id] = value as TutorialContent;
         break;
       case "waves":
         if (wavesById[id]) {
@@ -832,6 +844,54 @@ export const buildContentRegistry = (
     }
   }
 
+  const resolvedTutorials: Record<string, UiRouteTutorialTrigger> = {};
+  for (const [id, tutorial] of Object.entries(tutorialsById)) {
+    const moments = tutorial.moments
+      .map((moment) => ({
+        ...moment,
+        text: moment.text.trim(),
+      }))
+      .filter((moment) => moment.text.length > 0);
+    if (moments.length === 0) {
+      addReferenceError(
+        errors,
+        `tutorials/${id}`,
+        "Tutorial has no valid conversation moments.",
+      );
+      continue;
+    }
+    for (let momentIndex = 0; momentIndex < moments.length; momentIndex += 1) {
+      const moment = moments[momentIndex];
+      if (!moment.characterId) continue;
+      const character = charactersById[moment.characterId];
+      if (!character) {
+        addReferenceError(
+          errors,
+          `tutorials/${id}`,
+          `Missing character "${moment.characterId}" in moments[${momentIndex}].`,
+        );
+        continue;
+      }
+      if (!moment.expression) continue;
+      const hasExpression = character.avatars.some(
+        (avatar) => avatar.expression === moment.expression,
+      );
+      if (!hasExpression) {
+        addReferenceError(
+          errors,
+          `tutorials/${id}`,
+          `Missing expression "${moment.expression}" for character "${moment.characterId}" in moments[${momentIndex}].`,
+        );
+      }
+    }
+    resolvedTutorials[id] = {
+      id: tutorial.id,
+      moments,
+      route: tutorial.route,
+      when: tutorial.when,
+    };
+  }
+
   for (const [id, weapon] of Object.entries(resolvedWeapons)) {
     if (!resolvedGuns[weapon.gunId]) {
       addReferenceError(
@@ -845,23 +905,34 @@ export const buildContentRegistry = (
   const resolvedLevels: Record<string, LevelDefinition> = {};
   for (const [id, level] of Object.entries(levelsById)) {
     const events: LevelDefinition["events"] = [];
-    for (let eventIndex = 0; eventIndex < level.events.length; eventIndex += 1) {
-      const event = level.events[eventIndex];
+    type ContentLevelEventShorthand = Extract<
+      LevelContent["events"][number],
+      unknown[]
+    >;
+    type ContentLevelBranchOption = ContentLevelEventShorthand[number];
+    type ContentLevelEventAction = Exclude<
+      LevelContent["events"][number],
+      { kind: "branch" } | ContentLevelEventShorthand
+    >;
+
+    const resolveEventAction = (
+      event: ContentLevelEventAction,
+      eventPath: string,
+    ): LevelEventAction | null => {
       if (event.kind === "wave") {
         const resolvedWave = resolvedWaves[event.waveId];
         if (!resolvedWave) {
           addReferenceError(
             errors,
             `levels/${id}`,
-            `Missing wave "${event.waveId}" in events[${eventIndex}].`,
+            `Missing wave "${event.waveId}" in ${eventPath}.`,
           );
-          continue;
+          return null;
         }
-        events.push({
+        return {
           kind: "wave",
           wave: resolvedWave,
-        });
-        continue;
+        };
       }
 
       const moments = event.moments
@@ -874,24 +945,104 @@ export const buildContentRegistry = (
         addReferenceError(
           errors,
           `levels/${id}`,
-          `events[${eventIndex}] has no valid conversation moments.`,
+          `${eventPath} has no valid conversation moments.`,
         );
-        continue;
+        return null;
       }
-      for (let momentIndex = 0; momentIndex < moments.length; momentIndex += 1) {
+      for (
+        let momentIndex = 0;
+        momentIndex < moments.length;
+        momentIndex += 1
+      ) {
         const moment = moments[momentIndex];
         if (moment.characterId && !charactersById[moment.characterId]) {
           addReferenceError(
             errors,
             `levels/${id}`,
-            `Missing character "${moment.characterId}" in events[${eventIndex}].moments[${momentIndex}].`,
+            `Missing character "${moment.characterId}" in ${eventPath}.moments[${momentIndex}].`,
           );
         }
       }
-      events.push({
+      return {
         kind: "conversation",
         moments,
-      });
+      };
+    };
+
+    const resolveBranchOptions = (
+      options: ContentLevelBranchOption[],
+      branchPath: string,
+    ): Extract<
+      LevelDefinition["events"][number],
+      { kind: "branch" }
+    >["options"] => {
+      const resolvedOptions: Extract<
+        LevelDefinition["events"][number],
+        { kind: "branch" }
+      >["options"] = [];
+      for (
+        let optionIndex = 0;
+        optionIndex < options.length;
+        optionIndex += 1
+      ) {
+        const option = options[optionIndex];
+        const resolvedAction = resolveEventAction(
+          option.event,
+          `${branchPath}.options[${optionIndex}].event`,
+        );
+        if (!resolvedAction) continue;
+        resolvedOptions.push({
+          event: resolvedAction,
+          when: option.when,
+        });
+      }
+      return resolvedOptions;
+    };
+
+    for (
+      let eventIndex = 0;
+      eventIndex < level.events.length;
+      eventIndex += 1
+    ) {
+      const event = level.events[eventIndex];
+      if (Array.isArray(event)) {
+        const options = resolveBranchOptions(event, `events[${eventIndex}]`);
+        if (options.length === 0) {
+          addReferenceError(
+            errors,
+            `levels/${id}`,
+            `events[${eventIndex}] branch has no valid options.`,
+          );
+          continue;
+        }
+        events.push({
+          kind: "branch",
+          options,
+        });
+        continue;
+      }
+      if (event.kind === "branch") {
+        const options = resolveBranchOptions(
+          event.options,
+          `events[${eventIndex}]`,
+        );
+        if (options.length === 0) {
+          addReferenceError(
+            errors,
+            `levels/${id}`,
+            `events[${eventIndex}] branch has no valid options.`,
+          );
+          continue;
+        }
+        events.push({
+          kind: "branch",
+          options,
+        });
+        continue;
+      }
+      const resolvedAction = resolveEventAction(event, `events[${eventIndex}]`);
+      if (!resolvedAction) continue;
+      events.push(resolvedAction);
     }
 
     const missingHazards = (level.hazardIds ?? []).filter(
@@ -972,6 +1123,7 @@ export const buildContentRegistry = (
       shipsById: resolvedShips,
       shopsById: resolvedShops,
       soundsById,
+      tutorialsById: resolvedTutorials,
       wavesById: resolvedWaves,
       weaponsById: resolvedWeapons,
     },

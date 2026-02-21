@@ -11,9 +11,17 @@ import {
   UI_DIALOG_MOMENT_WINDOW_EVENT,
 } from "./dialogMoment";
 
+interface DialogMomentQueueItem extends DialogMomentPayload {
+  isTutorial: boolean;
+}
+
+interface DialogMomentShowOptions {
+  isTutorial?: boolean;
+}
+
 export class DialogMomentController {
   private readonly game: Phaser.Game;
-  private queue: DialogMomentPayload[] = [];
+  private queue: DialogMomentQueueItem[] = [];
   private sequence = 0;
   private transitionSequence = 0;
   readonly signal = signal<DialogMomentView | null>(null);
@@ -41,8 +49,12 @@ export class DialogMomentController {
     }
   }
 
-  show(request: DialogMomentInput): void {
-    this.queue = normalizeDialogMomentPayloads(request);
+  show(request: DialogMomentInput, options?: DialogMomentShowOptions): void {
+    const isTutorial = options?.isTutorial ?? false;
+    this.queue = normalizeDialogMomentPayloads(request).map((entry) => ({
+      ...entry,
+      isTutorial,
+    }));
     this.showNext();
   }
 
@@ -84,6 +96,7 @@ export class DialogMomentController {
       characterId: next.characterId,
       durationMs: next.durationMs,
       expression: next.expression,
+      isTutorial: next.isTutorial,
       key: String(this.sequence),
       placement: next.placement,
       text: next.text,

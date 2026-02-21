@@ -134,7 +134,7 @@ export class ShopScene extends Phaser.Scene {
     render(
       <ShopOverlayView
         content={this.contentSignal.value}
-        onQuit={() => this.handleQuitToMenu()}
+        onQuit={this.handleQuitToMenu.bind(this)}
         onItemAction={(item) => {
           if (item.owned) {
             this.equipPreviewItem(item);
@@ -143,7 +143,7 @@ export class ShopScene extends Phaser.Scene {
           this.buyPreviewItem(item);
         }}
         onItemClick={(item) => void item}
-        onTabSelect={(category) => this.setCategory(category)}
+        onTabSelect={this.setCategory.bind(this)}
         category={this.categorySignal.value}
         gold={this.goldSignal.value}
         missionActive={this.missionActiveSignal.value}
@@ -401,20 +401,12 @@ export class ShopScene extends Phaser.Scene {
     const ship = this.getSelectedShip();
     return (
       <LoadoutAreaView
-        onAssignModToSlot={(mountId, slotIndex, modInstanceId) =>
-          this.assignModToSlot(mountId, slotIndex, modInstanceId)
-        }
-        onAssignWeaponToMount={(mountId, weaponInstanceId) =>
-          this.assignWeaponToMount(mountId, weaponInstanceId)
-        }
-        onClearModSlot={(mountId, slotIndex) =>
-          this.clearModSlot(mountId, slotIndex)
-        }
-        onDetachWeaponFromMount={(mountId) =>
-          this.detachWeaponFromMount(mountId)
-        }
-        onSelectShip={(shipId) => this.handleLoadoutShipSelect(shipId)}
-        onStartMission={() => this.handleDeploy()}
+        onAssignModToSlot={this.assignModToSlot.bind(this)}
+        onAssignWeaponToMount={this.assignWeaponToMount.bind(this)}
+        onClearModSlot={this.clearModSlot.bind(this)}
+        onDetachWeaponFromMount={this.detachWeaponFromMount.bind(this)}
+        onSelectShip={this.handleLoadoutShipSelect.bind(this)}
+        onStartMission={this.handleDeploy.bind(this)}
         previewRootRef={this.handlePreviewRootRef}
         save={this.save}
         selectedShip={ship}
@@ -526,7 +518,7 @@ export class ShopScene extends Phaser.Scene {
       this.syncPreviewCanvasSize(),
     );
     this.resizeObserver.observe(this.previewRoot);
-    window.requestAnimationFrame(() => this.syncPreviewCanvasSize());
+    window.requestAnimationFrame(this.syncPreviewCanvasSize.bind(this));
   }
 
   private attachPreviewCanvasToRoot(): void {

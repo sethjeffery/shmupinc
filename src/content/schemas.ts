@@ -11,6 +11,7 @@ export const CONTENT_KINDS = [
   "objectives",
   "levels",
   "sounds",
+  "tutorials",
   "ships",
   "shops",
   "waves",
@@ -958,7 +959,7 @@ const shopSchema = z.object({
   id: idField("Unique shop id."),
 });
 
-const winConditionSchema = z.union([
+const winConditionSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z
       .literal("clearWaves")
@@ -983,7 +984,7 @@ const levelConversationMomentSchema = z.object({
     .optional(),
   expression: idField("Optional character expression id.").optional(),
   placement: z
-    .enum(["bottom", "top"])
+    .enum(["bottom", "top", "center"])
     .describe("Dialog placement.")
     .optional(),
   text: z.string().min(1).describe("Dialog line."),
@@ -993,7 +994,75 @@ const levelConversationMomentSchema = z.object({
     .optional(),
 });
 
-const levelEventSchema = z.union([
+const uiTutorialConditionSchema = z.object({
+  maxTimes: z
+    .number()
+    .int()
+    .positive()
+    .describe("Show no more than N times.")
+    .optional(),
+});
+
+const uiTutorialRouteSchema = z.enum([
+  "gameover",
+  "hangar",
+  "menu",
+  "pause",
+  "play",
+  "progression",
+]);
+
+const uiRouteTutorialSchema = z.object({
+  id: idField("Unique tutorial trigger id."),
+  moments: z
+    .array(levelConversationMomentSchema)
+    .min(1)
+    .describe("Ordered dialog moments."),
+  route: uiTutorialRouteSchema
+    .describe("UI route that triggers this tutorial.")
+    .optional(),
+  when: uiTutorialConditionSchema
+    .describe("Optional conditions for showing this tutorial.")
+    .optional(),
+});
+
+const levelEventConditionSchema = z.object({
+  firstClearOnly: z
+    .boolean()
+    .describe("Only matches on first clear attempt.")
+    .optional(),
+  hpRatioGte: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("Require current HP ratio >= this value.")
+    .optional(),
+  hpRatioLte: z
+    .number()
+    .min(0)
+    .max(1)
+    .describe("Require current HP ratio <= this value.")
+    .optional(),
+  maxHpGte: z
+    .number()
+    .positive()
+    .describe("Require max HP >= this value.")
+    .optional(),
+  maxHpLte: z
+    .number()
+    .positive()
+    .describe("Require max HP <= this value.")
+    .optional(),
+  maxTimes: z
+    .number()
+    .int()
+    .positive()
+    .describe("Match this option no more than N total selections.")
+    .optional(),
+  repeatOnly: z.boolean().describe("Only matches on repeat clears.").optional(),
+});
+
+const levelEventActionSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("wave").describe("Run a wave."),
     waveId: idField("Wave id to run."),
@@ -1005,6 +1074,34 @@ const levelEventSchema = z.union([
       .min(1)
       .describe("Ordered dialog moments."),
   }),
+]);
+
+const levelEventBranchOptionSchema = z.object({
+  event: levelEventActionSchema.describe(
+    "Event to run if this option matches.",
+  ),
+  when: levelEventConditionSchema
+    .describe("Optional conditions for this option.")
+    .optional(),
+});
+
+const levelEventBranchSchema = z.object({
+  kind: z.literal("branch").describe("Pick the first matching branch option."),
+  options: z
+    .array(levelEventBranchOptionSchema)
+    .min(1)
+    .describe("Ordered branch options."),
+});
+
+const levelEventShorthandSchema = z
+  .array(levelEventBranchOptionSchema)
+  .min(1)
+  .describe("Shorthand for branch options.");
+
+const levelEventSchema = z.union([
+  levelEventActionSchema,
+  levelEventBranchSchema,
+  levelEventShorthandSchema,
 ]);
 
 const rewardBundleSchema = z.object({
@@ -1361,6 +1458,7 @@ export const contentSchemas = {
   ships: shipSchema,
   shops: shopSchema,
   sounds: proceduralSoundSchema,
+  tutorials: uiRouteTutorialSchema,
   waves: waveSchema,
   weapons: weaponSchema,
 } satisfies Record<ContentKind, z.ZodSchema>;
@@ -1377,5 +1475,6 @@ export type LevelContent = z.infer<typeof levelSchema>;
 export type ShipContent = z.infer<typeof shipSchema>;
 export type ShopContent = z.infer<typeof shopSchema>;
 export type SoundContent = z.infer<typeof proceduralSoundSchema>;
+export type TutorialContent = z.infer<typeof uiRouteTutorialSchema>;
 export type WaveContent = z.infer<typeof waveSchema>;
 export type WeaponContent = z.infer<typeof weaponSchema>;

@@ -1,5 +1,4 @@
-import { signal } from "@preact/signals";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 
 interface UseEnterLeaveProps {
   entryDuration?: number;
@@ -7,50 +6,48 @@ interface UseEnterLeaveProps {
   startEntering?: boolean;
 }
 
-const enterTimer = signal<null | number>(null);
-const exitTimer = signal<null | number>(null);
-
 export function useEnterLeave({
   entryDuration = 1000,
   exitDuration = 1000,
   startEntering = true,
 }: UseEnterLeaveProps) {
+  const enterTimerRef = useRef<null | number>(null);
+  const exitTimerRef = useRef<null | number>(null);
+  const enteringPromiseRef = useRef<null | Promise<void>>(null);
+  const leavingPromiseRef = useRef<null | Promise<void>>(null);
   const [entering, setEntering] = useState(startEntering);
   const [leaving, setLeaving] = useState(false);
   const [entered, setEntered] = useState(false);
-  const [leavingPromise, setLeavingPromise] = useState<null | Promise<void>>(
-    null,
-  );
-  const [enteringPromise, setEnteringPromise] = useState<null | Promise<void>>(
-    null,
-  );
 
   const leave = useCallback(() => {
-    if (leavingPromise) return leavingPromise;
+    if (leavingPromiseRef.current) return leavingPromiseRef.current;
     const promise = new Promise<void>((resolve) => {
       setLeaving(true);
-      exitTimer.value = window.setTimeout(() => {
+      exitTimerRef.current = window.setTimeout(() => {
         setEntered(false);
         setLeaving(false);
+        leavingPromiseRef.current = null;
         resolve();
       }, exitDuration);
     });
-    setLeavingPromise(promise);
+    leavingPromiseRef.current = promise;
     return promise;
-  }, [exitDuration, leavingPromise]);
+  }, [exitDuration]);
 
   const enter = useCallback(() => {
-    if (enteringPromise) return;
+    if (enteringPromiseRef.current) return enteringPromiseRef.current;
+    setEntering(true);
     const promise = new Promise<void>((resolve) => {
-      enterTimer.value = window.setTimeout(() => {
+      enterTimerRef.current = window.setTimeout(() => {
         setEntered(true);
         setEntering(false);
+        enteringPromiseRef.current = null;
         resolve();
       }, entryDuration);
     });
-    setEnteringPromise(promise);
+    enteringPromiseRef.current = promise;
     return promise;
-  }, [enteringPromise, entryDuration]);
+  }, [entryDuration]);
 
   useEffect(() => {
     if (startEntering) {
@@ -60,11 +57,11 @@ export function useEnterLeave({
 
   useEffect(() => {
     return () => {
-      if (exitTimer.value !== null) {
-        window.clearTimeout(exitTimer.value);
+      if (exitTimerRef.current !== null) {
+        window.clearTimeout(exitTimerRef.current);
       }
-      if (enterTimer.value !== null) {
-        window.clearTimeout(enterTimer.value);
+      if (enterTimerRef.current !== null) {
+        window.clearTimeout(enterTimerRef.current);
       }
     };
   }, []);

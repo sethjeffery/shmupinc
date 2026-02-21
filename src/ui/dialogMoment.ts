@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 
-export type DialogMomentPlacement = "bottom" | "top";
+export type DialogMomentPlacement = "bottom" | "center" | "top";
 export type DialogMomentTransition = "smooth" | "urgent" | "wham";
 
 export interface DialogMomentRequest {
@@ -25,15 +25,13 @@ export interface DialogMomentPayload {
 
 export const UI_DIALOG_MOMENT_EVENT = "ui:dialog-moment";
 export const UI_DIALOG_MOMENT_WINDOW_EVENT = "ui:dialog-moment:window";
-export const UI_DIALOG_MOMENT_DEFAULT_DURATION_MS = 2600;
-export const UI_DIALOG_MOMENT_EXIT_MS = 220;
 
-export const normalizeDialogMomentPayload = (
+const normalizeDialogMomentPayload = (
   request: DialogMomentRequest,
 ): DialogMomentPayload => ({
   ...request,
   durationMs:
-    request.durationMs ?? Math.max(request.text.length * 100 + 500, 2000),
+    request.durationMs ?? Math.max(request.text.length * 50 + 1000, 2000),
   placement: request.placement ?? "top",
   transition: request.transition ?? "smooth",
 });

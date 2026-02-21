@@ -24,6 +24,7 @@ import {
   stopPlayScene,
   stopShopScene,
 } from "./router/sceneEffects";
+import { UiRouteTutorialController } from "./tutorial/uiRouteTutorialController";
 
 import styles from "./router.module.css";
 
@@ -124,8 +125,10 @@ const UiRoot = (props: {
   signals: UiViewSignals;
 }) => {
   const route = props.signals.route.value;
-  const uiOpen = isUiOpenRoute(route);
   const dialogMoment = props.signals.dialogMoment.value;
+  const uiOpen = isUiOpenRoute(route);
+  const tutorialDialogOpen = Boolean(dialogMoment?.isTutorial);
+  const rootInteractive = uiOpen || tutorialDialogOpen;
 
   const renderActiveOverlay = () => {
     switch (route) {
@@ -220,15 +223,17 @@ const UiRoot = (props: {
   };
 
   return (
-    <div className={clsx(styles.uiRoot, uiOpen ? styles.isActive : undefined)}>
+    <div
+      className={clsx(styles.uiRoot, rootInteractive ? styles.isActive : undefined)}
+    >
       {renderActiveOverlay()}
       {dialogMoment ? (
         <DialogMomentOverlay
           key={dialogMoment.transitionKey}
           moment={dialogMoment}
-          onComplete={(momentKey) => props.signals.dialogMomentComplete(momentKey)}
-          shouldTransitionOut={(momentKey) =>
-            props.signals.dialogMomentShouldTransitionOut(momentKey)
+          onComplete={props.signals.dialogMomentComplete}
+          shouldTransitionOut={(key) =>
+            props.signals.dialogMomentShouldTransitionOut(key)
           }
         />
       ) : null}
@@ -239,6 +244,7 @@ const UiRoot = (props: {
 export class UiRouter {
   private readonly audio = getAudioDirector();
   private readonly dialogMomentController: DialogMomentController;
+  private readonly routeTutorialController: UiRouteTutorialController;
   private disposed = false;
   private game: Phaser.Game;
   private route: UiRoute = "menu";
@@ -273,17 +279,23 @@ export class UiRouter {
     }
     this.root = root;
     this.dialogMomentController = new DialogMomentController(game);
+    this.routeTutorialController = new UiRouteTutorialController(
+      this.dialogMomentController.show.bind(this.dialogMomentController),
+    );
 
     this.refreshProgressionView();
     render(
       <UiRoot
-        onAction={(action, levelId) => this.handleAction(action, levelId)}
+        onAction={this.handleAction.bind(this)}
         signals={{
           dialogMoment: this.dialogMomentController.signal,
-          dialogMomentComplete: (momentKey) =>
-            this.dialogMomentController.complete(momentKey),
-          dialogMomentShouldTransitionOut: (momentKey) =>
-            this.dialogMomentController.shouldTransitionOut(momentKey),
+          dialogMomentComplete: this.dialogMomentController.complete.bind(
+            this.dialogMomentController,
+          ),
+          dialogMomentShouldTransitionOut:
+            this.dialogMomentController.shouldTransitionOut.bind(
+              this.dialogMomentController,
+            ),
           gameOver: this.gameOverSignal,
           musicEnabled: this.musicEnabledSignal,
           progression: this.progressionSignal,
@@ -298,7 +310,7 @@ export class UiRouter {
 
     this.game.events.on("ui:route", this.handleRouteEvent);
     this.game.events.on("ui:gameover", this.handleGameOverEvent);
-    this.game.events.once("destroy", () => this.dispose());
+    this.game.events.once("destroy", this.dispose.bind(this));
 
     this.setRoute("menu", { force: true });
     this.tryAutoStartLevel();
@@ -333,6 +345,7 @@ export class UiRouter {
     document.body.classList.toggle("game-locked", isGameLockRoute(route));
     document.body.classList.toggle("game-active", isAppVisibleRoute(route));
     this.setEngineLoopActive(isEngineActiveRoute(route));
+    this.routeTutorialController.handleRoute(route);
 
     if (route === "play") {
       void startOrResumePlayScene({

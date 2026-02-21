@@ -2,7 +2,7 @@ import type { DialogMomentTransition } from "./dialogMoment";
 import type { DialogMomentView } from "./dialogMomentState";
 
 import clsx from "clsx";
-import { useEffect, useMemo } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef } from "preact/hooks";
 
 import {
   STORY_CHARACTERS,
@@ -81,6 +81,7 @@ export const DialogMomentOverlay = (props: {
     characterId,
     durationMs,
     expression,
+    isTutorial,
     key,
     placement,
     text,
@@ -91,6 +92,7 @@ export const DialogMomentOverlay = (props: {
     entryDuration: transitionConfig.entryDurationMs,
     exitDuration: transitionConfig.exitDurationMs,
   });
+  const completedRef = useRef(false);
 
   const avatarImage = useMemo(
     () => characterId && getCharacterAvatar(characterId, expression),
@@ -100,54 +102,79 @@ export const DialogMomentOverlay = (props: {
     ? (STORY_CHARACTERS[characterId]?.name ?? null)
     : null;
 
+  const completeMoment = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    if (shouldTransitionOut(key)) {
+      void leave().then(() => onComplete(key));
+      return;
+    }
+    onComplete(key);
+  }, [key, leave, onComplete, shouldTransitionOut]);
+
   useEffect(() => {
+    completedRef.current = false;
     const timer = window.setTimeout(() => {
-      if (shouldTransitionOut(key)) {
-        void leave().then(() => onComplete(key));
-      } else {
-        onComplete(key);
-      }
+      completeMoment();
     }, durationMs);
+
     return () => window.clearTimeout(timer);
-  }, [durationMs, key, leave, onComplete, shouldTransitionOut]);
+  }, [completeMoment, durationMs, key]);
+
+  const handleTutorialAdvance = useCallback(() => {
+    if (!isTutorial) return;
+    completeMoment();
+  }, [completeMoment, isTutorial]);
 
   return (
-    <div
-      className={clsx(
-        styles.dialogMoment,
-        getEnteringClass(entering, transition),
-        getLeavingClass(leaving, transition),
-        placement === "bottom"
-          ? styles.dialogMomentBottom
-          : styles.dialogMomentTop,
-      )}
-    >
-      {avatarImage ? (
-        <div className={styles.dialogMomentAvatarFrame}>
-          <img
-            alt={characterName ? `${characterName} avatar` : "Character avatar"}
-            className={styles.dialogMomentAvatar}
-            src={avatarImage}
-          />
-        </div>
+    <div className={styles.dialogMomentLayer}>
+      {isTutorial ? (
+        <div
+          className={styles.dialogMomentTutorialBackdrop}
+          onPointerDown={handleTutorialAdvance}
+        />
       ) : null}
       <div
         className={clsx(
-          styles.dialogMomentCard,
-          transition === "wham" &&
-            (Number(key) % 2 === 0
-              ? styles.dialogMomentCardWhamA
-              : styles.dialogMomentCardWhamB),
-          avatarImage ? undefined : styles.dialogMomentNoAvatar,
+          styles.dialogMoment,
+          getEnteringClass(entering, transition),
+          getLeavingClass(leaving, transition),
+          placement === "bottom"
+            ? styles.dialogMomentBottom
+            : placement === "top"
+              ? styles.dialogMomentTop
+              : styles.dialogMomentCenter,
         )}
       >
-        <div className={styles.dialogMomentName}>{characterName}</div>
-        <DialogMomentText
-          key={key}
-          momentKey={key}
-          speed={transitionConfig.typewriterSpeed}
-          text={text}
-        />
+        {avatarImage ? (
+          <div className={styles.dialogMomentAvatarFrame}>
+            <img
+              alt={
+                characterName ? `${characterName} avatar` : "Character avatar"
+              }
+              className={styles.dialogMomentAvatar}
+              src={avatarImage}
+            />
+          </div>
+        ) : null}
+        <div
+          className={clsx(
+            styles.dialogMomentCard,
+            transition === "wham" &&
+              (Number(key) % 2 === 0
+                ? styles.dialogMomentCardWhamA
+                : styles.dialogMomentCardWhamB),
+            avatarImage ? undefined : styles.dialogMomentNoAvatar,
+          )}
+        >
+          <div className={styles.dialogMomentName}>{characterName}</div>
+          <DialogMomentText
+            key={key}
+            momentKey={key}
+            speed={transitionConfig.typewriterSpeed}
+            text={text}
+          />
+        </div>
       </div>
     </div>
   );

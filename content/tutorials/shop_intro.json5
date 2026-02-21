@@ -1,0 +1,31 @@
+{
+  "id": "shop-intro",
+  "route": "hangar",
+  "when": {
+    "maxTimes": 1
+  },
+  "moments": [
+    {
+      "characterId": "alex",
+      "text": "Welcome to the hangar. This is where we tune your ship before a mission.",
+      "placement": "center"
+    },
+    {
+      "characterId": "kai",
+      "expression": "worried",
+      "text": "Oh, I can get more weapons?",
+      "placement": "center"
+    },
+    {
+      "characterId": "alex",
+      "text": "Exactly. You'll get gold from missions which you can spend here. For now, hit START MISSION when you're ready.",
+      "placement": "center",
+      "expression": "happy"
+    },
+    {
+      "characterId": "kai",
+      "text": "Got it.",
+      "placement": "center"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ export interface DialogMomentView {
   characterId?: string;
   durationMs: number;
   expression?: string;
+  isTutorial: boolean;
   key: string;
   placement: DialogMomentPlacement;
   text: string;

@@ -53,6 +53,7 @@ const EMPTY_REGISTRY: ContentRegistry = {
   shipsById: {},
   shopsById: {},
   soundsById: {},
+  tutorialsById: {},
   wavesById: {},
   weaponsById: {},
 };

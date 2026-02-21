@@ -120,41 +120,84 @@ export const buildJsonSchemaForKind = (
     }
 
     if (props.events) {
-      const eventItem = getItemsSchema(props.events);
-      const eventOptions = getUnionOptions(eventItem);
-
-      const waveOption = eventOptions.find((option) => {
-        const optionProps = getProperties(option);
-        return (
-          optionProps?.kind &&
-          (optionProps.kind as { const?: string }).const === "wave"
-        );
-      });
-      const waveProps = waveOption ? getProperties(waveOption) : null;
-      if (waveProps?.waveId) {
-        setEnumOnProperty(waveProps.waveId, Object.keys(registry.wavesById));
-      }
-
-      const conversationOption = eventOptions.find((option) => {
-        const optionProps = getProperties(option);
-        return (
-          optionProps?.kind &&
-          (optionProps.kind as { const?: string }).const === "conversation"
-        );
-      });
-      const conversationProps = conversationOption
-        ? getProperties(conversationOption)
-        : null;
-      if (conversationProps?.moments) {
-        const momentItem = getItemsSchema(conversationProps.moments);
-        const momentProps = getProperties(momentItem);
-        if (momentProps?.characterId) {
-          setEnumOnProperty(
-            momentProps.characterId,
-            Object.keys(registry.charactersById),
-          );
+      const characterIds = Object.keys(registry.charactersById);
+      const expressionIds = Array.from(
+        new Set(
+          Object.values(registry.charactersById).flatMap((character) =>
+            character.avatars.map((avatar) => avatar.expression),
+          ),
+        ),
+      );
+      const waveIds = Object.keys(registry.wavesById);
+      const applyLevelEventEnums = (eventSchema: JsonSchema): void => {
+        const unionOptions = getUnionOptions(eventSchema);
+        if (unionOptions.length > 0) {
+          unionOptions.forEach((option) => applyLevelEventEnums(option));
+          return;
         }
-      }
+
+        const schemaType = (eventSchema as { type?: string }).type;
+        if (schemaType === "array") {
+          applyLevelEventEnums(getItemsSchema(eventSchema));
+          return;
+        }
+
+        const eventProps = getProperties(eventSchema);
+        if (!eventProps) return;
+        const kindConst = (eventProps.kind as { const?: string } | undefined)
+          ?.const;
+
+        if (kindConst === "wave" && eventProps.waveId) {
+          setEnumOnProperty(eventProps.waveId, waveIds);
+          return;
+        }
+
+        if (kindConst === "conversation" && eventProps.moments) {
+          const momentItem = getItemsSchema(eventProps.moments);
+          const momentProps = getProperties(momentItem);
+          if (momentProps?.characterId) {
+            setEnumOnProperty(momentProps.characterId, characterIds);
+          }
+          if (momentProps?.expression) {
+            setEnumOnProperty(momentProps.expression, expressionIds);
+          }
+          return;
+        }
+
+        if (kindConst === "branch" && eventProps.options) {
+          const optionItem = getItemsSchema(eventProps.options);
+          const optionProps = getProperties(optionItem);
+          if (optionProps?.event) {
+            applyLevelEventEnums(optionProps.event);
+          }
+          return;
+        }
+
+        if (eventProps.event) {
+          applyLevelEventEnums(eventProps.event);
+        }
+      };
+
+      applyLevelEventEnums(getItemsSchema(props.events));
+    }
+  }
+
+  if (kind === "tutorials") {
+    const characterIds = Object.keys(registry.charactersById);
+    const expressionIds = Array.from(
+      new Set(
+        Object.values(registry.charactersById).flatMap((character) =>
+          character.avatars.map((avatar) => avatar.expression),
+        ),
+      ),
+    );
+    const momentItem = getItemsSchema(props.moments ?? {});
+    const momentProps = getProperties(momentItem);
+    if (momentProps?.characterId) {
+      setEnumOnProperty(momentProps.characterId, characterIds);
+    }
+    if (momentProps?.expression) {
+      setEnumOnProperty(momentProps.expression, expressionIds);
     }
   }
 

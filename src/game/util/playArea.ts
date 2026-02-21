@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-export const PLAYFIELD_MOBILE_WIDTH = 450;
+const PLAYFIELD_MOBILE_WIDTH = 450;
 export const PLAYFIELD_BASE_WIDTH = Math.round(PLAYFIELD_MOBILE_WIDTH * 1.5);
 export const PLAYFIELD_BASE_HEIGHT = 800;
 export const PLAYFIELD_CORNER_RADIUS = 18;

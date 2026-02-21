@@ -20,6 +20,8 @@ import {
   addResourceInSave,
   bankGold,
   computePlayerLoadout,
+  getLevelBranchOptionCount,
+  incrementLevelBranchOptionCount,
   mutateSave,
 } from "../data/save";
 import {
@@ -164,6 +166,7 @@ export class PlayScene extends Phaser.Scene {
   private gameOverTimer?: Phaser.Time.TimerEvent;
   private overlayShown = false;
   private levelRunner?: LevelRunner;
+  private firstClearRun = true;
 
   private enemies: Enemy[] = [];
   private enemyPool: Enemy[] = [];
@@ -296,6 +299,7 @@ export class PlayScene extends Phaser.Scene {
     this.enemyPool.length = 0;
     this.isGameOver = false;
     this.overlayShown = false;
+    this.firstClearRun = true;
     this.gold = 0;
     this.goldBanked = false;
     this.playerFiring.reset();
@@ -382,7 +386,7 @@ export class PlayScene extends Phaser.Scene {
       {
         canDamage: () => this.shipAlive && !this.isGameOver,
         getBounds: () => this.playArea,
-        onDeath: () => this.handleShipDeath(),
+        onDeath: this.handleShipDeath.bind(this),
         particles: this.particles,
         ship: this.ship,
       },
@@ -434,12 +438,21 @@ export class PlayScene extends Phaser.Scene {
     const activeSession = getActiveLevelSession();
     const activeLevel = activeSession?.level;
     if (activeLevel) {
+      const activeLevelId = activeSession?.id ?? activeLevel.id;
+      this.firstClearRun = activeSession?.id
+        ? getLevelStars(activeSession.id) <= 0
+        : true;
       const playerState = { alive: true, radius: 0, x: 0, y: 0 };
       this.levelRunner = new LevelRunner(activeLevel, {
         applyContactDamage: (amount, fxX, fxY) =>
           this.applyContactDamage(amount, fxX, fxY),
+        getBranchOptionSelectionCount: (eventIndex, optionIndex) =>
+          getLevelBranchOptionCount(activeLevelId, eventIndex, optionIndex),
         getEnemyCount: () => this.enemies.length,
         getPlayArea: () => this.playArea,
+        getPlayerHpRatio: () =>
+          this.ship.maxHp > 0 ? this.ship.hp / this.ship.maxHp : 0,
+        getPlayerMaxHp: () => this.ship.maxHp,
         getPlayerState: () => {
           playerState.alive = this.shipAlive;
           playerState.radius = shipHitboxMaxRadius(this.ship.hitbox);
@@ -451,6 +464,14 @@ export class PlayScene extends Phaser.Scene {
           this.enemies.some(
             (enemy) => enemy.active && enemy.def.id === enemyId,
           ),
+        isFirstClearRun: () => this.firstClearRun,
+        markBranchOptionSelected: (eventIndex, optionIndex) => {
+          incrementLevelBranchOptionCount(
+            activeLevelId,
+            eventIndex,
+            optionIndex,
+          );
+        },
         onVictory: () => this.handleLevelVictory(),
         pushPlayer: (offsetX, offsetY, fxColor, fxX, fxY, allowBottomEject) =>
           this.applyPlayerPush(
@@ -466,7 +487,10 @@ export class PlayScene extends Phaser.Scene {
           const payloads = normalizeDialogMomentPayloads(moments);
           if (payloads.length === 0) return 0;
           showDialogMoment(payloads, this.game);
-          return payloads.reduce((total, moment) => total + moment.durationMs, 0);
+          return payloads.reduce(
+            (total, moment) => total + moment.durationMs,
+            0,
+          );
         },
         spawnEnemy: (enemyId, x, y, hpMultiplier, overrides) =>
           this.spawnEnemy(enemyId, x, y, hpMultiplier, overrides),
@@ -600,8 +624,7 @@ export class PlayScene extends Phaser.Scene {
       exitDashMs: EXIT_DASH_MS,
       finishLingerMs: FINISH_LINGER_MS,
       getEnemyEntered: (enemy) => this.enemyEntered.get(enemy) ?? false,
-      getEnemyPush: (enemyX, enemyY, enemyRadius) =>
-        this.getEnemyPush(enemyX, enemyY, enemyRadius),
+      getEnemyPush: this.getEnemyPush.bind(this),
       margin: ENEMY_MARGIN,
       markEnemyEntered: (enemy) => {
         this.enemyEntered.set(enemy, true);
@@ -621,7 +644,7 @@ export class PlayScene extends Phaser.Scene {
         }
       },
       onEnemyDying: (enemy) => this.vfx.onEnemyDying(enemy, deltaMs),
-      onReleaseEnemy: (index, dropGold) => this.releaseEnemy(index, dropGold),
+      onReleaseEnemy: this.releaseEnemy.bind(this),
       playerAlive: this.shipAlive,
       playerX: this.ship.x,
       playerY: this.ship.y,
@@ -693,7 +716,7 @@ export class PlayScene extends Phaser.Scene {
       enemyBullets: this.enemyBullets,
       handleExplosion: this.handleBulletExplosion,
       onBulletImpact: this.handleBulletImpact,
-      onDamagePlayer: (amount, fxX, fxY) => this.damagePlayer(amount, fxX, fxY),
+      onDamagePlayer: this.damagePlayer.bind(this),
       onEnemyKilled: (enemyIndex) => this.releaseEnemy(enemyIndex, true),
       playArea: this.playArea,
       playerAlive: this.shipAlive,
