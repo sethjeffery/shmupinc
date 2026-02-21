@@ -1,0 +1,203 @@
+.map {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  transition:
+    transform 0.7s ease,
+    filter 0.7s ease;
+}
+
+.launching.map {
+  transform: scale(2);
+  filter: blur(1.5px);
+}
+
+.ambient {
+  pointer-events: none;
+}
+
+.ambientStar {
+  fill: rgba(229, 240, 255, 0.95);
+  animation: progressionStarTwinkle 5.2s ease-in-out infinite;
+}
+
+.edge {
+  stroke: rgba(113, 138, 168, 0.35);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.edge.sequenced {
+  animation: progressionEdgeDraw 0.42s cubic-bezier(0.18, 0.72, 0.32, 1) both;
+}
+
+.edge.unlocked {
+  stroke: rgba(125, 249, 255, 0.55);
+}
+
+.edge.complete {
+  stroke: rgba(255, 209, 102, 0.75);
+}
+
+.node {
+  cursor: default;
+}
+
+.node.sequenced {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.88);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: progressionNodeReveal 0.38s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+}
+
+.node circle {
+  fill: rgba(12, 21, 35, 0.98);
+  stroke: rgba(98, 122, 150, 0.58);
+  stroke-width: 2.5;
+}
+
+.node.unlocked circle {
+  stroke: rgba(125, 249, 255, 0.72);
+}
+
+.node.current circle {
+  stroke: rgba(125, 249, 255, 1);
+  filter: drop-shadow(0 0 10px rgba(125, 249, 255, 0.55));
+}
+
+.node.complete circle {
+  stroke: rgba(255, 209, 102, 0.9);
+}
+
+.node.actionable {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.node.actionable:hover,
+.node.actionable:focus-visible {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 14px rgba(125, 249, 255, 0.45));
+}
+
+.node.actionable:hover circle,
+.node.actionable:focus-visible circle {
+  stroke: rgba(154, 250, 255, 0.95);
+  fill: rgba(17, 32, 52, 0.95);
+}
+
+.ping {
+  fill: none;
+  stroke: rgba(125, 249, 255, 0.66);
+  stroke-width: 1.4;
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: progressionRadarPing 2.5s ease-out infinite;
+}
+
+.pingA {
+  animation-delay: 0s;
+}
+
+.pingB {
+  animation-delay: 1.1s;
+}
+
+.label {
+  fill: #e9f4ff;
+  font-family: "Orbitron", sans-serif;
+  font-size: 14px;
+  text-anchor: middle;
+  letter-spacing: 0.08em;
+}
+
+.stars {
+  fill: rgba(166, 188, 216, 0.5);
+  font-family: "Orbitron", sans-serif;
+  font-size: 12px;
+  text-anchor: middle;
+  letter-spacing: 0.08em;
+}
+
+.stars .starred {
+  fill: #ffd166;
+}
+
+@keyframes progressionStarTwinkle {
+  0% {
+    opacity: 0.18;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.32;
+  }
+}
+
+@keyframes progressionRadarPing {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.72);
+  }
+  82% {
+    opacity: 0;
+    transform: scale(1.95);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.95);
+  }
+}
+
+@keyframes progressionNodeReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes progressionEdgeDraw {
+  0% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node.sequenced {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .edge.sequenced {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .label {
+    font-size: 18px;
+  }
+
+  .stars {
+    font-size: 17px;
+  }
+}

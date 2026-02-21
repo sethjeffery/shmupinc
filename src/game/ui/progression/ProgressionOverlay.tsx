@@ -1,13 +1,15 @@
-import type { GalaxyView } from "../../game/data/galaxyProgress";
+import type { GalaxyView } from "../../data/galaxyProgress";
 
 import clsx from "clsx";
 
-import { ProgressionHud } from "../../game/ui/progression/components/ProgressionHud";
-import { ProgressionMapSvg } from "../../game/ui/progression/components/ProgressionMapSvg";
-import { useProgressionAmbientStars } from "../../game/ui/progression/hooks/useProgressionAmbientStars";
-import { useProgressionLaunch } from "../../game/ui/progression/hooks/useProgressionLaunch";
-import { useProgressionMapLayout } from "../../game/ui/progression/hooks/useProgressionMapLayout";
-import { useProgressionTitle } from "../../game/ui/progression/hooks/useProgressionTitle";
+import { useProgressionAmbientStars } from "./hooks/useProgressionAmbientStars";
+import { useProgressionLaunch } from "./hooks/useProgressionLaunch";
+import { useProgressionMapLayout } from "./hooks/useProgressionMapLayout";
+import { useProgressionTitle } from "./hooks/useProgressionTitle";
+import { ProgressionHud } from "./ProgressionHud";
+import { ProgressionMapSvg } from "./ProgressionMapSvg";
+
+import styles from "./ProgressionOverlay.module.css";
 
 export default function ProgressionOverlay(props: {
   onAction: (action: string, levelId?: string) => void;
@@ -25,7 +27,6 @@ export default function ProgressionOverlay(props: {
     starsOffset,
   } = useProgressionMapLayout();
   const {
-    entered,
     entering,
     exitToMenu,
     isLaunching,
@@ -48,14 +49,13 @@ export default function ProgressionOverlay(props: {
   return (
     <div
       className={clsx(
-        "progression-shell",
-        entering ? "is-entering" : undefined,
-        entered ? "is-entered" : undefined,
-        isLeavingMenu ? "is-leaving-menu" : undefined,
-        isLaunching ? "is-launching" : undefined,
+        styles.shell,
+        entering && styles.entering,
+        isLeavingMenu && styles.leavingMenu,
+        isLaunching && styles.launching,
       )}
     >
-      <div className="progression-map-frame" ref={mapFrameRef}>
+      <div className={styles.frame} ref={mapFrameRef}>
         <ProgressionMapSvg
           ambientStars={ambientStars}
           isLaunching={isLaunching}
@@ -71,11 +71,12 @@ export default function ProgressionOverlay(props: {
           starsOffset={starsOffset}
           view={props.view}
         />
-        <div className="progression-map-fade" />
+        <div className={styles.fade} />
         <ProgressionHud
           currentNodeName={currentNode?.name ?? null}
           description={props.view.description}
           isComplete={props.view.isComplete}
+          isLaunching={isLaunching}
           menuDisabled={leaving}
           onMenu={exitToMenu}
           titleText={typedMapTitle}

@@ -1,0 +1,114 @@
+.hud {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+
+.title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 21px;
+  gap: 5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #f1f8ff;
+  text-shadow: 0 0 12px rgba(125, 249, 255, 0.3);
+}
+
+.titleText {
+  min-width: 12ch;
+}
+
+.titleCursor {
+  animation: progressionTerminalCursor 0.9s steps(1, end) infinite;
+  color: rgba(125, 249, 255, 0.92);
+}
+
+.menu {
+  border-radius: 999px;
+  border: 1px solid rgba(125, 249, 255, 0.42);
+  background: rgba(8, 15, 26, 0.72);
+  color: #d9f8ff;
+  font-family: "Orbitron", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 8px 13px;
+  cursor: pointer;
+}
+
+.hudCaption {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  right: 20px;
+  bottom: 18px;
+  color: rgba(207, 225, 244, 0.9);
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 700px;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+
+.current {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  top: 50px;
+  color: rgba(170, 232, 255, 0.96);
+  font-family: "Orbitron", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+
+.launching .hud,
+.launching .hudCaption,
+.launching .current {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@keyframes progressionTerminalCursor {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  51% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titleCursor {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .title {
+    font-size: 18px;
+  }
+
+  .hudCaption {
+    font-size: 12px;
+  }
+}

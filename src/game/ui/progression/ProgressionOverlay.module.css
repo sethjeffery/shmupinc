@@ -1,0 +1,108 @@
+.frame {
+  position: relative;
+  height: min(720px, 86vh);
+  min-height: 520px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(125, 249, 255, 0.18);
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(125, 249, 255, 0.08),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 65%,
+      rgba(255, 209, 102, 0.09),
+      transparent 45%
+    ),
+    linear-gradient(165deg, rgba(9, 14, 24, 0.96), rgba(6, 10, 16, 0.98));
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.45),
+    inset 0 0 18px rgba(125, 249, 255, 0.08);
+}
+
+.frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(125, 249, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 249, 255, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+}
+
+.fade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 14, 0) 42%,
+    rgba(5, 8, 14, 0.08) 74%,
+    rgba(5, 8, 14, 0.18) 100%
+  );
+}
+
+@media (max-width: 640px) {
+  .frame {
+    min-height: min(580px, 80vh);
+  }
+}
+
+.shell {
+  width: min(1120px, 96vw);
+  min-height: min(720px, 86vh);
+  position: relative;
+  transition: opacity 0.5s;
+  transition-delay: 0.2s;
+}
+
+.shell.entering {
+  animation: progressionSceneIn 560ms cubic-bezier(0.2, 0.84, 0.28, 1) both;
+}
+
+.shell.leavingMenu {
+  animation: progressionSceneOutMenu 520ms ease both;
+  pointer-events: none;
+}
+
+.shell.launching {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes progressionSceneIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes progressionSceneOutMenu {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell.entering {
+    animation: none;
+  }
+
+  .shell.leavingMenu {
+    animation: none;
+    opacity: 0;
+  }
+}

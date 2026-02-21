@@ -13,8 +13,8 @@ import {
 } from "../game/data/galaxyProgress";
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
 import { STORY_BEATS } from "../game/data/storyBeats";
+import ProgressionOverlay from "../game/ui/progression/ProgressionOverlay";
 import { MenuOverlay } from "../game/ui/title/MenuOverlay";
-import ProgressionOverlay from "./overlays/ProgressionOverlay";
 import {
   openHangarScene,
   pausePlayScene,

@@ -1,11 +1,15 @@
-import type { GalaxyView } from "../../../data/galaxyProgress";
-import type { AmbientStar } from "../hooks/useProgressionAmbientStars";
+import type { GalaxyView } from "../../data/galaxyProgress";
+import type { AmbientStar } from "./hooks/useProgressionAmbientStars";
+
+import clsx from "clsx";
 
 import {
   PROGRESSION_EDGE_DRAW_OFFSET_MS,
   PROGRESSION_REVEAL_INITIAL_DELAY_MS,
   PROGRESSION_REVEAL_STEP_MS,
-} from "../constants";
+} from "./constants";
+
+import styles from "./ProgressionMapSvg.module.css";
 
 interface ProgressionMapSvgProps {
   ambientStars: AmbientStar[];
@@ -35,7 +39,7 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
 
   return (
     <svg
-      className={`progression-map${props.isLaunching ? " is-launching" : ""}`}
+      className={clsx(styles.map, props.isLaunching && styles.launching)}
       style={
         launchingNode
           ? {
@@ -54,10 +58,10 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
         </linearGradient>
       </defs>
 
-      <g className="progression-ambient" aria-hidden="true">
+      <g className={styles.ambient} aria-hidden="true">
         {props.ambientStars.map((star, index) => (
           <circle
-            className="progression-ambient-star"
+            className={styles.ambientStar}
             cx={star.cx}
             cy={star.cy}
             key={`ambient-star-${index}`}
@@ -85,17 +89,15 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
           PROGRESSION_REVEAL_INITIAL_DELAY_MS +
           edgeIndex * PROGRESSION_REVEAL_STEP_MS +
           PROGRESSION_EDGE_DRAW_OFFSET_MS;
-        const className = `progression-edge${
-          edge.isCompleted
-            ? " is-complete"
-            : edge.isUnlocked
-              ? " is-unlocked"
-              : ""
-        } is-sequenced`;
 
         return (
           <line
-            className={className}
+            className={clsx(
+              styles.edge,
+              edge.isCompleted && styles.complete,
+              edge.isUnlocked && styles.unlocked,
+              styles.sequenced,
+            )}
             key={`${edge.from}-${edge.to}`}
             stroke={
               edge.isCompleted
@@ -131,15 +133,17 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
         const hitHeight = props.starsOffset + props.nodeRadius + 16;
         const hitX = x - hitWidth / 2;
         const hitY = y - props.nodeRadius - 12;
-        const className = `progression-node${
-          node.isCompleted ? " is-complete" : ""
-        }${node.isCurrent ? " is-current" : ""}${
-          node.isUnlocked ? " is-unlocked" : " is-locked"
-        }${canLaunch ? " is-actionable" : ""} is-sequenced`;
 
         return (
           <g
-            className={className}
+            className={clsx(
+              styles.node,
+              node.isCompleted && styles.complete,
+              node.isCurrent && styles.current,
+              node.isUnlocked && styles.unlocked,
+              canLaunch && styles.actionable,
+              styles.sequenced,
+            )}
             key={node.id}
             onClick={() => {
               if (!canLaunch) return;
@@ -163,7 +167,6 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
           >
             {canLaunch ? (
               <rect
-                className="progression-node-hitbox"
                 fill="transparent"
                 height={hitHeight}
                 pointerEvents="all"
@@ -178,13 +181,13 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
             {node.isCurrent ? (
               <>
                 <circle
-                  className="progression-node-ping ping-a"
+                  className={clsx(styles.ping, styles.pingA)}
                   cx={x}
                   cy={y}
                   r={props.nodePingRadius}
                 />
                 <circle
-                  className="progression-node-ping ping-b"
+                  className={clsx(styles.ping, styles.pingB)}
                   cx={x}
                   cy={y}
                   r={props.nodePingRadius}
@@ -196,12 +199,15 @@ export function ProgressionMapSvg(props: ProgressionMapSvgProps) {
 
             {node.isSelectable || node.isCompleted ? (
               <>
-                <text className="progression-node-label" x={x} y={y + props.labelOffset}>
+                <text className={styles.label} x={x} y={y + props.labelOffset}>
                   {node.name}
                 </text>
-                <text className="progression-node-stars" x={x} y={y + props.starsOffset}>
+                <text className={styles.stars} x={x} y={y + props.starsOffset}>
                   {Array.from({ length: node.starCap }, (_, i) => (
-                    <tspan key={i} className={i < node.stars ? "is-starred" : ""}>
+                    <tspan
+                      key={i}
+                      className={i < node.stars ? styles.starred : ""}
+                    >
                       ★
                     </tspan>
                   ))}

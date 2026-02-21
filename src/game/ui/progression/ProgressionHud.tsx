@@ -1,7 +1,12 @@
+import clsx from "clsx";
+
+import styles from "./ProgressionHud.module.css";
+
 interface ProgressionHudProps {
   currentNodeName: null | string;
   description?: string;
   isComplete: boolean;
+  isLaunching: boolean;
   menuDisabled: boolean;
   onMenu: () => void;
   titleText: string;
@@ -9,18 +14,18 @@ interface ProgressionHudProps {
 
 export function ProgressionHud(props: ProgressionHudProps) {
   return (
-    <>
-      <div className="progression-map-hud">
-        <div className="progression-map-title">
-          <span className="progression-map-title-text">
+    <div className={clsx(props.isLaunching && styles.launching)}>
+      <div className={styles.hud}>
+        <div className={styles.title}>
+          <span className={styles.titleText}>
             {props.titleText || "\u00a0"}
           </span>
-          <span aria-hidden="true" className="progression-map-title-cursor">
+          <span aria-hidden="true" className={styles.titleCursor}>
             _
           </span>
         </div>
         <button
-          className="progression-map-menu"
+          className={styles.menu}
           disabled={props.menuDisabled}
           onClick={props.onMenu}
           type="button"
@@ -28,14 +33,14 @@ export function ProgressionHud(props: ProgressionHudProps) {
           Main Menu
         </button>
       </div>
-      <div className="progression-map-caption">{props.description ?? ""}</div>
-      <div className="progression-map-current">
+      <div className={styles.hudCaption}>{props.description ?? ""}</div>
+      <div className={styles.current}>
         {props.isComplete
           ? "Galaxy Complete"
           : props.currentNodeName
             ? `Current: ${props.currentNodeName}`
             : "Campaign ready"}
       </div>
-    </>
+    </div>
   );
 }
