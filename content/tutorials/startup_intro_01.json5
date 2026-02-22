@@ -1,0 +1,31 @@
+{
+  "id": "startup-intro-01",
+  "route": "startup",
+  "when": { "maxTimes": 1 },
+  "moments": [
+    {
+      "text": "Wh-- where am I?",
+      "placement": "center"
+    },
+    {
+      "text": "Everything is foggy ...",
+      "placement": "center"
+    },
+    {
+      "characterId": "alex",
+      "placement": "center",
+      "expression": "worried",
+      "text": "Stay with me, Kai. We are launching now."
+    },
+    {
+      "characterId": "kai",
+      "placement": "center",
+      "text": "Who are you? What's going on?"
+    },
+    {
+      "characterId": "alex",
+      "placement": "center",
+      "text": "I'm Alex. Don't worry, it'll make sense soon..."
+    }
+  ]
+}

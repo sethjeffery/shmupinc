@@ -6,7 +6,8 @@ export type UiTutorialRoute =
   | "menu"
   | "pause"
   | "play"
-  | "progression";
+  | "progression"
+  | "startup";
 
 export type UiTutorialShopEvent = "open";
 

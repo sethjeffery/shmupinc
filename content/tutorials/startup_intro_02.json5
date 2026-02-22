@@ -1,0 +1,18 @@
+{
+  "id": "startup-intro-02",
+  "route": "startup",
+  "when": { "maxTimes": 2 },
+  "moments": [
+    {
+      "characterId": "alex",
+      "placement": "center",
+      "expression": "worried",
+      "text": "Are you still there, Kai? We got disconnected."
+    },
+    {
+      "characterId": "kai",
+      "placement": "center",
+      "text": "I'm here. But what is going on?"
+    }
+  ]
+}

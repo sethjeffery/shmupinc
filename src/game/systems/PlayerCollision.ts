@@ -45,6 +45,7 @@ interface PlayerCollisionConfig {
 interface PlayerCollisionContext {
   canDamage: () => boolean;
   getBounds: () => CollisionBounds;
+  getMinHpFloor: () => number;
   onDeath: () => void;
   particles: ParticleSystem;
   ship: Ship;
@@ -91,6 +92,7 @@ export class PlayerCollisionResolver {
     const minY = bounds.y + bounds.height * this.config.padding;
     const maxY = bounds.y + bounds.height * (1 - this.config.padding);
     const bottom = bounds.y + bounds.height;
+    const minHpFloor = Math.max(0, this.context.getMinHpFloor());
     const ship = this.context.ship;
     const nextX = clamp(ship.x + offsetX, minX, maxX);
     const targetY = ship.y + offsetY;
@@ -100,6 +102,11 @@ export class PlayerCollisionResolver {
     ship.setPosition(nextX, nextY);
     this.emitBumpFx(fxColor, fxX, fxY);
     if (options?.allowBottomEject && ship.y >= bottom) {
+      if (minHpFloor > 0) {
+        ship.hp = Math.max(minHpFloor, ship.hp);
+        ship.setPosition(ship.x, maxY);
+        return;
+      }
       ship.hp = 0;
       this.context.onDeath();
     }
@@ -123,8 +130,9 @@ export class PlayerCollisionResolver {
   private applyDamage(amount: number): void {
     const ship = this.context.ship;
     const scaled = amount * this.config.damageMultiplier;
-    ship.hp = Math.max(0, ship.hp - scaled);
-    if (ship.hp <= 0) {
+    const minHpFloor = Math.max(0, this.context.getMinHpFloor());
+    ship.hp = Math.max(minHpFloor, ship.hp - scaled);
+    if (ship.hp <= 0 && minHpFloor <= 0) {
       this.context.onDeath();
     }
   }

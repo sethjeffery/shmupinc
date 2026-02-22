@@ -13,6 +13,7 @@ import {
   type GalaxyView,
 } from "../game/data/galaxyProgress";
 import { clearActiveLevel, startLevelSession } from "../game/data/levelState";
+import { hasCompletedAnyLevel } from "../game/data/save";
 import ProgressionOverlay from "../game/ui/progression/ProgressionOverlay";
 import { MenuOverlay } from "../game/ui/title/MenuOverlay";
 import { DialogMomentController } from "./dialogMomentController";
@@ -34,7 +35,8 @@ export type UiRoute =
   | "menu"
   | "pause"
   | "play"
-  | "progression";
+  | "progression"
+  | "startup";
 
 interface GameOverStats {
   gold: number;
@@ -65,6 +67,7 @@ const UI_OPEN_ROUTES = new Set<UiRoute>([
   "pause",
   "gameover",
   "progression",
+  "startup",
 ]);
 
 const GAME_LOCK_ROUTES = new Set<UiRoute>(["play", "pause"]);
@@ -217,6 +220,16 @@ const UiRoot = (props: {
           </div>
         );
       }
+      case "startup":
+        return (
+          <div
+            className={clsx(
+              styles.uiOverlay,
+              styles.uiOverlayStartup,
+              styles.isActive,
+            )}
+          />
+        );
       default:
         return null;
     }
@@ -224,7 +237,10 @@ const UiRoot = (props: {
 
   return (
     <div
-      className={clsx(styles.uiRoot, rootInteractive ? styles.isActive : undefined)}
+      className={clsx(
+        styles.uiRoot,
+        rootInteractive ? styles.isActive : undefined,
+      )}
     >
       {renderActiveOverlay()}
       {dialogMoment ? (
@@ -247,10 +263,10 @@ export class UiRouter {
   private readonly routeTutorialController: UiRouteTutorialController;
   private disposed = false;
   private game: Phaser.Game;
-  private route: UiRoute = "menu";
+  private route: UiRoute = "startup";
   private root: HTMLElement;
   private transitionToken = 0;
-  private readonly routeSignal = signal<UiRoute>("menu");
+  private readonly routeSignal = signal<UiRoute>("startup");
   private readonly musicEnabledSignal = signal<boolean>(
     this.audio.getMusicEnabled(),
   );
@@ -312,8 +328,7 @@ export class UiRouter {
     this.game.events.on("ui:gameover", this.handleGameOverEvent);
     this.game.events.once("destroy", this.dispose.bind(this));
 
-    this.setRoute("menu", { force: true });
-    this.tryAutoStartLevel();
+    void this.bootstrapInitialRoute();
   }
 
   dispose(): void {
@@ -328,7 +343,11 @@ export class UiRouter {
 
   setRoute(
     route: UiRoute,
-    options?: { force?: boolean; restart?: boolean },
+    options?: {
+      force?: boolean;
+      restart?: boolean;
+      suppressTutorials?: boolean;
+    },
   ): void {
     if (this.route === route && !options?.force) return;
     const token = ++this.transitionToken;
@@ -345,7 +364,9 @@ export class UiRouter {
     document.body.classList.toggle("game-locked", isGameLockRoute(route));
     document.body.classList.toggle("game-active", isAppVisibleRoute(route));
     this.setEngineLoopActive(isEngineActiveRoute(route));
-    this.routeTutorialController.handleRoute(route);
+    if (!options?.suppressTutorials) {
+      this.routeTutorialController.handleRoute(route);
+    }
 
     if (route === "play") {
       void startOrResumePlayScene({
@@ -385,6 +406,13 @@ export class UiRouter {
       return;
     }
 
+    if (route === "startup") {
+      stopPlayScene(this.game);
+      stopShopScene(this.game);
+      clearActiveLevel();
+      return;
+    }
+
     if (route === "menu") {
       stopPlayScene(this.game);
       stopShopScene(this.game);
@@ -396,8 +424,10 @@ export class UiRouter {
   private startLevel(
     levelId: string,
     options?: {
+      launchRoute?: "hangar" | "play";
       returnRoute?: UiRoute;
       source?: { galaxyId?: string; nodeId?: string };
+      tutorialMode?: boolean;
     },
   ): void {
     const returnRoute =
@@ -405,13 +435,14 @@ export class UiRouter {
     const session = startLevelSession(levelId, {
       returnRoute,
       source: options?.source,
+      tutorialMode: options?.tutorialMode ?? false,
     });
     const level = session?.level;
     if (!level) {
       this.setRoute("menu");
       return;
     }
-    this.setRoute("hangar");
+    this.setRoute(options?.launchRoute ?? "hangar");
   }
 
   private handleAction(action: string, levelId?: string): void {
@@ -483,17 +514,46 @@ export class UiRouter {
     }
   }
 
-  private tryAutoStartLevel(): void {
+  private async bootstrapInitialRoute(): Promise<void> {
     const params = new URLSearchParams(window.location.search);
     const levelId = params.get("level");
+    window.history.replaceState({}, "", window.location.pathname);
     if (levelId) {
       this.startLevel(levelId);
-      window.history.replaceState({}, "", window.location.pathname);
       return;
     }
-    ensureActiveGalaxy();
     this.refreshProgressionView();
-    window.history.replaceState({}, "", window.location.pathname);
+    if (hasCompletedAnyLevel()) {
+      this.setRoute("menu", { force: true });
+      return;
+    }
+    await this.startFirstRunTutorial();
+  }
+
+  private async startFirstRunTutorial(): Promise<void> {
+    const progression = this.progressionSignal.value ?? buildActiveGalaxyView();
+    const firstLevelId =
+      progression?.currentLevelId ?? progression?.nodes[0]?.levelId;
+    if (!firstLevelId) {
+      this.setRoute("menu", { force: true });
+      return;
+    }
+
+    this.setRoute("startup", { force: true, suppressTutorials: true });
+    await new Promise<void>((resolve) => {
+      const shown = this.routeTutorialController.handleRoute("startup", {
+        onSequenceComplete: resolve,
+      });
+      if (!shown) {
+        resolve();
+      }
+    });
+    if (this.disposed || hasCompletedAnyLevel()) return;
+    this.startLevel(firstLevelId, {
+      launchRoute: "play",
+      returnRoute: "progression",
+      tutorialMode: true,
+    });
   }
 
   private setEngineLoopActive(enabled: boolean): void {

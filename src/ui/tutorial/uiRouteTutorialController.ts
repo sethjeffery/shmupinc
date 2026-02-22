@@ -22,34 +22,44 @@ const passesCondition = (
 export class UiRouteTutorialController {
   private readonly showDialogMoment: (
     moments: DialogMomentRequest[],
-    options?: { isTutorial?: boolean },
+    options?: { isTutorial?: boolean; onSequenceComplete?: () => void },
   ) => void;
 
   constructor(
     showDialogMoment: (
       moments: DialogMomentRequest[],
-      options?: { isTutorial?: boolean },
+      options?: { isTutorial?: boolean; onSequenceComplete?: () => void },
     ) => void,
   ) {
     this.showDialogMoment = showDialogMoment;
   }
 
-  private triggerIfEligible(trigger: {
-    id: string;
-    moments: DialogMomentRequest[];
-    when?: UiRouteTutorialCondition;
-  }): boolean {
+  private triggerIfEligible(
+    trigger: {
+      id: string;
+      moments: DialogMomentRequest[];
+      when?: UiRouteTutorialCondition;
+    },
+    options?: { onSequenceComplete?: () => void },
+  ): boolean {
     const count = getUiTutorialTriggerCount(trigger.id);
     if (!passesCondition(trigger.when, count)) return false;
     incrementUiTutorialTriggerCount(trigger.id);
-    this.showDialogMoment(trigger.moments, { isTutorial: true });
+    this.showDialogMoment(trigger.moments, {
+      isTutorial: true,
+      onSequenceComplete: options?.onSequenceComplete,
+    });
     return true;
   }
 
-  handleRoute(route: UiRoute): void {
+  handleRoute(
+    route: UiRoute,
+    options?: { onSequenceComplete?: () => void },
+  ): boolean {
     for (const trigger of getUiRouteTutorials()) {
       if (trigger.route !== route) continue;
-      if (this.triggerIfEligible(trigger)) return;
+      if (this.triggerIfEligible(trigger, options)) return true;
     }
+    return false;
   }
 }

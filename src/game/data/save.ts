@@ -716,6 +716,22 @@ export const incrementLevelBranchOptionCount = (
       getLevelBranchOptionCount(levelId, eventIndex, optionIndex, save) + 1;
   });
 
+export const hasCompletedAnyLevel = (save: SaveData = loadSave()): boolean => {
+  for (const stars of Object.values(save.levelStars)) {
+    if (Number.isFinite(stars) && stars > 0) {
+      return true;
+    }
+  }
+
+  for (const campaign of Object.values(save.galaxyCampaign)) {
+    if ((campaign.completedLevelIds?.length ?? 0) > 0) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export const getUiTutorialTriggerCount = (
   triggerId: string,
   save: SaveData = loadSave(),

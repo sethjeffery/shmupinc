@@ -1010,6 +1010,7 @@ const uiTutorialRouteSchema = z.enum([
   "pause",
   "play",
   "progression",
+  "startup",
 ]);
 
 const uiRouteTutorialSchema = z.object({

@@ -129,6 +129,7 @@ const DAMAGE_JOLT_Y_RATIO = 0.14;
 const CHARGE_CUE_COOLDOWN_MIN_MS = 34;
 const CHARGE_CUE_COOLDOWN_MAX_MS = 165;
 const LARGE_ENEMY_EXPLOSION_HP_THRESHOLD = 12;
+const TUTORIAL_MIN_HP = 1;
 
 const getLevelOrderNumber = (levelId: string): number => {
   const match = /^L(\d+)_/i.exec(levelId);
@@ -167,6 +168,8 @@ export class PlayScene extends Phaser.Scene {
   private overlayShown = false;
   private levelRunner?: LevelRunner;
   private firstClearRun = true;
+  private tutorialModeActive = false;
+  private minHpFloor = 0;
 
   private enemies: Enemy[] = [];
   private enemyPool: Enemy[] = [];
@@ -300,6 +303,8 @@ export class PlayScene extends Phaser.Scene {
     this.isGameOver = false;
     this.overlayShown = false;
     this.firstClearRun = true;
+    this.tutorialModeActive = false;
+    this.minHpFloor = 0;
     this.gold = 0;
     this.goldBanked = false;
     this.playerFiring.reset();
@@ -373,6 +378,9 @@ export class PlayScene extends Phaser.Scene {
       radius: resolveShipRadius(stats.ship),
       vector: stats.ship.vector,
     });
+    const activeSession = getActiveLevelSession();
+    this.tutorialModeActive = Boolean(activeSession?.tutorialMode);
+    this.minHpFloor = this.tutorialModeActive ? TUTORIAL_MIN_HP : 0;
     this.ship.setStrokeWidth(1);
     this.ship.setMountedWeapons(this.mountedWeapons);
     this.collisionResolver = new PlayerCollisionResolver(
@@ -386,6 +394,7 @@ export class PlayScene extends Phaser.Scene {
       {
         canDamage: () => this.shipAlive && !this.isGameOver,
         getBounds: () => this.playArea,
+        getMinHpFloor: () => this.minHpFloor,
         onDeath: this.handleShipDeath.bind(this),
         particles: this.particles,
         ship: this.ship,
@@ -435,7 +444,6 @@ export class PlayScene extends Phaser.Scene {
       () => this.pauseGame(),
       this.hudArea,
     );
-    const activeSession = getActiveLevelSession();
     const activeLevel = activeSession?.level;
     if (activeLevel) {
       const activeLevelId = activeSession?.id ?? activeLevel.id;

@@ -9,14 +9,51 @@
   "events": [
     [
       {
-        "when": { "firstClearOnly": true },
+        "when": { "maxTimes": 1, "firstClearOnly": true },
         "event": {
           "kind": "conversation",
           "moments": [
             {
               "characterId": "kai",
-              "expression": "surprised",
-              "text": "Where am I?"
+              "text": "What is this?"
+            },
+            {
+              "characterId": "kai",
+              "expression": "worried",
+              "text": "Is this... a fighter jet?!"
+            },
+            {
+              "characterId": "alex",
+              "text": "Take the controls. Waves of enemies will approach, I need you to take them out."
+            }
+          ]
+        }
+      },
+      {
+        "when": { "maxTimes": 2, "firstClearOnly": true },
+        "event": {
+          "kind": "conversation",
+          "moments": [
+            {
+              "characterId": "kai",
+              "expression": "stressed",
+              "text": "Huh, again? What's going on?"
+            }
+          ]
+        }
+      },
+      {
+        "when": { "maxTimes": 1 },
+        "event": {
+          "kind": "conversation",
+          "moments": [
+            {
+              "characterId": "alex",
+              "text": "Want to go again? Nice one!"
+            },
+            {
+              "characterId": "kai",
+              "text": "..."
             }
           ]
         }
@@ -24,8 +61,65 @@
     ],
     { "kind": "wave", "waveId": "intro-intro" },
     { "kind": "wave", "waveId": "intro-approach" },
+    [
+      {
+        "when": { "maxTimes": 1 },
+        "event": {
+          "kind": "conversation",
+          "moments": [
+            {
+              "characterId": "kai",
+              "expression": "stressed",
+              "text": "This is tough..."
+            },
+            {
+              "characterId": "kai",
+              "text": "But I think I'm getting the hang of it."
+            },
+            {
+              "characterId": "alex",
+              "expression": "happy",
+              "text": "You're doing great, Kai!"
+            }
+          ]
+        }
+      }
+    ],
     { "kind": "wave", "waveId": "intro-cross" },
-    { "kind": "wave", "waveId": "intro-harass" }
+    { "kind": "wave", "waveId": "intro-harass" },
+    [
+      {
+        "when": { "firstClearOnly": true },
+        "event": {
+          "kind": "conversation",
+          "moments": [
+            {
+              "characterId": "alex",
+              "expression": "laughing",
+              "text": "You did it! That was amazing!"
+            },
+            {
+              "characterId": "kai",
+              "expression": "content",
+              "text": "Not bad if I do say so myself."
+            },
+            {
+              "characterId": "kai",
+              "text": "But I think I deserve an explanation."
+            },
+            {
+              "characterId": "alex",
+              "expression": "worried",
+              "text": "Of course."
+            },
+            {
+              "characterId": "alex",
+              "text": "I'll contact you back at the hangar."
+            }
+          ]
+        }
+      }
+    ]
   ],
   "shopId": "shop_intro",
   "winCondition": {

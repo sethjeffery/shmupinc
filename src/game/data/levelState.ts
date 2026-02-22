@@ -13,6 +13,7 @@ interface LevelSession {
   returnRoute: LevelSessionRoute;
   source?: LevelSessionSource;
   startedAt: number;
+  tutorialMode?: boolean;
 }
 
 let activeSession: LevelSession | null = null;
@@ -22,6 +23,7 @@ export function startLevelSession(
   options?: {
     returnRoute?: LevelSessionRoute;
     source?: LevelSessionSource;
+    tutorialMode?: boolean;
   },
 ): LevelSession | null {
   const level = getLevels()[levelId];
@@ -32,6 +34,7 @@ export function startLevelSession(
     returnRoute: options?.returnRoute ?? "menu",
     source: options?.source,
     startedAt: Date.now(),
+    tutorialMode: options?.tutorialMode ?? false,
   };
   return activeSession;
 }

@@ -17,11 +17,13 @@ interface DialogMomentQueueItem extends DialogMomentPayload {
 
 interface DialogMomentShowOptions {
   isTutorial?: boolean;
+  onSequenceComplete?: () => void;
 }
 
 export class DialogMomentController {
   private readonly game: Phaser.Game;
   private queue: DialogMomentQueueItem[] = [];
+  private onSequenceComplete?: () => void;
   private sequence = 0;
   private transitionSequence = 0;
   readonly signal = signal<DialogMomentView | null>(null);
@@ -40,6 +42,7 @@ export class DialogMomentController {
   dispose(): void {
     this.game.events.off(UI_DIALOG_MOMENT_EVENT, this.handleGameDialogMoment);
     this.queue.length = 0;
+    this.onSequenceComplete = undefined;
     this.signal.value = null;
     if (typeof window !== "undefined") {
       window.removeEventListener(
@@ -51,10 +54,19 @@ export class DialogMomentController {
 
   show(request: DialogMomentInput, options?: DialogMomentShowOptions): void {
     const isTutorial = options?.isTutorial ?? false;
-    this.queue = normalizeDialogMomentPayloads(request).map((entry) => ({
+    const moments = normalizeDialogMomentPayloads(request).map((entry) => ({
       ...entry,
       isTutorial,
     }));
+    this.queue = moments;
+    this.onSequenceComplete = options?.onSequenceComplete;
+    if (moments.length === 0) {
+      this.signal.value = null;
+      const callback = this.onSequenceComplete;
+      this.onSequenceComplete = undefined;
+      callback?.();
+      return;
+    }
     this.showNext();
   }
 
@@ -81,6 +93,9 @@ export class DialogMomentController {
     const next = this.queue.shift();
     if (!next) {
       this.signal.value = null;
+      const callback = this.onSequenceComplete;
+      this.onSequenceComplete = undefined;
+      callback?.();
       return;
     }
     const sameCharacter =

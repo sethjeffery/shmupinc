@@ -31,6 +31,10 @@
   background: transparent;
 }
 
+.uiOverlayStartup {
+  background: #000;
+}
+
 .uiPanel {
   width: min(460px, 92vw);
   padding: 24px;
