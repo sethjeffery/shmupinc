@@ -323,16 +323,92 @@ body.ui-open canvas {
 }
 
 .content-editor__tree-row {
+  align-items: center;
+  border-radius: 6px;
   color: rgba(217, 228, 242, 0.7);
   cursor: default;
+  display: flex;
+  justify-content: space-between;
+  min-height: 24px;
+  padding: 2px 4px;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 
 .content-editor__tree-row.is-file {
   cursor: pointer;
 }
 
-.content-editor__tree-row.is-file:hover {
+.content-editor__tree-row.is-dir {
+  cursor: pointer;
+}
+
+.content-editor__tree-row.is-file:hover,
+.content-editor__tree-row.is-dir:hover {
+  background: rgba(125, 214, 255, 0.08);
+  color: #b8e9ff;
+}
+
+.content-editor__tree-row.is-file.is-active {
+  background: rgba(125, 214, 255, 0.16);
   color: #7dd6ff;
+}
+
+.content-editor__tree-row-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.content-editor__tree-row-label > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-editor__tree-chevron,
+.content-editor__tree-chevron-spacer {
+  flex: 0 0 14px;
+  height: 14px;
+  width: 14px;
+}
+
+.content-editor__tree-chevron {
+  color: rgba(217, 228, 242, 0.6);
+}
+
+.content-editor__tree-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.content-editor__tree-row:hover .content-editor__tree-actions,
+.content-editor__tree-row:focus-within .content-editor__tree-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.content-editor__tree-action {
+  align-items: center;
+  background: rgba(10, 15, 22, 0.8);
+  border: 1px solid rgba(125, 214, 255, 0.3);
+  border-radius: 4px;
+  color: rgba(217, 228, 242, 0.8);
+  cursor: pointer;
+  display: inline-flex;
+  height: 20px;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+}
+
+.content-editor__tree-action:hover {
+  background: rgba(125, 214, 255, 0.16);
+  color: #b8e9ff;
 }
 
 .content-editor__main {

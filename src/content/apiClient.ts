@@ -91,5 +91,52 @@ export const writeContentFile = async (
   }
 };
 
+export const createContentFile = async (
+  relativePath: string,
+  contents: string,
+): Promise<void> => {
+  const payload = await requestJson<ContentWriteResponse>(
+    contentApi.post("/__content/create", {
+      json: {
+        contents,
+        path: relativePath,
+      },
+    }),
+  );
+  if (!payload.ok) {
+    throw new Error("Create failed.");
+  }
+};
+
+export const renameContentFile = async (
+  relativePath: string,
+  nextRelativePath: string,
+): Promise<void> => {
+  const payload = await requestJson<ContentWriteResponse>(
+    contentApi.post("/__content/rename", {
+      json: {
+        nextPath: nextRelativePath,
+        path: relativePath,
+      },
+    }),
+  );
+  if (!payload.ok) {
+    throw new Error("Rename failed.");
+  }
+};
+
+export const deleteContentFile = async (relativePath: string): Promise<void> => {
+  const payload = await requestJson<ContentWriteResponse>(
+    contentApi.post("/__content/delete", {
+      json: {
+        path: relativePath,
+      },
+    }),
+  );
+  if (!payload.ok) {
+    throw new Error("Delete failed.");
+  }
+};
+
 export const fetchRegistry = async (): Promise<ContentRegistryResponse> =>
   requestJson<ContentRegistryResponse>(contentApi.get("/__content/registry"));

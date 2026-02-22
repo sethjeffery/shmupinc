@@ -1,3 +1,4 @@
+import type { GunDefinition } from "../data/gunTypes";
 import type { ModDefinition } from "../data/modTypes";
 import type { MountedWeapon } from "../data/save";
 import type { BulletSpec } from "../data/scripts";
@@ -19,6 +20,7 @@ import { Bullet, type BulletUpdateContext } from "../entities/Bullet";
 import { Enemy } from "../entities/Enemy";
 import { Ship } from "../entities/Ship";
 import { DEFAULT_ENEMY_VECTOR } from "../render/enemyShapes";
+import { drawGunToGraphics } from "../render/gunShapes";
 import { DEFAULT_SHIP_VECTOR } from "../render/shipShapes";
 import { ParallaxBackground } from "../systems/Parallax";
 import { ParticleSystem } from "../systems/Particles";
@@ -39,6 +41,9 @@ const LOOP_DELAY_MS = 600;
 const PLAYER_Y_RATIO = 0.84;
 const WEAPON_PREVIEW_ZOOM = 2;
 const WEAPON_PREVIEW_DUMMY_HP = 14;
+const WEAPON_PREVIEW_GUN_RADIUS = 17;
+const WEAPON_PREVIEW_GUN_SIZE = WEAPON_PREVIEW_GUN_RADIUS * 0.58;
+const WEAPON_PREVIEW_GUN_COLOR = 0x7df9ff;
 
 const createWeaponPreviewDummy = (id: string): EnemyDef => ({
   fire: { loop: false, steps: [] },
@@ -88,7 +93,10 @@ export class ContentPreviewScene extends Phaser.Scene {
   private enemyPool: Enemy[] = [];
   private playerMarker?: Phaser.GameObjects.Graphics;
   private playerShip?: Ship;
+  private weaponPreviewGun?: Phaser.GameObjects.Graphics;
   private mountedWeapons: MountedWeapon[] = [];
+  private weaponPreviewType: "gun" | "ship" = "ship";
+  private weaponGunDef: GunDefinition | null = null;
   private shipDef: null | ShipDefinition = null;
   private playerFiring = new PlayerFiring();
   private bulletContext: BulletUpdateContext = {
@@ -119,6 +127,12 @@ export class ContentPreviewScene extends Phaser.Scene {
         weapon: WeaponDefinition;
         ship: ShipDefinition;
         mountId?: string;
+        mods?: ModDefinition[];
+      }
+    | {
+        mode: "weaponGun";
+        weapon: WeaponDefinition;
+        gun: GunDefinition;
         mods?: ModDefinition[];
       }
     | { mode: null }
@@ -183,6 +197,9 @@ export class ContentPreviewScene extends Phaser.Scene {
     });
     this.playerShip.graphics.setDepth(8);
     this.playerShip.graphics.setVisible(false);
+    this.weaponPreviewGun = this.add.graphics();
+    this.weaponPreviewGun.setDepth(8);
+    this.weaponPreviewGun.setVisible(false);
     this.ready = true;
     if (this.pendingParentSize) {
       this.scale.setParentSize(
@@ -205,6 +222,8 @@ export class ContentPreviewScene extends Phaser.Scene {
           payload.mountId,
           payload.mods,
         );
+      } else if (payload.mode === "weaponGun") {
+        this.setWeaponGun(payload.weapon, payload.gun, payload.mods);
       } else {
         this.setMode(null);
       }
@@ -289,6 +308,14 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.setWeaponPreview(weapon, ship, mountId, mods);
   }
 
+  setWeaponGun(
+    weapon: WeaponDefinition,
+    gun: GunDefinition,
+    mods?: ModDefinition[],
+  ): void {
+    this.setWeaponGunPreview(weapon, gun, mods);
+  }
+
   private setWeaponPreview(
     weapon: WeaponDefinition,
     ship: ShipDefinition,
@@ -306,6 +333,8 @@ export class ContentPreviewScene extends Phaser.Scene {
       return;
     }
     this.mode = "weapon";
+    this.weaponPreviewType = "ship";
+    this.weaponGunDef = null;
     const mount = this.getPreviewMount(weapon, ship, mountId);
     const normalizedMods = normalizeMountMods(mods ?? []).slice(
       0,
@@ -335,6 +364,52 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.applyWeaponZoom();
   }
 
+  private setWeaponGunPreview(
+    weapon: WeaponDefinition,
+    gun: GunDefinition,
+    mods?: ModDefinition[],
+  ): void {
+    if (!this.ready) {
+      this.pendingPayload = {
+        gun,
+        mode: "weaponGun",
+        mods,
+        weapon,
+      };
+      return;
+    }
+    this.mode = "weapon";
+    this.weaponPreviewType = "gun";
+    this.weaponGunDef = gun;
+    const normalizedMods = normalizeMountMods(mods ?? []);
+    const mount: WeaponMount = {
+      id: "__preview_mount__",
+      modSlots: normalizedMods.length,
+      offset: { x: 0, y: 0 },
+      size: weapon.size,
+    };
+    this.mountedWeapons = [
+      {
+        instanceId: "__preview__",
+        mods: normalizedMods,
+        mount,
+        stats: resolveWeaponStatsWithMods(weapon, normalizedMods),
+        weapon,
+      },
+    ];
+    this.shipDef = null;
+    this.enemyDef = null;
+    this.waveSpawns = [];
+    this.spawnCursor = 0;
+    this.elapsedMs = 0;
+    this.loopDelayMs = 0;
+    this.playerFiring.reset();
+    this.clearEntities();
+    this.spawnWeaponPreviewDummies();
+    this.showWeaponPreview(true);
+    this.applyWeaponZoom();
+  }
+
   setMode(_mode = null): void {
     if (!this.ready) {
       this.pendingPayload = { mode: null };
@@ -343,6 +418,8 @@ export class ContentPreviewScene extends Phaser.Scene {
     this.mode = null;
     this.enemyDef = null;
     this.mountedWeapons = [];
+    this.weaponPreviewType = "ship";
+    this.weaponGunDef = null;
     this.shipDef = null;
     this.waveSpawns = [];
     this.spawnCursor = 0;
@@ -396,9 +473,8 @@ export class ContentPreviewScene extends Phaser.Scene {
 
   private updatePlayerMarker(): void {
     if (!this.playerMarker) return;
-    const playerX = this.bounds.width * 0.5;
-    const playerY = this.bounds.height * PLAYER_Y_RATIO;
-    this.playerMarker.setPosition(playerX, playerY);
+    const origin = this.getWeaponPreviewOrigin();
+    this.playerMarker.setPosition(origin.x, origin.y);
   }
 
   private updateEnemies(deltaMs: number): void {
@@ -447,8 +523,16 @@ export class ContentPreviewScene extends Phaser.Scene {
   }
 
   private updatePlayerBullets(delta: number): void {
+    const origin = this.getWeaponPreviewOrigin();
     const ship = this.playerShip;
-    if (!ship) return;
+    const playerRadius =
+      this.weaponPreviewType === "ship" && ship
+        ? ship.radius
+        : WEAPON_PREVIEW_GUN_RADIUS;
+    const playerHitbox =
+      this.weaponPreviewType === "ship" && ship
+        ? ship.hitbox
+        : { kind: "circle" as const, radius: WEAPON_PREVIEW_GUN_RADIUS };
     updatePlayerBulletsRuntime(delta, {
       bulletContext: this.bulletContext,
       emitTrail: this.emitMissileTrail,
@@ -461,24 +545,31 @@ export class ContentPreviewScene extends Phaser.Scene {
       playArea: this.bounds,
       playerAlive: true,
       playerBullets: this.playerBullets,
-      playerHitbox: ship.hitbox,
-      playerRadius: ship.radius,
-      playerX: ship.x,
-      playerY: ship.y,
+      playerHitbox,
+      playerRadius,
+      playerX: origin.x,
+      playerY: origin.y,
     });
   }
 
   private updateWeaponPreview(delta: number): void {
+    if (this.mountedWeapons.length === 0) return;
+    const origin = this.getWeaponPreviewOrigin();
     const ship = this.playerShip;
-    if (!ship || this.mountedWeapons.length === 0) return;
-    const playerX = this.bounds.width * 0.5;
-    const playerY = this.bounds.height * PLAYER_Y_RATIO;
-    ship.setPosition(playerX, playerY);
+    const playerRadius =
+      this.weaponPreviewType === "ship" && ship
+        ? ship.radius
+        : WEAPON_PREVIEW_GUN_RADIUS;
+    if (this.weaponPreviewType === "ship" && ship) {
+      ship.setPosition(origin.x, origin.y);
+    } else {
+      this.drawWeaponPreviewGun(origin.x, origin.y);
+    }
     this.playerFiring.update(
       delta,
-      ship.x,
-      ship.y,
-      ship.radius,
+      origin.x,
+      origin.y,
+      playerRadius,
       this.mountedWeapons,
       this.emitPlayerBullet,
       true,
@@ -584,18 +675,55 @@ export class ContentPreviewScene extends Phaser.Scene {
     }
   }
 
+  private getWeaponPreviewOrigin(): { x: number; y: number } {
+    return {
+      x: this.bounds.width * 0.5,
+      y: this.bounds.height * PLAYER_Y_RATIO,
+    };
+  }
+
+  private drawWeaponPreviewGun(x: number, y: number): void {
+    if (!this.weaponPreviewGun || !this.weaponGunDef) return;
+    const mounted = this.mountedWeapons[0];
+    const color = mounted?.stats.bullet.color ?? WEAPON_PREVIEW_GUN_COLOR;
+    const angleRad = ((mounted?.stats.angleDeg ?? 0) * Math.PI) / 180;
+    this.weaponPreviewGun.clear();
+    drawGunToGraphics(
+      this.weaponPreviewGun,
+      this.weaponGunDef,
+      0,
+      0,
+      WEAPON_PREVIEW_GUN_SIZE,
+      color,
+      false,
+      angleRad,
+    );
+    this.weaponPreviewGun.setPosition(x, y);
+  }
+
   private showWeaponPreview(show: boolean): void {
     if (this.playerMarker) {
       this.playerMarker.setVisible(!show);
     }
     if (this.playerShip) {
-      this.playerShip.graphics.setVisible(show);
-      if (show && this.shipDef) {
+      const showShip = show && this.weaponPreviewType === "ship";
+      this.playerShip.graphics.setVisible(showShip);
+      if (showShip && this.shipDef) {
         const radius = resolveShipRadius(this.shipDef);
         this.playerShip.setAppearance(this.shipDef.vector);
         this.playerShip.setHitbox(resolveShipHitbox(this.shipDef));
         this.playerShip.setRadius(radius);
         this.playerShip.setMountedWeapons(this.mountedWeapons);
+      }
+    }
+    if (this.weaponPreviewGun) {
+      const showGun = show && this.weaponPreviewType === "gun";
+      this.weaponPreviewGun.setVisible(showGun);
+      if (showGun) {
+        const origin = this.getWeaponPreviewOrigin();
+        this.drawWeaponPreviewGun(origin.x, origin.y);
+      } else {
+        this.weaponPreviewGun.clear();
       }
     }
   }
@@ -610,9 +738,7 @@ export class ContentPreviewScene extends Phaser.Scene {
     }
     const zoom = WEAPON_PREVIEW_ZOOM;
     camera.setZoom(zoom);
-    const ship = this.playerShip;
-    const worldX = ship?.x ?? this.bounds.width * 0.5;
-    const worldY = ship?.y ?? this.bounds.height * PLAYER_Y_RATIO;
-    camera.centerOn(worldX, worldY);
+    const origin = this.getWeaponPreviewOrigin();
+    camera.centerOn(origin.x, origin.y);
   }
 }

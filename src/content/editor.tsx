@@ -30,6 +30,7 @@ import {
   modify,
   parseTree,
 } from "jsonc-parser";
+import { ChevronDown, ChevronRight, FilePlus2, Pencil, Trash2 } from "lucide-preact";
 import * as monaco from "monaco-editor";
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
@@ -46,9 +47,12 @@ import {
   PLAYFIELD_BASE_WIDTH,
 } from "../game/util/playArea";
 import {
+  createContentFile,
+  deleteContentFile,
   fetchRegistry,
   listContentTree,
   readContentFile,
+  renameContentFile,
   type ContentRegistryResponse,
   type ContentTreeNode,
   writeContentFile,
@@ -78,8 +82,6 @@ import {
   type EditablePointPath,
 } from "./vectorEditorScenes";
 
-type WeaponPreviewMountId = string;
-
 interface EditorShellRefs {
   bezierCanvas: HTMLCanvasElement;
   bezierInfo: HTMLDivElement;
@@ -106,6 +108,31 @@ interface EditorShellRefs {
   treeContainer: HTMLDivElement;
   validationStatus: HTMLDivElement;
 }
+
+const JSON5_SUFFIX = /\.json5$/i;
+
+const stripJson5Suffix = (value: string): string => value.replace(JSON5_SUFFIX, "");
+
+const formatPathLabel = (value: string): string => {
+  const parts = value.split("/");
+  if (!parts.length) return value;
+  const fileName = parts[parts.length - 1] ?? "";
+  parts[parts.length - 1] = stripJson5Suffix(fileName);
+  return parts.join("/");
+};
+
+const buildJson5Path = (directoryPath: string, fileStem: string): string => {
+  const normalizedStem = stripJson5Suffix(fileStem.trim());
+  return `${directoryPath}/${normalizedStem}.json5`;
+};
+
+const isValidFileStem = (value: string): boolean =>
+  /^[A-Za-z0-9._-]+$/.test(value);
+
+const getParentPath = (value: string): string => {
+  const lastSlash = value.lastIndexOf("/");
+  return lastSlash >= 0 ? value.slice(0, lastSlash) : "";
+};
 
 const ContentEditorShell = (props: {
   setRef: <K extends keyof EditorShellRefs>(
@@ -469,8 +496,6 @@ export const initContentEditor = (): void => {
   let previewGame: null | Phaser.Game = null;
   let previewScene: ContentPreviewScene | null = null;
   let previewResizeObserver: null | ResizeObserver = null;
-  let currentWeaponMountId: WeaponPreviewMountId = "";
-  let currentWeaponPreviewModIds: string[] = [];
   let currentModPreviewShipId = "";
   let currentModPreviewWeaponId = "";
   let currentModPreviewMountId = "";
@@ -478,14 +503,56 @@ export const initContentEditor = (): void => {
   let soundPreviewGainScale = 1;
   const soundPreviewPlayer = new ProceduralSoundPreviewPlayer();
   let bezierPanelWasVisible = false;
+  let treeData: ContentTreeNode[] = [];
+  const expandedFolders = new Set<string>();
+
+  const collectDirectoryPaths = (nodes: ContentTreeNode[]): Set<string> => {
+    const paths = new Set<string>();
+    const visit = (entries: ContentTreeNode[]): void => {
+      for (const entry of entries) {
+        if (entry.type !== "dir") continue;
+        paths.add(entry.path);
+        if (entry.children?.length) {
+          visit(entry.children);
+        }
+      }
+    };
+    visit(nodes);
+    return paths;
+  };
+
+  const syncExpandedFolders = (): void => {
+    const validPaths = collectDirectoryPaths(treeData);
+    for (const folderPath of Array.from(expandedFolders)) {
+      if (!validPaths.has(folderPath)) {
+        expandedFolders.delete(folderPath);
+      }
+    }
+  };
+
+  const expandAncestorFolders = (filePath: string): void => {
+    const parts = filePath.split("/").filter(Boolean);
+    if (parts.length <= 1) return;
+    let current = "";
+    for (let i = 0; i < parts.length - 1; i += 1) {
+      current = current ? `${current}/${parts[i]}` : parts[i];
+      expandedFolders.add(current);
+    }
+  };
+
   const loadTree = async (): Promise<void> => {
     try {
-      const tree = await listContentTree();
-      render(null, treeContainer);
-      buildTree(tree);
-      contentPathIndex = buildContentIndex(tree);
-    } catch {
-      renderValidation(["Failed to load content tree."]);
+      treeData = await listContentTree();
+      syncExpandedFolders();
+      buildTree();
+      contentPathIndex = buildContentIndex(treeData);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load content tree.";
+      renderValidation([message]);
+      treeData = [];
+      buildTree();
+      contentPathIndex = new Map<string, string>();
     }
   };
 
@@ -1062,14 +1129,6 @@ export const initContentEditor = (): void => {
   const getRegistry = (): ContentRegistry | null =>
     registryCache?.registry ?? null;
 
-  const getPreviewShip = (): null | ShipDefinition => {
-    const registry = getRegistry();
-    if (!registry) return null;
-    return (
-      registry.shipsById.starter ?? Object.values(registry.shipsById)[0] ?? null
-    );
-  };
-
   const ensurePreviewGame = (): void => {
     if (previewGame || !previewCanvasHost) return;
     destroyPreviewPointEditor();
@@ -1410,70 +1469,6 @@ export const initContentEditor = (): void => {
       </select>,
     );
 
-  const normalizePreviewModSelection = (
-    requestedModIds: string[],
-    availableMods: ModDefinition[],
-    maxSlots: number,
-  ): string[] => {
-    const byId = new Map(availableMods.map((mod) => [mod.id, mod]));
-    const seenKinds = new Set<ModDefinition["iconKind"]>();
-    const selected: string[] = [];
-    for (const modId of requestedModIds) {
-      const mod = byId.get(modId);
-      if (!mod) continue;
-      if (seenKinds.has(mod.iconKind)) continue;
-      seenKinds.add(mod.iconKind);
-      selected.push(modId);
-      if (selected.length >= maxSlots) break;
-    }
-    return selected;
-  };
-
-  const buildModTabsGroup = (
-    mods: ModDefinition[],
-    selectedModIds: string[],
-    maxSlots: number,
-    onToggle: (modId: string) => void,
-  ): ComponentChildren => {
-    const label = `Mods (${selectedModIds.length}/${maxSlots})`;
-    if (maxSlots <= 0) {
-      return buildPreviewControlGroup(
-        label,
-        <span className="content-editor__preview-empty">
-          This mount has no mod slots.
-        </span>,
-      );
-    }
-    const selectedKinds = new Set(
-      selectedModIds
-        .map((id) => mods.find((mod) => mod.id === id))
-        .filter((mod): mod is ModDefinition => Boolean(mod))
-        .map((mod) => mod.iconKind),
-    );
-    return buildPreviewControlGroup(
-      label,
-      mods.map((mod) => {
-        const isSelected = selectedModIds.includes(mod.id);
-        const hasTypeConflict = selectedKinds.has(mod.iconKind) && !isSelected;
-        const limitReached = selectedModIds.length >= maxSlots && !isSelected;
-        const isDisabled = hasTypeConflict || limitReached;
-        return (
-          <button
-            type="button"
-            className={getPreviewTabClassName(isSelected, isDisabled)}
-            key={mod.id}
-            disabled={isDisabled}
-            onClick={() => {
-              onToggle(mod.id);
-            }}
-          >
-            {mod.id}
-          </button>
-        );
-      }),
-    );
-  };
-
   const getSoundLayerDurationMs = (
     layer: SoundContent["layers"][number],
   ): number => {
@@ -1674,8 +1669,7 @@ export const initContentEditor = (): void => {
     if (currentKind === "weapons") {
       setPreviewAspect(playfieldAspect);
       const registry = getRegistry();
-      const ship = getPreviewShip();
-      if (!registry || !currentWeaponDef || !ship) {
+      if (!registry || !currentWeaponDef) {
         previewText.textContent = "Weapon preview unavailable.";
         hidePreviewCanvas();
         hidePreviewTabs();
@@ -1684,65 +1678,21 @@ export const initContentEditor = (): void => {
         return;
       }
       const weaponDef = currentWeaponDef;
-      const compatibleMounts = ship.mounts.filter((mount) =>
-        canMountWeapon(weaponDef, mount),
-      );
-      const mountIds =
-        compatibleMounts.length > 0
-          ? compatibleMounts.map((mount) => mount.id)
-          : ship.mounts.map((mount) => mount.id);
-      if (!mountIds.includes(currentWeaponMountId)) {
-        currentWeaponMountId = mountIds[0] ?? "";
+      const gunDef = registry.gunsById[weaponDef.gunId] ?? null;
+      if (!gunDef) {
+        previewText.textContent = `Weapon preview unavailable: missing gun "${weaponDef.gunId}".`;
+        hidePreviewCanvas();
+        hidePreviewTabs();
+        previewScene?.setMode(null);
+        setPanelVisible(previewSection, true);
+        return;
       }
-      const selectedMount =
-        ship.mounts.find((mount) => mount.id === currentWeaponMountId) ?? null;
-      const maxModSlots = selectedMount?.modSlots ?? 0;
-      const availableMods = Object.values(registry.modsById).sort((a, b) =>
-        a.id.localeCompare(b.id),
-      );
-      currentWeaponPreviewModIds = normalizePreviewModSelection(
-        currentWeaponPreviewModIds,
-        availableMods,
-        maxModSlots,
-      );
-      const selectedMods = currentWeaponPreviewModIds
-        .map((modId) => registry.modsById[modId])
-        .filter((mod): mod is ModDefinition => Boolean(mod));
       previewText.textContent = "";
       previewCanvasHost.style.display = "";
       setPanelVisible(previewSection, true);
       ensurePreviewGame();
-      renderPreviewTabs([
-        buildMountTabsGroup(mountIds, currentWeaponMountId, (mountId) => {
-          currentWeaponMountId = mountId;
-          currentWeaponPreviewModIds = [];
-          renderPreview();
-        }),
-        buildModTabsGroup(
-          availableMods,
-          currentWeaponPreviewModIds,
-          maxModSlots,
-          (modId) => {
-            if (currentWeaponPreviewModIds.includes(modId)) {
-              currentWeaponPreviewModIds = currentWeaponPreviewModIds.filter(
-                (id) => id !== modId,
-              );
-            } else {
-              currentWeaponPreviewModIds = [
-                ...currentWeaponPreviewModIds,
-                modId,
-              ];
-            }
-            renderPreview();
-          },
-        ),
-      ]);
-      previewScene?.setWeapon(
-        weaponDef,
-        ship,
-        currentWeaponMountId,
-        selectedMods,
-      );
+      hidePreviewTabs();
+      previewScene?.setWeaponGun(weaponDef, gunDef);
       return;
     }
 
@@ -2054,13 +2004,24 @@ export const initContentEditor = (): void => {
         (result.data as WaveDefinition);
       setLevelButtonsEnabled(false);
     } else if (kind === "weapons") {
-      const build = buildContentRegistry([
+      const entries: ContentEntry[] = [
         {
           data: result.data as WeaponContent,
           kind: "weapons",
           path: currentPath,
         },
-      ]);
+      ];
+      const registry = getRegistry();
+      if (registry) {
+        for (const bullet of Object.values(registry.bulletsById)) {
+          entries.push({
+            data: bullet,
+            kind: "bullets",
+            path: `bullets/${bullet.id}.json5`,
+          });
+        }
+      }
+      const build = buildContentRegistry(entries);
       currentWeaponDef = build.registry.weaponsById[result.data.id] ?? null;
       setLevelButtonsEnabled(false);
     } else if (kind === "mods") {
@@ -2160,8 +2121,8 @@ export const initContentEditor = (): void => {
     let contents = "";
     try {
       contents = await readContentFile(path);
-    } catch {
-      renderValidation([`Failed to load ${path}.`]);
+    } catch (error) {
+      readActionError("Load", path, error);
       return;
     }
     currentPath = path;
@@ -2172,7 +2133,9 @@ export const initContentEditor = (): void => {
     bezierActive = false;
     referenceSection.style.display = "none";
     modIconSection.style.display = "none";
-    fileLabel.textContent = path;
+    expandAncestorFolders(path);
+    fileLabel.textContent = formatPathLabel(path);
+    buildTree();
     model.setValue(contents);
     updateDirtyState();
     validateCurrent();
@@ -2180,36 +2143,253 @@ export const initContentEditor = (): void => {
     void refreshRegistry();
   };
 
-  const buildTree = (nodes: ContentTreeNode[], depth = 0): void => {
+  const readActionError = (
+    action: string,
+    targetPath: string,
+    error: unknown,
+  ): void => {
+    const detail = error instanceof Error ? error.message : "Unknown error.";
+    renderValidation([`${action} failed for ${targetPath}.`, detail]);
+  };
+
+  const promptForFileStem = (label: string, initialValue: string): null | string => {
+    const rawValue = window.prompt(label, initialValue);
+    if (rawValue === null) return null;
+    const stem = stripJson5Suffix(rawValue.trim());
+    if (!stem) {
+      renderValidation(["File name is required."]);
+      return null;
+    }
+    if (!isValidFileStem(stem)) {
+      renderValidation([
+        "File name can only include letters, numbers, hyphen, underscore, and dot.",
+      ]);
+      return null;
+    }
+    return stem;
+  };
+
+  const toggleFolder = (folderPath: string): void => {
+    if (expandedFolders.has(folderPath)) {
+      expandedFolders.delete(folderPath);
+    } else {
+      expandedFolders.add(folderPath);
+    }
+    buildTree();
+  };
+
+  const closeCurrentFile = (): void => {
+    currentPath = null;
+    currentText = "";
+    originalText = "";
+    currentLevelId = null;
+    currentEnemyDef = null;
+    currentWaveDef = null;
+    currentWeaponDef = null;
+    currentModDef = null;
+    currentGunDef = null;
+    currentGalaxyDef = null;
+    currentSoundDef = null;
+    currentShipDef = null;
+    currentKind = null;
+    currentModPreviewShipId = "";
+    currentModPreviewWeaponId = "";
+    currentModPreviewMountId = "";
+    lastReferencePath = null;
+    lastBezierPath = null;
+    bezierActive = false;
+    referenceSection.style.display = "none";
+    modIconSection.style.display = "none";
+    setLevelButtonsEnabled(false);
+    fileLabel.textContent = "No file selected";
+    model.setValue("");
+    renderValidation(["Select a file to begin."]);
+    renderSchemaDocs(null);
+    renderReferencePanel(null);
+    renderBezierPanel();
+    renderPreview();
+    updateDirtyState();
+    buildTree();
+  };
+
+  const handleCreateFile = async (directoryPath: string): Promise<void> => {
+    const fileStem = promptForFileStem(
+      `Create file in ${directoryPath} (without .json5):`,
+      "new-file",
+    );
+    if (!fileStem) return;
+    const nextPath = buildJson5Path(directoryPath, fileStem);
+    try {
+      await createContentFile(nextPath, "{\n}\n");
+    } catch (error) {
+      readActionError("Create", nextPath, error);
+      return;
+    }
+    expandedFolders.add(directoryPath);
+    await loadTree();
+    await requestOpenFile(nextPath);
+  };
+
+  const handleRenameFile = async (filePath: string): Promise<void> => {
+    const currentStem = stripJson5Suffix(filePath.split("/").pop() ?? filePath);
+    const fileStem = promptForFileStem(
+      `Rename ${currentStem} to (without .json5):`,
+      currentStem,
+    );
+    if (!fileStem) return;
+    const parentPath = getParentPath(filePath);
+    if (!parentPath) {
+      renderValidation(["Cannot rename a file without a parent directory."]);
+      return;
+    }
+    const nextPath = buildJson5Path(parentPath, fileStem);
+    if (nextPath === filePath) return;
+    const isCurrentFile = currentPath === filePath;
+    if (isCurrentFile) {
+      const canProceed = await confirmUnsavedChanges();
+      if (!canProceed) return;
+    }
+    try {
+      await renameContentFile(filePath, nextPath);
+    } catch (error) {
+      readActionError("Rename", filePath, error);
+      return;
+    }
+    await loadTree();
+    if (isCurrentFile) {
+      await openFile(nextPath);
+    }
+  };
+
+  const handleDeleteFile = async (filePath: string): Promise<void> => {
+    const confirmed = window.confirm(
+      `Delete ${formatPathLabel(filePath)}? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    const isCurrentFile = currentPath === filePath;
+    if (isCurrentFile && hasUnsavedChanges()) {
+      const canDiscard = window.confirm(
+        "Current file has unsaved changes. Delete and discard changes?",
+      );
+      if (!canDiscard) return;
+    }
+    try {
+      await deleteContentFile(filePath);
+    } catch (error) {
+      readActionError("Delete", filePath, error);
+      return;
+    }
+    await loadTree();
+    if (isCurrentFile) {
+      closeCurrentFile();
+    }
+  };
+
+  const buildTree = (): void => {
     const rows: { depth: number; node: ContentTreeNode }[] = [];
     const visit = (entries: ContentTreeNode[], level: number): void => {
       for (const node of entries) {
         rows.push({ depth: level, node });
-        if (node.type === "dir" && node.children?.length) {
+        if (
+          node.type === "dir" &&
+          node.children?.length &&
+          expandedFolders.has(node.path)
+        ) {
           visit(node.children, level + 1);
         }
       }
     };
-    visit(nodes, depth);
+    visit(treeData, 0);
     render(
       <>
         {rows.map((entry) => {
-          const className =
-            entry.node.type === "file"
-              ? "content-editor__tree-row is-file"
-              : "content-editor__tree-row";
+          const isFile = entry.node.type === "file";
+          const isExpanded =
+            entry.node.type === "dir" && expandedFolders.has(entry.node.path);
+          const className = [
+            "content-editor__tree-row",
+            isFile ? "is-file" : "is-dir",
+            isFile && currentPath === entry.node.path ? "is-active" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
           return (
             <div
               className={className}
               key={entry.node.path}
               onClick={
-                entry.node.type === "file"
+                isFile
                   ? () => void requestOpenFile(entry.node.path)
-                  : undefined
+                  : () => toggleFolder(entry.node.path)
               }
               style={{ paddingLeft: `${entry.depth * 12}px` }}
             >
-              {entry.node.name}
+              <div className="content-editor__tree-row-label">
+                {isFile ? (
+                  <span className="content-editor__tree-chevron-spacer" />
+                ) : isExpanded ? (
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="content-editor__tree-chevron"
+                    size={14}
+                    strokeWidth={2}
+                  />
+                ) : (
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="content-editor__tree-chevron"
+                    size={14}
+                    strokeWidth={2}
+                  />
+                )}
+                <span>{isFile ? stripJson5Suffix(entry.node.name) : entry.node.name}</span>
+              </div>
+              <div className="content-editor__tree-actions">
+                {isFile ? (
+                  <>
+                    <button
+                      aria-label={`Rename ${entry.node.name}`}
+                      className="content-editor__tree-action"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void handleRenameFile(entry.node.path);
+                      }}
+                      title="Rename file"
+                      type="button"
+                    >
+                      <Pencil size={14} strokeWidth={2} />
+                    </button>
+                    <button
+                      aria-label={`Delete ${entry.node.name}`}
+                      className="content-editor__tree-action"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void handleDeleteFile(entry.node.path);
+                      }}
+                      title="Delete file"
+                      type="button"
+                    >
+                      <Trash2 size={14} strokeWidth={2} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    aria-label={`Create file in ${entry.node.name}`}
+                    className="content-editor__tree-action"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      void handleCreateFile(entry.node.path);
+                    }}
+                    title="New file"
+                    type="button"
+                  >
+                    <FilePlus2 size={14} strokeWidth={2} />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

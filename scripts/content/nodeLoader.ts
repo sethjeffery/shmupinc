@@ -35,11 +35,31 @@ const normalizePath = (value: string): string =>
   value.split(path.sep).join("/");
 
 const ensureInsideContentRoot = (relativePath: string): string => {
-  const resolved = path.resolve(CONTENT_ROOT, relativePath);
-  if (!resolved.startsWith(CONTENT_ROOT)) {
+  const normalized = normalizePath(relativePath).replace(/^\/+/, "");
+  if (!normalized) {
+    throw new Error("Path is required.");
+  }
+  const resolved = path.resolve(CONTENT_ROOT, normalized);
+  const rootPrefix = `${CONTENT_ROOT}${path.sep}`;
+  if (resolved !== CONTENT_ROOT && !resolved.startsWith(rootPrefix)) {
     throw new Error("Path escapes content root.");
   }
   return resolved;
+};
+
+const ensureJson5Path = (relativePath: string): void => {
+  if (!/\.json5$/i.test(relativePath)) {
+    throw new Error("Content file path must end with .json5.");
+  }
+};
+
+const fileExists = async (absolutePath: string): Promise<boolean> => {
+  try {
+    await fs.access(absolutePath);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 const listContentFiles = async (): Promise<string[]> => {
@@ -130,6 +150,49 @@ export const writeContentFile = async (
   const safePath = ensureInsideContentRoot(relativePath);
   await fs.mkdir(path.dirname(safePath), { recursive: true });
   await fs.writeFile(safePath, contents, "utf-8");
+};
+
+export const createContentFile = async (
+  relativePath: string,
+  contents: string,
+): Promise<void> => {
+  ensureJson5Path(relativePath);
+  const safePath = ensureInsideContentRoot(relativePath);
+  if (await fileExists(safePath)) {
+    throw new Error("File already exists.");
+  }
+  await fs.mkdir(path.dirname(safePath), { recursive: true });
+  await fs.writeFile(safePath, contents, "utf-8");
+};
+
+export const renameContentFile = async (
+  fromRelativePath: string,
+  toRelativePath: string,
+): Promise<void> => {
+  ensureJson5Path(fromRelativePath);
+  ensureJson5Path(toRelativePath);
+  const sourcePath = ensureInsideContentRoot(fromRelativePath);
+  const targetPath = ensureInsideContentRoot(toRelativePath);
+  if (sourcePath === targetPath) {
+    throw new Error("Source and target paths are identical.");
+  }
+  if (!(await fileExists(sourcePath))) {
+    throw new Error("Source file does not exist.");
+  }
+  if (await fileExists(targetPath)) {
+    throw new Error("Target file already exists.");
+  }
+  await fs.mkdir(path.dirname(targetPath), { recursive: true });
+  await fs.rename(sourcePath, targetPath);
+};
+
+export const deleteContentFile = async (relativePath: string): Promise<void> => {
+  ensureJson5Path(relativePath);
+  const safePath = ensureInsideContentRoot(relativePath);
+  if (!(await fileExists(safePath))) {
+    throw new Error("File does not exist.");
+  }
+  await fs.unlink(safePath);
 };
 
 export const loadContentEntries = async (): Promise<LoadContentResult> => {

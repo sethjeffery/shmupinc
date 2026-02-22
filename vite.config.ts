@@ -3,9 +3,12 @@ import JSON5 from "json5";
 import { defineConfig } from "vite";
 import { buildContentRegistry } from "./src/content/validation";
 import {
+  createContentFile,
+  deleteContentFile,
   listContentTree,
   loadContentEntries,
   readContentFile,
+  renameContentFile,
   writeContentFile,
 } from "./scripts/content/nodeLoader";
 import { ServerResponse } from "node:http";
@@ -109,6 +112,71 @@ export default defineConfig({
               return;
             }
             await writeContentFile(payload.path, payload.contents);
+            sendJson(res, 200, { ok: true });
+          } catch (error) {
+            sendJson(res, 400, { error: (error as Error).message });
+          }
+        });
+
+        server.middlewares.use("/__content/create", async (req, res, next) => {
+          if (req.method !== "POST") {
+            next();
+            return;
+          }
+          try {
+            const raw = await parseBody(req);
+            const payload = JSON.parse(raw) as {
+              contents?: string;
+              path?: string;
+            };
+            if (!payload.path || typeof payload.contents !== "string") {
+              sendJson(res, 400, { error: "Missing path or contents." });
+              return;
+            }
+            await createContentFile(payload.path, payload.contents);
+            sendJson(res, 200, { ok: true });
+          } catch (error) {
+            sendJson(res, 400, { error: (error as Error).message });
+          }
+        });
+
+        server.middlewares.use("/__content/rename", async (req, res, next) => {
+          if (req.method !== "POST") {
+            next();
+            return;
+          }
+          try {
+            const raw = await parseBody(req);
+            const payload = JSON.parse(raw) as {
+              nextPath?: string;
+              path?: string;
+            };
+            if (!payload.path || !payload.nextPath) {
+              sendJson(res, 400, { error: "Missing path or nextPath." });
+              return;
+            }
+            await renameContentFile(payload.path, payload.nextPath);
+            sendJson(res, 200, { ok: true });
+          } catch (error) {
+            sendJson(res, 400, { error: (error as Error).message });
+          }
+        });
+
+        server.middlewares.use("/__content/delete", async (req, res, next) => {
+          if (req.method !== "POST") {
+            next();
+            return;
+          }
+          try {
+            const raw = await parseBody(req);
+            const payload = JSON.parse(raw) as {
+              path?: string;
+            };
+            if (!payload.path) {
+              sendJson(res, 400, { error: "Missing path." });
+              return;
+            }
+            await deleteContentFile(payload.path);
             sendJson(res, 200, { ok: true });
           } catch (error) {
             sendJson(res, 400, { error: (error as Error).message });

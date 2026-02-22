@@ -42,6 +42,7 @@
     "json-schema-traverse": "^1.0.0",
     "json5": "^2.2.3",
     "ky": "^1.14.3",
+    "lucide-preact": "^0.575.0",
     "phaser": "^3.90.0",
     "preact": "^10.28.3",
     "prettier": "^3.8.1",
